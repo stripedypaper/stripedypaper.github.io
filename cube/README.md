@@ -1,2 +1,5 @@
-Cube Sim by stripedypaper 2016
+# Cube Sim by stripedypaper
 
+## Changelog
+
+1.0 : complete red cube functionality
