@@ -609,7 +609,3 @@ Game.playSound = function(sound) {
   sound.volume = 0.5;
   sound.play();
 }
-
-window.onload = Game.init();
-//console.log(Game.getPLine(4, false, 150, C.category.hat));
-//Game.getP(C.rare, C.blackCube.id, 150, C.category.hat);
