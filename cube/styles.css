@@ -22,12 +22,12 @@ article, aside, canvas, details, embed,
 figure, figcaption, footer, header, hgroup, 
 menu, nav, output, ruby, section, summary,
 time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	font: inherit;
-	vertical-align: baseline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
 }
 
 body
@@ -77,8 +77,8 @@ body
 {
   width:33px;
   height:33px;
-  z-index:100;
-	position:absolute;
+  z-index:200;
+  position:absolute;
   //border: 1px solid red;
 }
 
@@ -86,8 +86,7 @@ body
 {
   width:38px;
   height:38px;
-  z-index:100;
-	position:absolute;
+  position:absolute;
   background-color:yellow;
 }
 
@@ -95,13 +94,13 @@ body
 {
   width:38px;
   height:38px;
-	position:absolute;
+  position:absolute;
 }
 
 .item
 {
   background-repeat: no-repeat;
-	z-index:8;
+  z-index:8;
 }
 
 .item.dragged
@@ -129,21 +128,21 @@ body
 {
   width:161px;
   height:266px;
-	position:absolute;
+  position:absolute;
 }
 
 .equipment
 {
   width:232px;
   height:307px;
-	position:absolute;
+  position:absolute;
 }
 
 .cubeWindow
 {
   width:196px;
-  height:300px;
-	position:absolute;
+  height:370px;
+  position:absolute;
   background-repeat: no-repeat;
 }
 
@@ -151,7 +150,7 @@ body
 {
   width:290px;
   height:280px;
-	position:absolute;
+  position:absolute;
   background-repeat: no-repeat;
   z-index:1000;
   display:none;
@@ -206,8 +205,8 @@ body
 {
   pointer-events: none;
   width:261px;
-  height:280px;
-	position:absolute;
+  height:356px;
+  position:absolute;
   background-repeat: no-repeat;
   z-index:1000;
   display:none;
@@ -256,6 +255,15 @@ body
   top:193px;
   left:11px;
   width:100%;
+}
+
+.equiptooltipbpot
+{
+  position:absolute;
+  top:270px;
+  left:11px;
+  width:100%;
+  display:none;
 }
 
 .equiptooltipnpotimg
@@ -321,8 +329,9 @@ body
   pointer-events: none;
   width: 196px;
   height: 270px;
-  background: url('img/cube_red_use1.png');
+  background: url('https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/cube_red_use1.png');
   animation: play_1 1.1s steps(11) 1;
+  z-index:110;
 }
 
 .anim2
@@ -330,8 +339,29 @@ body
   pointer-events: none;
   width: 196px;
   height: 270px;
-  background: url('img/cube_red_use2.png');
+  background: url('https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/cube_red_use2.png');
   animation: play_1 1.1s steps(11) 1;
+  z-index:110;
+}
+
+.anim3
+{
+  pointer-events: none;
+  width: 196px;
+  height: 355px;
+  background: url('https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/cube_black_use1.png');
+  animation: play_1 1.1s steps(11) 1;
+  z-index:110;
+}
+
+.anim4
+{
+  pointer-events: none;
+  width: 196px;
+  height: 355px;
+  background: url('https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/cube_black_use2.png');
+  animation: play_1 1.1s steps(11) 1;
+  z-index:110;
 }
 
 @keyframes play_1 {
@@ -340,22 +370,47 @@ body
 
 .cubePot
 {
-  position:static;
+  pointer-events:none;
   text-align: center;
-  line-height: 360px;       /* the same as your div height */
+  margin-top:140px;
+  width:196px;
+  left:0px;
   color:yellow;
+  z-index:101;
 }
 
 .cubeLines
 {
+  pointer-events:none;
   top:185px;
   left:19px;
   width:160px;
+  z-index:101;
+}
+
+.cubePot2
+{
+  pointer-events:none;
+  text-align: center;
+  margin-top:225px;
+  width:196px;
+  left:0px;
+  color:yellow;
+  z-index:101;
+}
+
+.cubeLines2
+{
+  pointer-events:none;
+  top:270px;
+  left:19px;
+  width:160px;
+  z-index:101;
 }
 
 .button2
 {
-  cursor: url("img/Cursor.1.1.png"), pointer;
+  cursor: url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cursor.1.1.png"), pointer;
 }
 
 .cubeButtonAgain
@@ -363,20 +418,30 @@ body
   position:absolute;
   height:16px;
   width:133px;
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Red.BtOnemore.normal.0.png");
+  z-index:100;
+}
+
+.cubeButtonAgainRed
+{
   top:243px;
   left:10px;
-  background-image:url("img/Cube_Red.BtOnemore.normal.0.png");
-  z-index:100;
+}
+
+.cubeButtonAgainBlack
+{
+  top:328px;
+  left:10px;
 }
 
 .cubeButtonAgain:hover
 {
-  background-image:url("img/Cube_Red.BtOnemore.mouseOver.0.png");
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Red.BtOnemore.mouseOver.0.png");
 }
 
 .cubeButtonAgain:active
 {
-  background-image:url("img/Cube_Red.BtOnemore.pressed.0.png");
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Red.BtOnemore.pressed.0.png");
 }
 
 .cubeButtonOK
@@ -384,20 +449,72 @@ body
   position:absolute;
   height:16px;
   width:40px;
-  top:243px;
-  left:146px;
-  background-image:url("img/Cube_Red.BtOk.normal.0.png");
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Red.BtOk.normal.0.png");
   z-index:100;
 }
 
 .cubeButtonOK:hover
 {
-  background-image:url("img/Cube_Red.BtOk.mouseOver.0.png");
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Red.BtOk.mouseOver.0.png");
 }
 
 .cubeButtonOK:active
 {
-  background-image:url("img/Cube_Red.BtOk.pressed.0.png");
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Red.BtOk.pressed.0.png");
+}
+
+.cubeButtonOKRed
+{
+  top:243px;
+  left:146px;
+}
+
+.cubeButtonOKBlack
+{
+  top:328px;
+  left:146px;
+}
+
+.cubeButtonBefore
+{
+  position:absolute;
+  height:82px;
+  width:176px;
+  top:153px;
+  left:10px;
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Black.Before.normal.0.png");
+  z-index:100;
+}
+
+.cubeButtonBefore:hover
+{
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Black.Before.mouseOver.0.png");
+}
+
+.cubeButtonBefore:active
+{
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Black.Before.pressed.0.png");
+}
+
+.cubeButtonAfter
+{
+  position:absolute;
+  height:82px;
+  width:176px;
+  top:238px;
+  left:10px;
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Black.After.normal.0.png");
+  z-index:100;
+}
+
+.cubeButtonAfter:hover
+{
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Black.After.mouseOver.0.png");
+}
+
+.cubeButtonAfter:active
+{
+  background-image:url("https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/cube/img/Cube_Black.After.pressed.0.png");
 }
 
 .preload
@@ -414,6 +531,11 @@ body
   display:inline-block;
   width:32px;
   height:32px;
+}
+
+.credit
+{
+  z-index:200;
 }
 
 b
