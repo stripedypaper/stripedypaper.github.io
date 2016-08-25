@@ -610,6 +610,6 @@ Game.playSound = function(sound) {
   sound.play();
 }
 
-Game.init();
+window.onload = Game.init();
 //console.log(Game.getPLine(4, false, 150, C.category.hat));
 //Game.getP(C.rare, C.blackCube.id, 150, C.category.hat);
