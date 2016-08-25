@@ -286,7 +286,7 @@ Game.init = function() {
   
   for (var i = 0; i < equips.length; i++) {
     var newEquip = {info:equips[i], pot:null, bpot:null};
-    newEquip.pot = Game.getP(C.unique, C.noCube.id, newEquip.info.reqLevel, newEquip.info.category);
+    newEquip.pot = Game.getP(C.rare, C.noCube.id, newEquip.info.reqLevel, newEquip.info.category);
     Game.E.push(newEquip);
     Game.addEquipmentItem(newEquip); //todo
   }
