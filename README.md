@@ -1,0 +1,1 @@
+# stripedypaper.github.io
