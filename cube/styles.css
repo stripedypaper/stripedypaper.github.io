@@ -321,7 +321,7 @@ body
   pointer-events: none;
   width: 196px;
   height: 270px;
-  background: url('https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/cube_red_use1.png');
+  background: url('img/cube_red_use1.png');
   animation: play_1 1.1s steps(11) 1;
 }
 
@@ -330,7 +330,7 @@ body
   pointer-events: none;
   width: 196px;
   height: 270px;
-  background: url('https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/cube_red_use2.png');
+  background: url('img/cube_red_use2.png');
   animation: play_1 1.1s steps(11) 1;
 }
 
@@ -355,7 +355,7 @@ body
 
 .button2
 {
-  cursor: url("https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/Cursor.1.1.png"), pointer;
+  cursor: url("img/Cursor.1.1.png"), pointer;
 }
 
 .cubeButtonAgain
@@ -365,18 +365,18 @@ body
   width:133px;
   top:243px;
   left:10px;
-  background-image:url("https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/Cube_Red.BtOnemore.normal.0.png");
+  background-image:url("img/Cube_Red.BtOnemore.normal.0.png");
   z-index:100;
 }
 
 .cubeButtonAgain:hover
 {
-  background-image:url("https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/Cube_Red.BtOnemore.mouseOver.0.png");
+  background-image:url("img/Cube_Red.BtOnemore.mouseOver.0.png");
 }
 
 .cubeButtonAgain:active
 {
-  background-image:url("https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/Cube_Red.BtOnemore.pressed.0.png");
+  background-image:url("img/Cube_Red.BtOnemore.pressed.0.png");
 }
 
 .cubeButtonOK
@@ -386,18 +386,18 @@ body
   width:40px;
   top:243px;
   left:146px;
-  background-image:url("https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/Cube_Red.BtOk.normal.0.png");
+  background-image:url("img/Cube_Red.BtOk.normal.0.png");
   z-index:100;
 }
 
 .cubeButtonOK:hover
 {
-  background-image:url("https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/Cube_Red.BtOk.mouseOver.0.png");
+  background-image:url("img/Cube_Red.BtOk.mouseOver.0.png");
 }
 
 .cubeButtonOK:active
 {
-  background-image:url("https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/Cube_Red.BtOk.pressed.0.png");
+  background-image:url("img/Cube_Red.BtOk.pressed.0.png");
 }
 
 .preload

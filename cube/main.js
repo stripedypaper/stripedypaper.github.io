@@ -4,8 +4,8 @@ function asset(what) {return "url(" + C.assetsDir + what + ")";}
 function soundasset(what) {return C.soundDir + what + "?raw=true";}
 
 C = {};
-C.assetsDir = "https://raw.githubusercontent.com/stripedypaper/cube/master/html/img/"
-C.soundDir = "https://github.com/stripedypaper/cube/blob/master/html/sound/";
+C.assetsDir = "img/"
+C.soundDir = "sound/";
 
 Assets = {};
 Assets.cursor = asset("cursor.png");
