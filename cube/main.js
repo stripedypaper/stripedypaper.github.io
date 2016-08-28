@@ -521,8 +521,8 @@ C._1102775_3 = {id:"_1102775_3", name:"Absolab Archer Cape", category:C.category
 C._1102775_4 = {id:"_1102775_4", name:"Absolab Bandit Cape", category:C.category.cape, reqLevel:160, icon:Assets._1102775, offsetX: -5, offsetY: -3};
 C._1102775_5 = {id:"_1102775_5", name:"Absolab Pirate Cape", category:C.category.cape, reqLevel:160, icon:Assets._1102775, offsetX: -5, offsetY: -3};
 
-C._1122007 = {id:"_1122007", name:"Spiegelmann's Necklace", category:C.category.pendant, reqLevel:0, icon:Assets._1122007, offsetX: -3, offsetY: 0};
-C._1122266 = {id:"_1122266", name:"Reinforced Engraved Gollux Pendant", category:C.category.pendant, reqLevel:0, icon:Assets._1122266, offsetX: -5, offsetY: -2};
+C._1122007 = {id:"_1122007", name:"Spiegelmann's Necklace", category:C.category.pendant, reqLevel:30, icon:Assets._1122007, offsetX: -3, offsetY: 0};
+C._1122266 = {id:"_1122266", name:"Reinforced Engraved Gollux Pendant", category:C.category.pendant, reqLevel:140, icon:Assets._1122266, offsetX: -5, offsetY: -2};
 C._1122267 = {id:"_1122267", name:"Superior Engraved Gollux Pendant", category:C.category.pendant, reqLevel:150, icon:Assets._1122267, offsetX: -5, offsetY: -2};
 C._1122267_2 = {id:"_1122267", name:"Superior Engraved Gollux Pendant", category:C.category.pendant2, reqLevel:150, icon:Assets._1122267, offsetX: -5, offsetY: -2};
 
@@ -1073,6 +1073,10 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
         if (newEquip.info.category == C.category.bottom && Game.usingOverall) {
           Game.unequipTop();
         }
+      }
+      else {
+        equipList.style.display = 'none';
+        Game.equipListCategory = null;
       }
     }
   };
