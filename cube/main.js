@@ -1391,7 +1391,7 @@ Game.getToolTipHeight = function() {
   return Game.usedBonusScroll ? 356 : 280;
 }
 
-Game.init();
+//Game.init();
 //console.log(Game.getPLine(4, false, 150, C.category.hat));
 //Game.getP(C.rare, C.blackCube.id, 150, C.category.hat);
 //Game.getPLine(4, true, 150, C.category.gloves);
