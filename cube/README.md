@@ -1,4 +1,4 @@
-# Cube Sim by stripedypaper
+# [Cube Sim by stripedypaper](https://stripedypaper.github.io/cube/)
 
 ## Changelog
 
