@@ -790,6 +790,10 @@ Game.init = function() {
   l('equiptooltipcover').style.backgroundImage = Assets.tooltipCover;
   l('equiptooltippot').style.backgroundImage = Assets.tooltipPot0;
   
+  l('equiptooltipcube1').style.backgroundImage = Assets.redCubeRaw;
+  l('equiptooltipcube2').style.backgroundImage = Assets.blackCubeRaw;
+  l('equiptooltipcube3').style.backgroundImage = Assets.bonusCubeRaw;
+  
   var clickscreen = l('clickscreen');
   clickscreen.onclick = function() {
     //console.log("back click");
@@ -830,6 +834,7 @@ Game.init = function() {
   for (var i = 0; i < equips.length; i++) {
     var newEquip = {info:equips[i], pot:null, bpot:null};
     newEquip.pot = Game.getP(C.rare, C.noTierRate, false, newEquip.info.reqLevel, newEquip.info.category);
+    newEquip.count = {red:0, black:0, bonus:0};
     Game.E.push(newEquip);
     Game.addEquipmentItem(newEquip); //todo
   }
@@ -999,9 +1004,13 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
     l('equiptooltiplevel').innerHTML = obj.info.reqLevel;
     l('equiptooltipcategory').innerHTML = "CATEGORY: " + C.categories[obj.info.category];
     
+    l('equiptooltipcubetext1').innerHTML = obj.count.red;
+    l('equiptooltipcubetext2').innerHTML = obj.count.black;
+    l('equiptooltipcubetext3').innerHTML = obj.count.bonus
+    
     l('equiptooltipnpotheading').style.color = C.rarityColors[obj.pot.rarity];
     l('equiptooltipnpotlines').innerHTML = obj.pot.lines.join("<br>");
-    l('equiptooltipnpotimg').style.backgroundImage = Assets["tooltipPotIcon" + obj.pot.rarity];
+    l('equiptooltipnpotimg').style.backgroundImage = Assets["tooltipPotIcon" + obj.pot.rarity];;
     
     if (Game.usedBonusScroll) {
       l('equiptooltipbpotheading').style.color = C.rarityColors[obj.bpot.rarity];
@@ -1044,6 +1053,8 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
 
         if (Game.usedBonusScroll)
           newEquip.bpot = Game.getP(C.rare, C.noTierRate, true, newEquip.info.reqLevel, newEquip.info.category);
+          
+        newEquip.count = {red:0, black:0, bonus:0};
 
         if (itemPoolCat == C.category.ring || itemPoolCat == C.category.pendant)
           newEquip.info.category = obj.info.category; //hack for ring/pendant
@@ -1069,6 +1080,7 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
   button.addEventListener( "contextmenu", function(e) {
     if (!Game.isDragging) {
       e.preventDefault();
+      Game.openedEquipList = true;
       var equipList = l('equipList');
       if (obj.info.category == Game.equipListCategory) {
         equipList.style.display = 'none';
@@ -1076,6 +1088,7 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
       }
       else {
         equipList.style.display = 'block';
+        l('equiptip').style.display = 'none';
         Game.equipListCategory = obj.info.category;
         l('cubeWindow').style.display = 'none';
         
@@ -1219,11 +1232,17 @@ Game.parseP = function() {
 
 alt = true;
 Game.cube = function(obj) {
+  if (Game.openedEquipList) l('equiptip').style.display = 'none';
+  else {
+    Game.openedEquipList = true;
+    l('equiptip').style.display = 'block';
+  }
   // hack for success sound cutting itself off
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
     
   obj.pot = Game.getP(obj.pot.rarity, C.redCubeTierRate, false, obj.info.reqLevel, obj.info.category);
+  obj.count.red = obj.count.red + 1;
   Game.disableCube = true;
   Game.lastCubed = obj;
 
@@ -1263,10 +1282,16 @@ Game.cube = function(obj) {
 }
 
 Game.cubeBlack = function(obj) {
+  if (Game.openedEquipList) l('equiptip').style.display = 'none';
+  else {
+    Game.openedEquipList = true;
+    l('equiptip').style.display = 'block';
+  }
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
   
   var newPot = Game.getP(obj.pot.rarity, C.blackCubeTierRate, false, obj.info.reqLevel, obj.info.category);
+  obj.count.black = obj.count.black + 1;
   Game.disableCube = true;
   Game.lastCubed = obj;
 
@@ -1323,10 +1348,16 @@ Game.cubeBlack = function(obj) {
 }
 
 Game.cubeBonus = function(obj) {
+  if (Game.openedEquipList) l('equiptip').style.display = 'none';
+  else {
+    Game.openedEquipList = true;
+    l('equiptip').style.display = 'block';
+  }
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
     
   obj.bpot = Game.getP(obj.bpot.rarity, C.bonusCubeTierRate, true, obj.info.reqLevel, obj.info.category);
+  obj.count.bonus = obj.count.bonus + 1;
   Game.disableCube = true;
   Game.lastCubed = obj;
 

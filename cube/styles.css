@@ -112,6 +112,30 @@ body
   z-index:101;
 }
 
+.equiptip
+{
+  color:white;
+  font-family: 'Source Sans Pro',sans-serif;
+  font-size: 0.8em;
+  font-weight:300;
+  position:absolute;
+  top:-23px;
+  width:100%;
+  text-align:center;
+  display:none;
+}
+
+.move {
+    position:relative;
+    -webkit-animation: backandforth 1s ease 0s;
+    -webkit-animation-iteration-count:infinite;
+    animation: backandforth 1s ease 0s;
+    animation-iteration-count:infinite;
+}
+
+@-webkit-keyframes backandforth {0%{top:-23px;} 50%{top:-28px;} 100%{top:-23px;}}
+@keyframes backandforth {0%{top:-23px;} 50%{top:-28px;} 100%{top:-23px;}}
+
 .ui
 {
   width:628px;
@@ -292,6 +316,60 @@ body
 {
   top:164px;
   left:13px;
+}
+
+.equiptooltipcube1
+{
+  top:70px;
+  left:110px;
+  background-repeat: no-repeat;
+}
+
+.equiptooltipcube2
+{
+  top:70px;
+  left:160px;
+  background-repeat: no-repeat;
+}
+
+.equiptooltipcube3
+{
+  top:70px;
+  left:210px;
+  background-repeat: no-repeat;
+}
+
+.equiptooltipcubetext1
+{
+  top:107px;
+  left:104px;
+  width:50px;
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 8pt;
+  font-weight: 300;
+}
+
+.equiptooltipcubetext2
+{
+  top:107px;
+  left:154px;
+  width:50px;
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 8pt;
+  font-weight: 300;
+}
+
+.equiptooltipcubetext3
+{
+  top:107px;
+  left:204px;
+  width:50px;
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 8pt;
+  font-weight: 300;
 }
 
 .equiptooltipnpot

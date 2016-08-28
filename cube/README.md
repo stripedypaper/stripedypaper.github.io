@@ -4,7 +4,8 @@
 
 1.00 : complete red cube functionality  
 1.01 : complete black and bonus cube functionality  
-1.02 : equip swapping
+1.02 : equip swapping  
+1.03 : cube counter
 
 ## Disclaimer
 
@@ -20,5 +21,6 @@ The following assumptions were made based on stats I've seen around reddit:
 - Black Cube tier up chance: 20% rare to epic, 10% epic to unique, 5% unique to legendary
 - Bonus Cube tier up chance: 20% rare to epic, 10% epic to unique, 5% unique to legendary
 - Line tier up chance: 100% first line, 15% second line, 5% third line*
+- Potential options for regular non-bonus potential are all equally likely
 
 *For example, on a legendary armor a str% line is always 12% if it is the first line. The second and third lines start at 9% str but have a 15% and 5% chance respectively to become a 12% str line. These percentages were based on me watching people cube on youtube and counting it up (~300 sample size, not huge).
