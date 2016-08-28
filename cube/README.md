@@ -15,7 +15,7 @@ Maplestory and all related content including images and sounds used are sole pro
 
 All info on potential lines, which potentials can appear on which types of equipment, and potential weights (likelihood) for bonus potential are read directly from the game file Item.wz/ItemOption.img. The file P.js is the result of XML to JSON conversion of that file, after manually removing entries for things like Soul item potential.
 
-The following assumptions were made based on stats I've seen around reddit:
+The following assumptions were made (some based on stats I've seen around reddit):
 
 - Red Cube tier up chance: 10% rare to epic, 5% epic to unique, 2.5% unique to legendary
 - Black Cube tier up chance: 20% rare to epic, 10% epic to unique, 5% unique to legendary
