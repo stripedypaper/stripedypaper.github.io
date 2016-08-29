@@ -937,8 +937,8 @@ Game.addInventoryItem = function(info, row, col) {
     l('tooltipdescription').innerHTML = info.desc;
     var tti = l('tooltipimage');
     tti.style.backgroundImage = Assets[info.id];
-    tti.style.left = C.tooltipImageX + info.offsetX * 2 + "px";
-    tti.style.top = C.tooltipImageY + info.offsetY * 2 + "px";
+    tti.style.left = C.tooltipImageX + info.offsetX * 2 + 5 + "px";
+    tti.style.top = C.tooltipImageY + info.offsetY * 2 + 5 + "px";
     var tooltip = l('tooltip');
     if (info.id == C.blackCube.id) tooltip.style.backgroundImage = Assets.tooltip_big;
     else tooltip.style.backgroundImage = Assets.tooltip_small;
