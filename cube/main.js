@@ -732,7 +732,7 @@ Game.init = function() {
   document.onclick = function(e) {
     
   }
-  document.onmousemove = function(e) {
+  document.onmousemove = function(event) {
     var eventDoc, doc, body, pageX, pageY;
     event = event || window.event; // IE-ism
 
