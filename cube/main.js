@@ -1137,8 +1137,6 @@ Game.getPLine = function(tier, isBonus, level, category) {
       var subid = parseInt(o.id.substring(3));
       var emblembl = [601, 602, 603, 551];
       if (category == C.category.emblem && emblembl.indexOf(subid) > -1) continue;
-      var shieldbl = [201, 202, 206, 207];
-      if ((category == C.category.shield || category == C.category.secondary) && shieldbl.indexOf(subid) > -1) continue;
       
       if (!isBonus){
         var tier2bl = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 351, 352, 353, 81];
