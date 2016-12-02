@@ -6,6 +6,7 @@
 1.01 : complete black and bonus cube functionality  
 1.02 : equip swapping  
 1.03 : cube counter
+1.04 : removed avoidability and magic defense lines to match GMS
 
 ## Disclaimer
 
