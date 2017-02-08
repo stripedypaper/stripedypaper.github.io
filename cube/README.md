@@ -7,6 +7,7 @@
 1.02 : equip swapping  
 1.03 : cube counter  
 1.04 : removed avoidability and magic defense lines to match GMS
+1.05 : changed min and max crit to just crit damage to match GMS
 
 ## Disclaimer
 

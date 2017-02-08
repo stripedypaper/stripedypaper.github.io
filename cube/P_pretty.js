@@ -51782,7 +51782,7 @@ var P = {
 						],
 						"string": {
 							"-name": "string",
-							"-value": "Min Crit Damage: +#incCriticaldamageMin%"
+							"-value": "Critical Damage: +#incCriticaldamageMin%"
 						}
 					}, {
 						"-name": "level",
@@ -51790,121 +51790,121 @@ var P = {
 								"-name": "1",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "2",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "3",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "4",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "5",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "9"
+									"-value": "5"
 								}
 							}, {
 								"-name": "6",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "9"
+									"-value": "5"
 								}
 							}, {
 								"-name": "7",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "12"
+									"-value": "6"
 								}
 							}, {
 								"-name": "8",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "12"
+									"-value": "6"
 								}
 							}, {
 								"-name": "9",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "10",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "11",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "12",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "13",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "14",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "15",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "16",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "17",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "18",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "19",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "20",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "16"
+									"-value": "8"
 								}
 							}
 						]
@@ -51924,7 +51924,7 @@ var P = {
 						],
 						"string": {
 							"-name": "string",
-							"-value": "Max Crit Damage: +#incCriticaldamageMax%"
+							"-value": "Critical Damage: +#incCriticaldamageMax%"
 						}
 					}, {
 						"-name": "level",
@@ -51932,121 +51932,121 @@ var P = {
 								"-name": "1",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "2",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "3",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "4",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "5",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "9"
+									"-value": "5"
 								}
 							}, {
 								"-name": "6",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "9"
+									"-value": "5"
 								}
 							}, {
 								"-name": "7",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "12"
+									"-value": "6"
 								}
 							}, {
 								"-name": "8",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "12"
+									"-value": "6"
 								}
 							}, {
 								"-name": "9",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "10",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "11",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "12",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "13",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "14",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "15",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "15"
+									"-value": "8"
 								}
 							}, {
 								"-name": "16",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "17",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "18",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "19",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "16"
+									"-value": "8"
 								}
 							}, {
 								"-name": "20",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "16"
+									"-value": "8"
 								}
 							}
 						]
@@ -61566,7 +61566,7 @@ var P = {
 						],
 						"string": {
 							"-name": "string",
-							"-value": "Min Crit Damage: +#incCriticaldamageMin%"
+							"-value": "Critical Damage: +#incCriticaldamageMin%"
 						}
 					}, {
 						"-name": "level",
@@ -61574,121 +61574,121 @@ var P = {
 								"-name": "1",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "2",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "3",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "4",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "5",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "6",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "7",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "8",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "9",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "10",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "11",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "12",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "13",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "14",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "15",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "16",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "17",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "18",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "19",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "20",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "6"
+									"-value": "3"
 								}
 							}
 						]
@@ -61708,7 +61708,7 @@ var P = {
 						],
 						"string": {
 							"-name": "string",
-							"-value": "Min Crit Damage: +#incCriticaldamageMin%"
+							"-value": "Critical Damage: +#incCriticaldamageMin%"
 						}
 					}, {
 						"-name": "level",
@@ -61770,31 +61770,31 @@ var P = {
 								"-name": "10",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "11",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "12",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "13",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "14",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "15",
@@ -61806,31 +61806,31 @@ var P = {
 								"-name": "16",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "17",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "18",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "19",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "20",
 								"int": {
 									"-name": "incCriticaldamageMin",
-									"-value": "3"
+									"-value": "2"
 								}
 							}
 						]
@@ -61850,7 +61850,7 @@ var P = {
 						],
 						"string": {
 							"-name": "string",
-							"-value": "Max Crit Damage: +#incCriticaldamageMax%"
+							"-value": "Critical Damage: +#incCriticaldamageMax%"
 						}
 					}, {
 						"-name": "level",
@@ -61858,121 +61858,121 @@ var P = {
 								"-name": "1",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "2",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "3",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "4",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "5",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "6",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "7",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "8",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "9",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "4"
+									"-value": "2"
 								}
 							}, {
 								"-name": "10",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "11",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "12",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "13",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "14",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "15",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "5"
+									"-value": "3"
 								}
 							}, {
 								"-name": "16",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "17",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "18",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "19",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "6"
+									"-value": "3"
 								}
 							}, {
 								"-name": "20",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "6"
+									"-value": "3"
 								}
 							}
 						]
@@ -61992,7 +61992,7 @@ var P = {
 						],
 						"string": {
 							"-name": "string",
-							"-value": "Max Crit Damage: +#incCriticaldamageMax%"
+							"-value": "Critical Damage: +#incCriticaldamageMax%"
 						}
 					}, {
 						"-name": "level",
@@ -62054,31 +62054,31 @@ var P = {
 								"-name": "10",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "11",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "12",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "13",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "14",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "2"
+									"-value": "1"
 								}
 							}, {
 								"-name": "15",
@@ -62090,31 +62090,31 @@ var P = {
 								"-name": "16",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "17",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "18",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "19",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}, {
 								"-name": "20",
 								"int": {
 									"-name": "incCriticaldamageMax",
-									"-value": "3"
+									"-value": "2"
 								}
 							}
 						]
