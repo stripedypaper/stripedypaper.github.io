@@ -51918,6 +51918,9 @@ var P = {
 								"-name": "optionType",
 								"-value": "54"
 							}, {
+								"-name": "optionBlock",
+								"-value": "1"
+							}, {
 								"-name": "reqLevel",
 								"-value": "50"
 							}
