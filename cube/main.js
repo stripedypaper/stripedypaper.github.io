@@ -730,7 +730,7 @@ Game.init = function() {
   Game.preloadImages();
 
   document.onclick = function(e) {
-    
+
   }
   document.onmousemove = function(event) {
     var eventDoc, doc, body, pageX, pageY;
@@ -748,52 +748,52 @@ Game.init = function() {
         (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
         (doc && doc.clientTop  || body && body.clientTop  || 0 );
     }
-    
+
     Game.mouseX = event.pageX;
     Game.mouseY = event.pageY;
     if (Game.isDragging) Game.dragUpdate();
   }
-  
+
   // images
-  
+
   document.body.style.cursor = Assets.cursor + "0 3, auto";
   l('background').style.backgroundImage = Assets.background;
-  
+
   var inventory = l('inventory');
   inventory.style.backgroundImage = Assets.inventory;
   inventory.style.left = 0 + "px";
   inventory.style.top = 50 + "px";
-  
+
   var equipment = l('equipment');
   equipment.style.backgroundImage = Assets.equipment;
   equipment.style.left = 180 + "px";
   equipment.style.top = 50 + "px";
-  
+
   var cubeWindow = l('cubeWindow');
   cubeWindow.style.backgroundImage = Assets.cubeWindowRed;
   cubeWindow.style.left = 430 + "px";
   cubeWindow.style.top = 50 + "px";
   cubeWindow.style.display = 'none';
-  
+
   var equipList = l('equipList');
   equipList.style.backgroundImage = Assets.equipList;
   equipList.style.left = 430 + "px";
   equipList.style.top = 50 + "px";
   equipList.style.display = 'none';
-  
+
   var tooltip = l('tooltip');
   tooltip.style.backgroundImage = Assets.tooltip_small;
   l('tooltipcover').style.backgroundImage = Assets.tooltipCover;
-  
+
   var equiptooltip = l('equiptooltip');
   equiptooltip.style.backgroundImage = Assets.tooltip_equip_small;
   l('equiptooltipcover').style.backgroundImage = Assets.tooltipCover;
   l('equiptooltippot').style.backgroundImage = Assets.tooltipPot0;
-  
+
   l('equiptooltipcube1').style.backgroundImage = Assets.redCubeRaw;
   l('equiptooltipcube2').style.backgroundImage = Assets.blackCubeRaw;
   l('equiptooltipcube3').style.backgroundImage = Assets.bonusCubeRaw;
-  
+
   var clickscreen = l('clickscreen');
   clickscreen.onclick = function() {
     //console.log("back click");
@@ -807,15 +807,15 @@ Game.init = function() {
     var tooltip = l('equiptooltip');
     tooltip.style.display = 'none';
   };
-  
+
   // game logic
-  
+
   Game.addInventoryItem(C.redCube, 0, 0);
   Game.addInventoryItem(C.blackCube, 0, 1);
   Game.addInventoryItem(C.bonusScroll, 1, 0);
-  
+
   var equips = [C._1182060, C._1672040, C._1012438, C._1022211, C._1032223, C._1113073, C._1113074, C._1113075, C._1113072, C._1122267, C._1122267_2, C._1152108];
-  
+
   var hero1h = [C._1302275, C._1092113, C._1003797, C._1042254, C._1062165, C._1072743, C._1082543, C._1102481, C._1132174, C._1190301];
   var aran = [C._1442223, C._1352932, C._1003797, C._1042254, C._1062165, C._1072743, C._1082543, C._1102481, C._1132174, C._1190521];
   var bishop = [C._1372177, C._1092079, C._1003798, C._1042255, C._1062166, C._1072743_2, C._1082543_2, C._1102481_2, C._1132174_2, C._1190301];
@@ -826,34 +826,43 @@ Game.init = function() {
   var phantom = [C._1362090, C._1352103, C._1003800, C._1042257, C._1062168, C._1072743_4, C._1082543_4, C._1102481_4, C._1132174_4, C._1190521];
   var xenon = [C._1242060, C._1353004, C._1003801, C._1042258, C._1062169, C._1072743_5, C._1082543_5, C._1102481_5, C._1132174_5, C._1190201];
   var presets = [hero1h, aran, bishop, luminous, marksman, wildhunter, cannoneer, phantom, xenon];
-  
+
   equips = equips.concat(choose(presets));
-  
+
   //var equips = [C._1182060, C._1672069, C._1003797, C._1012438, C._1022211, C._1032223, C.emptyTop, C._1062165, C._1072743, C._1082543, C._1092113, C._1102481, C._1113020, C._1113074, C._1113075, C._1113132, C._1122267, C._1122267_2, C._1132174, C._1152124, C._1190301, C._1302275];
-  
+
+  var hairIds = [35350, 30830, 30800, 30330, 30120, 31220, 34120, 34240, 34560, 37950, 38000]
+  var faceIds = [20008, 20023, 20104, 20214, 20315, 20425, 20588, 20699, 23563, 21273, 21657]
+  var skinIds = [2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010, 2011, 2012, 2013];
+
+  Game.hair = hairIds[Math.floor(Math.random() * hairIds.length)];
+  Game.face = faceIds[Math.floor(Math.random() * faceIds.length)];
+  Game.skin = skinIds[Math.floor(Math.random() * skinIds.length)];
+
   for (var i = 0; i < equips.length; i++) {
     var newEquip = {info:equips[i], pot:null, bpot:null};
     newEquip.pot = Game.getP(C.rare, C.noTierRate, false, newEquip.info.reqLevel, newEquip.info.category);
     newEquip.count = {red:0, black:0, bonus:0};
     Game.E.push(newEquip);
+    Game.updateCharacter();
     Game.addEquipmentItem(newEquip); //todo
   }
-  
+
   l('cubeButtonOK').onclick = function() {
     Game.playSound(Sounds.click);
     if (!Game.disableCube) l('cubeWindow').style.display = 'none';
   };
-  
+
   var mouseover = function() {Game.playSound(Sounds.mouseover);};
   l('cubeButtonAgain').onmouseenter = mouseover;
   l('cubeButtonOK').onmouseenter = mouseover;
   l('cubeButtonBefore').onmouseenter = mouseover;
   l('cubeButtonAfter').onmouseenter = mouseover;
-  
+
   // cube item slot
-  
+
   var img = document.createElement("div");
-  
+
   img.className = "item icon";
   img.id = "cubeItem";
   img.style.backgroundImage = Assets.outlawHeart;
@@ -862,7 +871,7 @@ Game.init = function() {
   img.style.top = C.cubeItemY + "px";
   img.style.zIndex = "110";
   l('cubeWindow').appendChild(img);
-  
+
   var button = document.createElement("div");
   button.className = "button";
   button.id = "cubeItemButton";
@@ -874,6 +883,23 @@ Game.init = function() {
 Game.update = function() {
   if (Game.isDragging == true) {
   }
+}
+
+Game.updateCharacter = function () {
+  var itemIds = [];
+  for(var i = 0; i < Game.E.length; ++i)
+    itemIds.push(Game.E[i].info.id.replace("_2", "").replace("_3", "").replace("_4", "").replace("_5", "").replace("_", ""));
+
+  var hairIds = [35350, 30830, 30800, 30330, 30120, 31220, 34120, 34240, 34560, 37950, 38000]
+  var faceIds = [20008, 20023, 20104, 20214, 20315, 20425, 20588, 20699, 20861, 21273, 21657]
+  var skinIds = [2000, 2001, 2002, 2003, 2004, 2005, 2009, 2010, 2011, 2012, 2013];
+
+  itemIds.push(Game.hair)
+  itemIds.push(Game.face)
+
+  var itemIdList = itemIds.join(",");
+
+  l("character").src = "https://labs.maplestory.io/api/character/" + Game.skin + "/" + itemIdList;
 }
 
 Game.startDragging = function(id = null) {
@@ -909,7 +935,7 @@ Game.addInventoryItem = function(info, row, col) {
   img.style.left = C.inventoryOrigX + C.inventorySpaceX * col + info.offsetX + "px";
   img.style.top = C.inventoryOrigY + C.inventorySpaceY * row + info.offsetY + "px";
   l('inventory').appendChild(img);
-  
+
   var button = document.createElement("div");
   button.className = "button";
   button.id = "inventorybutton" + row + col;
@@ -954,18 +980,18 @@ Game.addInventoryItem = function(info, row, col) {
   l('inventory').appendChild(button);
 }
 
-Game.addEquipmentItem = function(obj, col = -1, row = -1) { 
+Game.addEquipmentItem = function(obj, col = -1, row = -1) {
   var img = document.createElement("div");
   if (col == -1) col = C.categoryGridX[obj.info.category];
   if (row == -1) row = C.categoryGridY[obj.info.category];
-  
+
   img.className = "item icon";
   img.style.backgroundImage = obj.info.icon;
   img.style.display = 'block';
   img.style.left = C.equipmentOrigX + C.equipmentSpaceX * col + obj.info.offsetX + "px";
   img.style.top = C.equipmentOrigY + C.equipmentSpaceY * row + obj.info.offsetY + "px";
   l('equipment').appendChild(img);
-  
+
   var outline = document.createElement("div");
   outline.className = "itemoutline";
   outline.id = "itemoutline" + obj.info.category;
@@ -973,7 +999,7 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
   outline.style.left = C.equipmentOrigX + C.equipmentSpaceX * col - 7 + "px";
   outline.style.top =  C.equipmentOrigY + C.equipmentSpaceY * row - 6 + "px";
   l('equipment').appendChild(outline);
-  
+
   var button = document.createElement("div");
   button.className = "button";
   button.id = "equipbutton" + obj.info.category;
@@ -990,7 +1016,7 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
         Game.cubeBonus(obj);
       else if (Game.dragID == C.bonusScroll.id)
         Game.consumeBonusScroll();
-      
+
       l('equipList').style.display = 'none';
       Game.equipListCategory = null;
       button.onmouseenter();
@@ -1003,23 +1029,23 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
     l('equiptooltiptoptext').innerHTML = "(" + C.rarities[Math.max(obj.pot.rarity, obj.bpot ? obj.bpot.rarity : 0)] + " Item)"
     l('equiptooltiplevel').innerHTML = obj.info.reqLevel;
     l('equiptooltipcategory').innerHTML = "CATEGORY: " + C.categories[obj.info.category];
-    
+
     l('equiptooltipcubetext1').innerHTML = obj.count.red;
     l('equiptooltipcubetext2').innerHTML = obj.count.black;
     l('equiptooltipcubetext3').innerHTML = obj.count.bonus
-    
+
     l('equiptooltipnpotheading').style.color = C.rarityColors[obj.pot.rarity];
     l('equiptooltipnpotlines').innerHTML = obj.pot.lines.join("<br>");
     l('equiptooltipnpotimg').style.backgroundImage = Assets["tooltipPotIcon" + obj.pot.rarity];;
-    
+
     if (Game.usedBonusScroll) {
       l('equiptooltipbpotheading').style.color = C.rarityColors[obj.bpot.rarity];
       l('equiptooltipbpotlines').innerHTML = obj.bpot.lines.join("<br>");
       l('equiptooltipbpotimg').style.backgroundImage = Assets["tooltipPotIcon" + obj.bpot.rarity];
     }
-    
+
     l('equiptooltippot').style.backgroundImage = Assets["tooltipPot" + Math.max(obj.pot.rarity, obj.bpot ? obj.bpot.rarity : 0)];
-    
+
     var tti = l('equiptooltipimage');
     tti.style.backgroundImage = obj.info.icon;
     tti.style.left = C.equiptooltipImageX + (obj.info.offsetX + 1) * 2 + 5 + "px";
@@ -1035,9 +1061,9 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
     }
   };
   l('equipment').appendChild(button);
-    
+
   // right click button
-  
+
   var itemPoolCat = C.categoryItemPool[obj.info.category];
   var itemPool = C.itemPools[itemPoolCat];
   var replaceThisItem = function(j, j2, j3) {
@@ -1053,23 +1079,24 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
 
         if (Game.usedBonusScroll)
           newEquip.bpot = Game.getP(C.rare, C.noTierRate, true, newEquip.info.reqLevel, newEquip.info.category);
-          
+
         newEquip.count = {red:0, black:0, bonus:0};
 
         if (itemPoolCat == C.category.ring || itemPoolCat == C.category.pendant)
           newEquip.info.category = obj.info.category; //hack for ring/pendant
 
         Game.E[Game.E.indexOf(obj)] = newEquip;
+        Game.updateCharacter();
         Game.addEquipmentItem(newEquip, j2, j3);
 
         equipList.style.display = 'none';
         Game.equipListCategory = null;
-        
+
         if (newEquip.info.id == "emptyTop" || newEquip.info.id == "emptyBottom") return;
         if (newEquip.info.category == C.category.overall) {
           Game.unequipBottom();
         }
-  
+
         if (newEquip.info.category == C.category.bottom && Game.usingOverall) {
           Game.unequipTop();
         }
@@ -1095,7 +1122,7 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
         l('equiptip').style.display = 'none';
         Game.equipListCategory = obj.info.category;
         l('cubeWindow').style.display = 'none';
-        
+
         var equipListText = l('equipListText');
         equipListText.innerHTML = "";
         //console.log(itemPool);
@@ -1103,7 +1130,7 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
           var newdiv = document.createElement("div");
           newdiv.className = "equipListItem noselect";
           newdiv.innerHTML = itemPool[i].name;
-          
+
           newdiv.onclick = replaceThisItem(itemPool[i], col, row);
           equipListText.appendChild(newdiv);
         }
@@ -1112,7 +1139,7 @@ Game.addEquipmentItem = function(obj, col = -1, row = -1) {
   });
 
   // hack kludge mania
-  
+
   if (obj.info.category == C.category.overall || obj.info.category == C.category.top) {
     Game.usingOverall = obj.info.category == C.category.overall;
     Game.unequipTop = replaceThisItem(C.emptyTop, col, row);
@@ -1127,7 +1154,7 @@ Game.getPLine = function(tier, isBonus, level, category) {
   var valid = [];
   var list = isBonus ? Game.P.bpot : Game.P.pot;
   var leveltier = Math.max(0, Math.floor((level - 1) / 10));
-  
+
   for (var i = 0; i < list.length; i++) {
     var o = list[i];
     if (o.tier == tier &&
@@ -1137,7 +1164,7 @@ Game.getPLine = function(tier, isBonus, level, category) {
       var subid = parseInt(o.id.substring(3));
       var emblembl = [601, 602, 603, 551];
       if (category == C.category.emblem && emblembl.indexOf(subid) > -1) continue;
-      
+
       if (!isBonus){
         var tier2bl = [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 351, 352, 353, 81];
         if (tier >= 2 && o.id[2] != 1 && tier2bl.indexOf(subid) > -1) continue;
@@ -1151,14 +1178,14 @@ Game.getPLine = function(tier, isBonus, level, category) {
       }
     }
   }
-  
+
   //console.log(valid);
   return choose(valid);
 }
 
 Game.getP = function(rarity, tierRate, isBonus, level, category) {
   var res = {};
-  
+
   if (Math.random() < tierRate[rarity]) {
     res.tieredUp = true;
     res.rarity = rarity + 1;
@@ -1167,7 +1194,7 @@ Game.getP = function(rarity, tierRate, isBonus, level, category) {
     res.tieredUp = false;
     res.rarity = rarity;
   }
-  
+
   res.lines = [];
   for (var i = 0; i < C.lineTierRate.length; i++) {
     var newLine;
@@ -1175,11 +1202,11 @@ Game.getP = function(rarity, tierRate, isBonus, level, category) {
       newLine = Game.getPLine(res.rarity + 1, isBonus, level, category);
     else
       newLine = Game.getPLine(res.rarity, isBonus, level, category);
-    
+
     newLine = newLine.replace("<", "&lt;").replace(">", "&gt;").replace("\\n", " ");
     res.lines.push(newLine);
-  }  
-  
+  }
+
   return res;
 }
 
@@ -1188,12 +1215,12 @@ Game.parseP = function() {
     var node = P.imgdir.imgdir[i];
     var tier = node["-name"][1];
     var bonus = node["-name"][2] == 2;
-    
+
     var obj = {};
     obj.id = node["-name"];
     obj.tier = tier;
     obj.bonus = bonus;
-    
+
     if(node.imgdir[0].int)
       if (Array.isArray(node.imgdir[0].int)) {
         for (var j = 0; j < node.imgdir[0].int.length; j++)
@@ -1202,13 +1229,13 @@ Game.parseP = function() {
       else {
         obj[node.imgdir[0].int["-name"]] = node.imgdir[0].int["-value"];
       }
-    
+
     // skip
     if(obj.optionBlock) continue;
-    
+
     if(node.imgdir[0].string) //always an object
       obj.string = node.imgdir[0].string["-value"];
-    
+
     obj.level = [];
     for (var k = 0; k < node.imgdir[1].imgdir.length; k++) {
       var int = node.imgdir[1].imgdir[k].int;
@@ -1222,7 +1249,7 @@ Game.parseP = function() {
       }
       obj.level.push(res);
     }
-    
+
     if (!bonus) {
       Game.P.pot.push(obj);
     }
@@ -1242,7 +1269,7 @@ Game.cube = function(obj) {
   // hack for success sound cutting itself off
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
-    
+
   obj.pot = Game.getP(obj.pot.rarity, C.redCubeTierRate, false, obj.info.reqLevel, obj.info.category);
   obj.count.red = obj.count.red + 1;
   Game.disableCube = true;
@@ -1250,7 +1277,7 @@ Game.cube = function(obj) {
 
   if(obj.pot.tieredUp) l('cubeAnimation').className = "anim2 cubeAnimation";
   else l('cubeAnimation').className = "anim1 cubeAnimation";
-  
+
   l('cubeWindow').style.display = 'block';
   l('cubeWindow').style.backgroundImage = Assets.cubeWindowRed;
   l('cubeButtonAgain').style.display = 'none';
@@ -1260,7 +1287,7 @@ Game.cube = function(obj) {
   l('cubeLines2').style.display = 'none';
   l('cubeButtonBefore').style.display = 'none';
   l('cubeButtonAfter').style.display = 'none';
-  
+
   l('itemoutline' + obj.info.category).style.borderColor = C.rarityOutlineColors[Math.max(obj.pot.rarity, obj.bpot ? obj.bpot.rarity : 0)];
   l('cubeLines').innerHTML = obj.pot.lines.join("<br>");
   l('cubePot').innerHTML = C.rarities[obj.pot.rarity];
@@ -1276,7 +1303,7 @@ Game.cube = function(obj) {
     l('cubeButtonAgain').style.display = 'block';
     Game.disableCube = false;
   }, 1090)
-  
+
   l('cubeButtonAgain').onclick = function() {
     Game.playSound(Sounds.click);
     if (!Game.disableCube) Game.cube(Game.lastCubed);
@@ -1291,7 +1318,7 @@ Game.cubeBlack = function(obj) {
   }
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
-  
+
   var newPot = Game.getP(obj.pot.rarity, C.blackCubeTierRate, false, obj.info.reqLevel, obj.info.category);
   obj.count.black = obj.count.black + 1;
   Game.disableCube = true;
@@ -1299,7 +1326,7 @@ Game.cubeBlack = function(obj) {
 
   if(newPot.tieredUp) l('cubeAnimation').className = "anim4 cubeAnimation";
   else l('cubeAnimation').className = "anim3 cubeAnimation";
-  
+
   l('cubeWindow').style.display = 'block';
   l('cubeWindow').style.backgroundImage = Assets.cubeWindowBlack;
   l('cubeButtonAgain').style.display = 'none';
@@ -1311,7 +1338,7 @@ Game.cubeBlack = function(obj) {
   l('cubeButtonAfter').style.display = 'block';
   l('cubeButtonBefore').style.pointerEvents = 'auto';
   l('cubeButtonAfter').style.pointerEvents = 'auto';
-  
+
   l('cubeLines').innerHTML = obj.pot.lines.join("<br>");
   l('cubePot').innerHTML = C.rarities[obj.pot.rarity];
   l('cubeLines2').innerHTML = newPot.lines.join("<br>");
@@ -1322,13 +1349,13 @@ Game.cubeBlack = function(obj) {
   l('cubeItem').style.top = C.cubeItemY + obj.info.offsetY + "px";
   l('cubeItemButton').onmouseenter = l('equipbutton' + obj.info.category).onmouseenter;
   l('cubeItemButton').onmousemove = l('equipbutton' + obj.info.category).onmousemove;
-  
+
   l('cubeButtonBefore').onclick = function() {
     Game.playSound(Sounds.click);
     l('cubeButtonAfter').style.display = 'none';
     l('cubeButtonBefore').style.pointerEvents = "none";
   };
-  
+
   l('cubeButtonAfter').onclick = function() {
     Game.playSound(Sounds.click);
     l('cubeButtonBefore').style.display = 'none';
@@ -1336,13 +1363,13 @@ Game.cubeBlack = function(obj) {
     obj.pot = newPot;
     l('itemoutline' + obj.info.category).style.borderColor = C.rarityOutlineColors[Math.max(obj.pot.rarity, obj.bpot ? obj.bpot.rarity : 0)];
   };
-  
+
   setTimeout(function(){
     l('cubeAnimation').className = "cubeAnimation";
     l('cubeButtonAgain').style.display = 'block';
     Game.disableCube = false;
   }, 1090)
-  
+
   l('cubeButtonAgain').onclick = function() {
     Game.playSound(Sounds.click);
     if (!Game.disableCube) Game.cubeBlack(Game.lastCubed);
@@ -1357,7 +1384,7 @@ Game.cubeBonus = function(obj) {
   }
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
-    
+
   obj.bpot = Game.getP(obj.bpot.rarity, C.bonusCubeTierRate, true, obj.info.reqLevel, obj.info.category);
   obj.count.bonus = obj.count.bonus + 1;
   Game.disableCube = true;
@@ -1365,7 +1392,7 @@ Game.cubeBonus = function(obj) {
 
   if(obj.bpot.tieredUp) l('cubeAnimation').className = "anim2 cubeAnimation";
   else l('cubeAnimation').className = "anim1 cubeAnimation";
-  
+
   l('cubeWindow').style.display = 'block';
   l('cubeWindow').style.backgroundImage = Assets.cubeWindowBonus;
   l('cubeButtonAgain').style.display = 'none';
@@ -1375,7 +1402,7 @@ Game.cubeBonus = function(obj) {
   l('cubeLines2').style.display = 'none';
   l('cubeButtonBefore').style.display = 'none';
   l('cubeButtonAfter').style.display = 'none';
-  
+
   l('itemoutline' + obj.info.category).style.borderColor = C.rarityOutlineColors[Math.max(obj.pot.rarity, obj.bpot ? obj.bpot.rarity : 0)];
   l('cubeLines').innerHTML = obj.bpot.lines.join("<br>");
   l('cubePot').innerHTML = C.rarities[obj.bpot.rarity];
@@ -1391,7 +1418,7 @@ Game.cubeBonus = function(obj) {
     l('cubeButtonAgain').style.display = 'block';
     Game.disableCube = false;
   }, 1090)
-  
+
   l('cubeButtonAgain').onclick = function() {
     Game.playSound(Sounds.click);
     if (!Game.disableCube) Game.cubeBonus(Game.lastCubed);
@@ -1421,14 +1448,14 @@ Game.playSound = function(sound) {
 Game.consumeBonusScroll = function() {
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
-  
+
   for (var i = 0; i < Game.E.length; i++) {
     Game.E[i].bpot = Game.getP(C.rare, C.noTierRate, true, Game.E[i].info.reqLevel, Game.E[i].info.category);
   }
-  
+
   Game.usedBonusScroll = true;
   Game.addInventoryItem(C.bonusCube, 0, 2);
-  
+
   l('inventoryitem10').style.display = 'none';
   l('inventorybutton10').style.display = 'none';
   l('equiptooltip').style.backgroundImage = Assets.tooltip_equip_big;
