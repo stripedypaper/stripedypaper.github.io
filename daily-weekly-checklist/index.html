@@ -11,8 +11,8 @@
 </head>
 <body ng-app="app" ng-controller="MainController as vm">
     <h3>Current time: {{vm.momentNow()}}</h3>
-    <h3>Next daily reset: {{vm.momentNextDailyReset()}}</h3>
-    <h3>Next weekly reset: {{vm.momentNextWeeklyReset()}}</h3>
+    <h3>Next daily reset: {{vm.momentNextDailyReset()}} in ({{vm.momentTimeUntilNextDailyReset()}})</h3>
+    <h3>Next weekly reset: {{vm.momentNextWeeklyReset()}} in ({{vm.momentTimeUntilNextWeeklyReset()}})</h3>
     <br/>
     <h4>Daily tasks&nbsp;&nbsp;<span class="small-link-button" ng-click="vm.resetDailyTaskOrder()">reset order</span></h4>
     <div ng-sortable="vm.sortableConfigDaily">

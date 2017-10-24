@@ -72,6 +72,8 @@ angular.module('app', ['ng-sortable'])
     vm.momentNow = momentNow;
     vm.momentNextDailyReset = momentNextDailyReset;
     vm.momentNextWeeklyReset = momentNextWeeklyReset;
+    vm.momentTimeUntilNextDailyReset = momentTimeUntilNextDailyReset;
+    vm.momentTimeUntilNextWeeklyReset = momentTimeUntilNextWeeklyReset;
     vm.doCheck = doCheck;
     vm.getChecked = getChecked;
     vm.addCustomTask = addCustomTask;
@@ -135,9 +137,20 @@ angular.module('app', ['ng-sortable'])
             minute: 0,
             hour: 0
         }).add(1, 'day');
-        var timeUntilNextDailyResetString = "(in " +moment.duration(+nextDailyReset - +now).format() +")";
 
-        return nextDailyReset.local().format('dddd, MMMM Do YYYY, h:mm:ss a') + " " + timeUntilNextDailyResetString;
+        return nextDailyReset.local().format('dddd, MMMM Do YYYY, h:mm:ss a');
+    }
+
+    function momentTimeUntilNextDailyReset() {
+        var now = moment();
+        var nextDailyReset = moment().utc().set({
+            millisecond: 0,
+            second: 0,
+            minute: 0,
+            hour: 0
+        }).add(1, 'day');
+
+        return moment.duration(+nextDailyReset - +now).format();
     }
 
     function momentNextWeeklyReset() {
@@ -153,9 +166,23 @@ angular.module('app', ['ng-sortable'])
             nextWeeklyReset.add(7, 'day');
         }
 
-        var timeUntilNextWeeklyResetString = "(in " +moment.duration(+nextWeeklyReset - +now).format() +")";
+        return nextWeeklyReset.local().format('dddd, MMMM Do YYYY, h:mm:ss a');
+    }
 
-        return nextWeeklyReset.local().format('dddd, MMMM Do YYYY, h:mm:ss a') + " " + timeUntilNextWeeklyResetString;
+    function momentTimeUntilNextWeeklyReset() {
+        var now = moment();
+        var nextWeeklyReset = moment().utc().set({
+            millisecond: 0,
+            second: 0,
+            minute: 0,
+            hour: 0,
+            day: 4
+        });
+        if (+nextWeeklyReset - +now < 0) {
+            nextWeeklyReset.add(7, 'day');
+        }
+
+        return moment.duration(+nextWeeklyReset - +now).format();
     }
 
     function clearDailyChecklists() {
@@ -292,8 +319,6 @@ angular.module('app', ['ng-sortable'])
         vm.weeklyTasks = [];
         vm.hiddenTasks = [];
 
-        console.log(hiddenMap);
-
         vm.hiddenTasks = _.map(_.keys(hiddenMap), taskId => {
             return getTaskFromTaskId(taskId);
         });
@@ -318,7 +343,6 @@ angular.module('app', ['ng-sortable'])
             });
         }
         else {
-            console.log("we");
             vm.dailyTasks = _.filter(
                 angular.copy(sortedDefaultDailyTasks)
                     .concat(_.filter(customTasks, ['type', 1])),
@@ -404,7 +428,6 @@ angular.module('app', ['ng-sortable'])
         else {
             updateCustomTasksInLocalStorage();
         }
-        console.log(customTasks);
     }
 
     function updateCustomTasksInLocalStorage() {
