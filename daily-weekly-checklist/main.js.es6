@@ -104,6 +104,22 @@ angular.module('app', ['ng-sortable'])
         loadHiddenMapFromLocalStorage();
         populateTaskLists();
 
+        // check if checked items should be cleared based on time passed since last session
+        var savedTime = $window.localStorage.getItem('savedTime');
+        if (savedTime != null) {
+            var lastDailyReset = nextDailyReset().subtract(1, 'day');
+            var lastWeeklyReset = nextWeeklyReset().subtract(1, 'week');
+
+            if (+savedTime < +lastDailyReset) {
+                clearDailyChecklists();
+            }
+            if (+savedTime < +lastWeeklyReset) {
+                clearWeeklyChecklists();
+            }
+            updateCheckMapInLocalStorage();
+        }
+        $window.localStorage.setItem('savedTime', JSON.stringify(+moment()));
+
         currentDay = moment().utc().day();
         $interval(() => {
             // detect day (and week) changes here
@@ -118,9 +134,11 @@ angular.module('app', ['ng-sortable'])
 
                 updateCheckMapInLocalStorage();
                 currentDay = updatedCurrentDay;
+                $window.localStorage.setItem('savedTime', JSON.stringify(+moment() + 1));
             }
             else if (currentDay > updatedCurrentDay) {
                 currentDay = updatedCurrentDay;
+                $window.localStorage.setItem('savedTime', JSON.stringify(+moment() + 1));
             }
         }, 1000);
     }
@@ -129,7 +147,7 @@ angular.module('app', ['ng-sortable'])
         return moment().format('dddd, MMMM Do YYYY, h:mm:ss a');
     }
 
-    function momentNextDailyReset() {
+    function nextDailyReset() {
         var now = moment();
         var nextDailyReset = moment().utc().set({
             millisecond: 0,
@@ -138,7 +156,11 @@ angular.module('app', ['ng-sortable'])
             hour: 0
         }).add(1, 'day');
 
-        return nextDailyReset.local().format('dddd, MMMM Do YYYY, h:mm:ss a');
+        return nextDailyReset;
+    }
+
+    function momentNextDailyReset() {
+        return nextDailyReset().local().format('dddd, MMMM Do YYYY, h:mm:ss a');
     }
 
     function momentTimeUntilNextDailyReset() {
@@ -153,7 +175,7 @@ angular.module('app', ['ng-sortable'])
         return moment.duration(+nextDailyReset - +now).format();
     }
 
-    function momentNextWeeklyReset() {
+    function nextWeeklyReset() {
         var now = moment();
         var nextWeeklyReset = moment().utc().set({
             millisecond: 0,
@@ -166,7 +188,11 @@ angular.module('app', ['ng-sortable'])
             nextWeeklyReset.add(7, 'day');
         }
 
-        return nextWeeklyReset.local().format('dddd, MMMM Do YYYY, h:mm:ss a');
+        return nextWeeklyReset;
+    }
+
+    function momentNextWeeklyReset() {
+        return nextWeeklyReset().local().format('dddd, MMMM Do YYYY, h:mm:ss a');
     }
 
     function momentTimeUntilNextWeeklyReset() {
