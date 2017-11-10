@@ -720,6 +720,7 @@ Game.lastCubed = null;
 Game.lastCube = null;
 Game.usedBonusScroll = false;
 Game.equipListCategory = null;
+Game.nxSpent = 0;
 
 Game.unequipTop = null;
 Game.unequipBottom = null;
@@ -763,6 +764,10 @@ Game.init = function() {
   inventory.style.backgroundImage = Assets.inventory;
   inventory.style.left = 0 + "px";
   inventory.style.top = 50 + "px";
+  
+  var inventory = l('nxspent');
+  inventory.style.left = 0 + "px";
+  inventory.style.top = 316 + "px";
   
   var equipment = l('equipment');
   equipment.style.backgroundImage = Assets.equipment;
@@ -874,6 +879,13 @@ Game.init = function() {
 Game.update = function() {
   if (Game.isDragging == true) {
   }
+}
+
+Game.spendNX = function(nx) {
+  Game.nxSpent += nx;
+  
+  var inventory = l('nxspent');
+  inventory.innerHTML = "NX Spent: " + Game.nxSpent + " NX"
 }
 
 Game.startDragging = function(id = null) {
@@ -1242,6 +1254,8 @@ Game.cube = function(obj) {
   // hack for success sound cutting itself off
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
+  
+  Game.spendNX(1200);
     
   obj.pot = Game.getP(obj.pot.rarity, C.redCubeTierRate, false, obj.info.reqLevel, obj.info.category);
   obj.count.red = obj.count.red + 1;
@@ -1291,6 +1305,8 @@ Game.cubeBlack = function(obj) {
   }
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
+  
+  Game.spendNX(2200);
   
   var newPot = Game.getP(obj.pot.rarity, C.blackCubeTierRate, false, obj.info.reqLevel, obj.info.category);
   obj.count.black = obj.count.black + 1;
@@ -1357,6 +1373,8 @@ Game.cubeBonus = function(obj) {
   }
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
+  
+  Game.spendNX(2400);
     
   obj.bpot = Game.getP(obj.bpot.rarity, C.bonusCubeTierRate, true, obj.info.reqLevel, obj.info.category);
   obj.count.bonus = obj.count.bonus + 1;

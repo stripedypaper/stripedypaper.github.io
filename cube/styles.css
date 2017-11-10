@@ -155,6 +155,16 @@ body
   position:absolute;
 }
 
+.nxspent
+{
+  font-family: 'Source Sans Pro',sans-serif;
+  font-size: 0.75em;
+  width:161px;
+  height:1em;
+  position:absolute;
+  text-align:center;
+}
+
 .equipment
 {
   width:232px;
