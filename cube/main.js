@@ -1306,7 +1306,7 @@ Game.cubeBlack = function(obj) {
   Game.playSound(alt ? Sounds.success : Sounds.successAlt);
   alt = !alt;
   
-  Game.spendNX(2400);
+  Game.spendNX(2200);
   
   var newPot = Game.getP(obj.pot.rarity, C.blackCubeTierRate, false, obj.info.reqLevel, obj.info.category);
   obj.count.black = obj.count.black + 1;
