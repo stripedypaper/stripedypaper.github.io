@@ -1,0 +1,16 @@
+.bg {
+  width: 1484px;
+  height: 1119px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.box {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background-color: #f00;
+  opacity: 0.3;
+  z-index: 100;
+}
