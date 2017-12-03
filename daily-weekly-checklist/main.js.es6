@@ -32,7 +32,6 @@ angular.module('app', ['ng-sortable'])
 
 .controller("MainController", function($interval, $window, dailyTasks, weeklyTasks) {
     var vm = this;
-    var currentDay;
     var customTasks = {};
     var checkMap = {};
     var hiddenMap = {};
@@ -120,26 +119,24 @@ angular.module('app', ['ng-sortable'])
         }
         $window.localStorage.setItem('savedTime', JSON.stringify(+moment()));
 
-        currentDay = moment().utc().day();
+        var now = moment();
         $interval(() => {
             // detect day (and week) changes here
             // this has a side effect of making angular update the page every second
-            var updatedCurrentDay = moment().utc().day();
-            if (currentDay < updatedCurrentDay) {
+
+            var newNow = moment();
+            if (+newNow >= +nextDailyReset(now)) {
                 clearDailyChecklists();
 
-                if (updatedCurrentDay === 4) { // thursday utc
+                if (+newNow >= +nextWeeklyReset(now)) {
                     clearWeeklyChecklists();
                 }
 
                 updateCheckMapInLocalStorage();
-                currentDay = updatedCurrentDay;
                 $window.localStorage.setItem('savedTime', JSON.stringify(+moment() + 1));
             }
-            else if (currentDay > updatedCurrentDay) {
-                currentDay = updatedCurrentDay;
-                $window.localStorage.setItem('savedTime', JSON.stringify(+moment() + 1));
-            }
+
+            now = moment();
         }, 1000);
     }
 
@@ -147,9 +144,8 @@ angular.module('app', ['ng-sortable'])
         return moment().format('dddd, MMMM Do YYYY, h:mm:ss a');
     }
 
-    function nextDailyReset() {
-        var now = moment();
-        var nextDailyReset = moment().utc().set({
+    function nextDailyReset(time) {
+        var nextDailyReset = (moment(time).utc() || moment().utc()).set({
             millisecond: 0,
             second: 0,
             minute: 0,
@@ -175,9 +171,9 @@ angular.module('app', ['ng-sortable'])
         return moment.duration(+nextDailyReset - +now).format();
     }
 
-    function nextWeeklyReset() {
-        var now = moment();
-        var nextWeeklyReset = moment().utc().set({
+    function nextWeeklyReset(time) {
+        var now = moment(time) || moment();
+        var nextWeeklyReset = (moment(time).utc() || moment().utc()).set({
             millisecond: 0,
             second: 0,
             minute: 0,
