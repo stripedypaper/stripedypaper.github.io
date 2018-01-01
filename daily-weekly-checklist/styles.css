@@ -1,3 +1,7 @@
+.hidden {
+  display: none;
+}
+
 .cursor-pointer {
     cursor: pointer;
 }
@@ -25,6 +29,10 @@
     color: #888888;
 }
 
+.custom-interval {
+    color: #3F51B5;
+}
+
 .noselect {
   -webkit-touch-callout: none; /* iOS Safari */
     -webkit-user-select: none; /* Safari */
@@ -38,4 +46,18 @@
 .sortable-handle {
     padding-left: 4px;
     padding-right: 4px;
+}
+
+form {
+  margin-bottom: 0;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #ECEFF1;
+}
+
+h3, h4 {
+  -webkit-margin-before: 0.5em;
+  -webkit-margin-after: 0.5em;
 }

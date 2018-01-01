@@ -6,8 +6,13 @@
     <script src="moment-duration-format.js"></script>
     <script src="Sortable.min.js"></script>
     <script src="angular-legacy-sortable.js"></script>
+    <script src="jquery-1.11.1.min.js"></script>
+    <script src="jquery-ui.min.js"></script>
     <script src="main.js.es6"></script>
     <link href="styles.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css" />
+
 </head>
 <body ng-app="app" ng-controller="MainController as vm">
     <h3>Current time: {{vm.momentNow()}}</h3>
@@ -41,13 +46,27 @@
             <span class="small-link-button grayish-text noselect" ng-if="task.isCustom" ng-click="vm.deleteCustomTask(task.id)">delete</span>
         </div>
     </div>
-    <br/>
+    <div ng-if="vm.customIntervalTasks.length > 0">
+        <br/>
+        <h4>Custom interval tasks</h4>
+        <div ng-repeat="task in vm.customIntervalTasks" ng-class="vm.getChecked(task.id) ? 'checked-item' : ''">
+            <input type="checkbox" class="cursor-pointer" ng-if="vm.getChecked(task.id)" ng-model="vm.trueGetterSetter"
+    ng-model-options=" {getterSetter: true }" ng-click="vm.doCheckCustomInterval(task)"/>
+            <input type="checkbox" class="cursor-pointer" ng-if="!vm.getChecked(task.id)" ng-model="vm.falseGetterSetter"
+    ng-model-options=" {getterSetter: true }" ng-click="vm.doCheckCustomInterval(task)"/>
+            <span class="cursor-pointer" ng-click="vm.doCheckCustomInterval(task)">{{task.friendlyName}}</span>
+            <span class="cursor-pointer custom-interval" ng-click="vm.doCheckCustomInterval(task)">{{vm.getCustomIntervalText(task)}}</span>
+            <span class="small-link-button grayish-text noselect" ng-click="vm.hideTask(task.id)">hide</span>
+            <span class="small-link-button grayish-text noselect" ng-if="task.isCustom" ng-click="vm.deleteCustomTask(task.id)">delete</span>
+        </div>
+    </div>
     <br/>
     <div>
-        <span>Add a custom task:&nbsp;</span>
+        <h4>Add a custom task:&nbsp;</h4>
         <form ng-submit="vm.addCustomTask()">
-            <input type="text" placeholder="Task name" ng-model="vm.customTaskInput"/>
+            <input type="text" placeholder="Task name" ng-model="vm.customTaskInput" required />
             <select ng-options="option.name for option in vm.customTaskDropdownOptions track by option.id" ng-model="vm.customTaskDropdownSelectedType"></select>
+            <input type="number" min="1" placeholder="Interval (hrs)" ng-model="vm.customTaskIntervalInput" ng-if="vm.customTaskDropdownSelectedType.id === 3" required />
             <button>Add</button>
         </form>
     </div>
