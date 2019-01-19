@@ -53,7 +53,8 @@ angular.module('app', ['ng-sortable'])
     vm.customTaskDropdownOptions = [
         {id: 1, name: "Daily (00:00 UTC)"},
         {id: 2, name: "Weekly (Thu 00:00 UTC)"},
-        {id: 3, name: "Custom interval"}
+        {id: 3, name: "Custom interval (hours)"},
+        {id: 4, name: "Custom interval (minutes)"}
     ];
     vm.customTaskDropdownSelectedType = vm.customTaskDropdownOptions[0];
     vm.sortableConfigDaily = {
@@ -82,10 +83,13 @@ angular.module('app', ['ng-sortable'])
     vm.doCheckCustomInterval = doCheckCustomInterval;
     vm.getChecked = getChecked;
     vm.getCustomIntervalText = getCustomIntervalText;
+    vm.getCustomIntervalClass = getCustomIntervalClass;
     vm.addCustomTask = addCustomTask;
     vm.deleteCustomTask = deleteCustomTask;
     vm.showTask = showTask;
     vm.hideTask = hideTask;
+    vm.toggleNotify = toggleNotify;
+    vm.getNotify = getNotify;
     vm.trueGetterSetter = () => true;
     vm.falseGetterSetter = () => false;
     vm.resetDailyTaskOrder = resetDailyTaskOrder;
@@ -128,6 +132,10 @@ angular.module('app', ['ng-sortable'])
         }
         $window.localStorage.setItem('savedTime', JSON.stringify(+moment()));
 
+        // preload audio
+        var audio = new Audio('ding.ogg');
+        audio.volume = 0.3;
+
         var now = moment();
         $interval(() => {
             // detect day (and week) changes here
@@ -151,6 +159,11 @@ angular.module('app', ['ng-sortable'])
                     intervalMap = _.omit(intervalMap, taskId);
                     updateCheckMapInLocalStorage();
                     updateIntervalMapInLocalStorage();
+
+                    var customTask = customTasks[taskId];
+                    if (customTask && customTask.notify) {
+                        audio.play();
+                    }
                 }
             });
 
@@ -314,6 +327,23 @@ angular.module('app', ['ng-sortable'])
         return moment.duration(task.interval, 'hour').format('H:mm:ss');
     }
 
+    function getCustomIntervalClass(task) {
+        if (!checkMap[task.id]) {
+            return '';
+        }
+
+        var completionRatio = moment.duration(intervalMap[task.id] - moment()) / moment.duration(task.interval, 'hour');
+        if (completionRatio < 0.1) {
+            return 'checked-item-red';
+        }
+        else if (completionRatio < 0.25) {
+            return 'checked-item-yellow';
+        }
+        else {
+            return 'checked-item';
+        }
+    }
+
     function addCustomTask() {
         var newTaskName = vm.customTaskInput;
         var newTaskId = getUniqueCustomTaskId();
@@ -327,6 +357,11 @@ angular.module('app', ['ng-sortable'])
 
         if (newTask.type == 3) {
             newTask.interval = vm.customTaskIntervalInput;
+        }
+
+        if (newTask.type == 4) {
+            newTask.type = 3;
+            newTask.interval = vm.customTaskIntervalInput / 60;
         }
 
         customTasks[newTaskId] = newTask;
@@ -372,6 +407,15 @@ angular.module('app', ['ng-sortable'])
         }
         updateHiddenMapInLocalStorage();
         populateTaskLists();
+    }
+
+    function toggleNotify(taskId) {
+        customTasks[taskId].notify = !getNotify(taskId);
+        updateCustomTasksInLocalStorage();
+    }
+
+    function getNotify(taskId) {
+        return !!customTasks[taskId].notify;
     }
 
     function updateHiddenMapInLocalStorage() {
@@ -510,6 +554,9 @@ angular.module('app', ['ng-sortable'])
                 if (task.d) {
                     customTasks[task.a].interval = task.d;
                 }
+                if (task.e) {
+                    customTasks[task.a].notify = true;
+                }
             });
         }
         else {
@@ -527,6 +574,9 @@ angular.module('app', ['ng-sortable'])
             };
             if (task.interval) {
                 tasks[task.id].d = task.interval;
+            }
+            if (task.notify) {
+                tasks[task.id].e = true;
             }
         });
         $window.localStorage.setItem('customTasks', JSON.stringify(tasks));

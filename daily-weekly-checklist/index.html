@@ -49,13 +49,14 @@
     <div ng-if="vm.customIntervalTasks.length > 0">
         <br/>
         <h4>Custom interval tasks</h4>
-        <div ng-repeat="task in vm.customIntervalTasks" ng-class="vm.getChecked(task.id) ? 'checked-item' : ''">
+        <div ng-repeat="task in vm.customIntervalTasks" ng-class="vm.getCustomIntervalClass(task)">
             <input type="checkbox" class="cursor-pointer" ng-if="vm.getChecked(task.id)" ng-model="vm.trueGetterSetter"
     ng-model-options=" {getterSetter: true }" ng-click="vm.doCheckCustomInterval(task)"/>
             <input type="checkbox" class="cursor-pointer" ng-if="!vm.getChecked(task.id)" ng-model="vm.falseGetterSetter"
     ng-model-options=" {getterSetter: true }" ng-click="vm.doCheckCustomInterval(task)"/>
             <span class="cursor-pointer" ng-click="vm.doCheckCustomInterval(task)">{{task.friendlyName}}</span>
             <span class="cursor-pointer custom-interval" ng-click="vm.doCheckCustomInterval(task)">{{vm.getCustomIntervalText(task)}}</span>
+            <span class="small-link-button grayish-text noselect" ng-click="vm.toggleNotify(task.id)">notify <span ng-if="vm.getNotify(task.id)" class="black-text">on</span><span ng-if="!vm.getNotify(task.id)">off</span></span>
             <span class="small-link-button grayish-text noselect" ng-click="vm.hideTask(task.id)">hide</span>
             <span class="small-link-button grayish-text noselect" ng-if="task.isCustom" ng-click="vm.deleteCustomTask(task.id)">delete</span>
         </div>
@@ -67,6 +68,7 @@
             <input type="text" placeholder="Task name" ng-model="vm.customTaskInput" required />
             <select ng-options="option.name for option in vm.customTaskDropdownOptions track by option.id" ng-model="vm.customTaskDropdownSelectedType"></select>
             <input type="number" min="1" placeholder="Interval (hrs)" ng-model="vm.customTaskIntervalInput" ng-if="vm.customTaskDropdownSelectedType.id === 3" required />
+            <input type="number" min="1" placeholder="Interval (mins)" ng-model="vm.customTaskIntervalInput" ng-if="vm.customTaskDropdownSelectedType.id === 4" required />
             <button>Add</button>
         </form>
     </div>
