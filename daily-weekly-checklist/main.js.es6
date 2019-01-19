@@ -31,10 +31,12 @@ angular.module('app', ['ng-sortable'])
 })
 
 .controller("MainController", function($interval, $window, dailyTasks, weeklyTasks) {
-    var vm = this;
+    var vm = window.vm = this;
+
     var customTasks = {};
     var checkMap = {};
     var hiddenMap = {};
+    var intervalMap = {};
     var dailyTaskOrder = [];
     var weeklyTaskOrder = [];
     var sortedDefaultDailyTasks = [];
@@ -42,13 +44,17 @@ angular.module('app', ['ng-sortable'])
     var customTaskPrefix = "_CT";
 
     vm.customTaskInput = "";
+    vm.customTaskIntervalInput = undefined;
     vm.useLocalTime = true;
     vm.dailyTasks = [];
     vm.weeklyTasks = [];
+    vm.customIntervalTasks = [];
     vm.hiddenTasks = [];
     vm.customTaskDropdownOptions = [
-        {id: 1, name: "Daily"},
-        {id: 2, name: "Weekly"}
+        {id: 1, name: "Daily (00:00 UTC)"},
+        {id: 2, name: "Weekly (Thu 00:00 UTC)"},
+        {id: 3, name: "Custom interval (hours)"},
+        {id: 4, name: "Custom interval (minutes)"}
     ];
     vm.customTaskDropdownSelectedType = vm.customTaskDropdownOptions[0];
     vm.sortableConfigDaily = {
@@ -74,15 +80,21 @@ angular.module('app', ['ng-sortable'])
     vm.momentTimeUntilNextDailyReset = momentTimeUntilNextDailyReset;
     vm.momentTimeUntilNextWeeklyReset = momentTimeUntilNextWeeklyReset;
     vm.doCheck = doCheck;
+    vm.doCheckCustomInterval = doCheckCustomInterval;
     vm.getChecked = getChecked;
+    vm.getCustomIntervalText = getCustomIntervalText;
+    vm.getCustomIntervalClass = getCustomIntervalClass;
     vm.addCustomTask = addCustomTask;
     vm.deleteCustomTask = deleteCustomTask;
     vm.showTask = showTask;
     vm.hideTask = hideTask;
+    vm.toggleNotify = toggleNotify;
+    vm.getNotify = getNotify;
     vm.trueGetterSetter = () => true;
     vm.falseGetterSetter = () => false;
     vm.resetDailyTaskOrder = resetDailyTaskOrder;
     vm.resetWeeklyTaskOrder = resetWeeklyTaskOrder;
+    vm.showExportDialog = () => $("#dialog").dialog({modal:true});
 
     init();
 
@@ -101,6 +113,7 @@ angular.module('app', ['ng-sortable'])
         loadCustomTasksFromLocalStorage();
         loadCheckMapFromLocalStorage();
         loadHiddenMapFromLocalStorage();
+        loadIntervalMapFromLocalStorage();
         populateTaskLists();
 
         // check if checked items should be cleared based on time passed since last session
@@ -119,6 +132,10 @@ angular.module('app', ['ng-sortable'])
         }
         $window.localStorage.setItem('savedTime', JSON.stringify(+moment()));
 
+        // preload audio
+        var audio = new Audio('ding.ogg');
+        audio.volume = 0.3;
+
         var now = moment();
         $interval(() => {
             // detect day (and week) changes here
@@ -135,6 +152,20 @@ angular.module('app', ['ng-sortable'])
                 updateCheckMapInLocalStorage();
                 $window.localStorage.setItem('savedTime', JSON.stringify(+moment() + 1));
             }
+
+            _.each(intervalMap, (expiration, taskId) => {
+                if (+newNow > expiration) {
+                    checkMap = _.omit(checkMap, taskId);
+                    intervalMap = _.omit(intervalMap, taskId);
+                    updateCheckMapInLocalStorage();
+                    updateIntervalMapInLocalStorage();
+
+                    var customTask = customTasks[taskId];
+                    if (customTask && customTask.notify) {
+                        audio.play();
+                    }
+                }
+            });
 
             now = moment();
         }, 1000);
@@ -243,6 +274,21 @@ angular.module('app', ['ng-sortable'])
         updateCheckMapInLocalStorage();
     }
 
+    function updateIntervalMapInLocalStorage() {
+        $window.localStorage.setItem('intervalMap', JSON.stringify(intervalMap));
+    }
+
+    function loadIntervalMapFromLocalStorage() {
+        var intervalMapObject = JSON.parse($window.localStorage.getItem('intervalMap'));
+        intervalMap = {};
+        _.each(_.keys(intervalMapObject), taskId => {
+            if (getTaskFromTaskId(taskId) && checkMap[taskId]) {
+                intervalMap[taskId] = intervalMapObject[taskId];
+            }
+        });
+        updateIntervalMapInLocalStorage();
+    }
+
     function doCheck(taskId) {
         var mapEntry = checkMap[taskId];
         if (angular.isDefined(mapEntry)) {
@@ -259,27 +305,71 @@ angular.module('app', ['ng-sortable'])
         updateCheckMapInLocalStorage();
     }
 
+    function doCheckCustomInterval(task) {
+        doCheck(task.id);
+        if (checkMap[task.id]) {
+            intervalMap[task.id] = +moment().add(task.interval, 'hour');
+        }
+        else {
+            intervalMap = _.omit(intervalMap, task.id);
+        }
+        updateIntervalMapInLocalStorage();
+    }
+
     function getChecked(taskId) {
         return checkMap[taskId];
     }
 
-    function addCustomTask() {
-        var newTaskName = vm.customTaskInput;
-        if (newTaskName === 0) {
-            return;
+    function getCustomIntervalText(task) {
+        if (checkMap[task.id]) {
+            return moment.duration(intervalMap[task.id] - moment()).format('H:mm:ss');
+        }
+        return moment.duration(task.interval, 'hour').format('H:mm:ss');
+    }
+
+    function getCustomIntervalClass(task) {
+        if (!checkMap[task.id]) {
+            return '';
         }
 
+        var completionRatio = moment.duration(intervalMap[task.id] - moment()) / moment.duration(task.interval, 'hour');
+        if (completionRatio < 0.1) {
+            return 'checked-item-red';
+        }
+        else if (completionRatio < 0.25) {
+            return 'checked-item-yellow';
+        }
+        else {
+            return 'checked-item';
+        }
+    }
+
+    function addCustomTask() {
+        var newTaskName = vm.customTaskInput;
         var newTaskId = getUniqueCustomTaskId();
-        customTasks[newTaskId] = {
+
+        var newTask = {
             id: newTaskId,
             friendlyName: newTaskName,
             type: vm.customTaskDropdownSelectedType.id,
             isCustom: true
         };
+
+        if (newTask.type == 3) {
+            newTask.interval = vm.customTaskIntervalInput;
+        }
+
+        if (newTask.type == 4) {
+            newTask.type = 3;
+            newTask.interval = vm.customTaskIntervalInput / 60;
+        }
+
+        customTasks[newTaskId] = newTask;
         updateCustomTasksInLocalStorage();
         populateTaskLists();
 
         vm.customTaskInput = "";
+        vm.customTaskIntervalInput = undefined;
     }
 
     function deleteCustomTask(taskId) {
@@ -287,6 +377,7 @@ angular.module('app', ['ng-sortable'])
         updateCustomTasksInLocalStorage();
         loadHiddenMapFromLocalStorage();
         loadCheckMapFromLocalStorage();
+        loadIntervalMapFromLocalStorage();
         populateTaskLists();
     }
 
@@ -310,10 +401,21 @@ angular.module('app', ['ng-sortable'])
         hiddenMap[taskId] = true;
         if (checkMap[taskId]) {
             checkMap = _.omit(checkMap, taskId);
+            intervalMap = _.omit(intervalMap, taskId);
             updateCheckMapInLocalStorage();
+            updateIntervalMapInLocalStorage();
         }
         updateHiddenMapInLocalStorage();
         populateTaskLists();
+    }
+
+    function toggleNotify(taskId) {
+        customTasks[taskId].notify = !getNotify(taskId);
+        updateCustomTasksInLocalStorage();
+    }
+
+    function getNotify(taskId) {
+        return !!customTasks[taskId].notify;
     }
 
     function updateHiddenMapInLocalStorage() {
@@ -343,6 +445,10 @@ angular.module('app', ['ng-sortable'])
 
         vm.hiddenTasks = _.map(_.keys(hiddenMap), taskId => {
             return getTaskFromTaskId(taskId);
+        });
+
+        vm.customIntervalTasks = _.filter(customTasks, customTask => {
+            return customTask.type === 3 && !hiddenMap[customTask.id]
         });
 
         var storedDailyOrder = JSON.parse($window.localStorage.getItem('dailyTaskOrder'));
@@ -445,6 +551,12 @@ angular.module('app', ['ng-sortable'])
                     type: task.c,
                     isCustom: true
                 };
+                if (task.d) {
+                    customTasks[task.a].interval = task.d;
+                }
+                if (task.e) {
+                    customTasks[task.a].notify = true;
+                }
             });
         }
         else {
@@ -460,6 +572,12 @@ angular.module('app', ['ng-sortable'])
                 b: task.friendlyName,
                 c: task.type
             };
+            if (task.interval) {
+                tasks[task.id].d = task.interval;
+            }
+            if (task.notify) {
+                tasks[task.id].e = true;
+            }
         });
         $window.localStorage.setItem('customTasks', JSON.stringify(tasks));
     }

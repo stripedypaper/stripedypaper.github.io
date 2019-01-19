@@ -1,9 +1,21 @@
+.hidden {
+  display: none;
+}
+
 .cursor-pointer {
     cursor: pointer;
 }
 
 .checked-item {
     background-color: #C8E6C9;
+}
+
+.checked-item-yellow {
+    background-color: #ffecb3;
+}
+
+.checked-item-red {
+    background-color: #ffcdd2;
 }
 
 .sortable-ghost {
@@ -17,12 +29,20 @@
     cursor: pointer;
 }
 
+.black-text {
+    color: #666666;
+}
+
 .grayish-text {
     color: #aaaaaa;
 }
 
 .hidden-task {
     color: #888888;
+}
+
+.custom-interval {
+    color: #3F51B5;
 }
 
 .noselect {
@@ -38,4 +58,18 @@
 .sortable-handle {
     padding-left: 4px;
     padding-right: 4px;
+}
+
+form {
+  margin-bottom: 0;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background-color: #ECEFF1;
+}
+
+h3, h4 {
+  -webkit-margin-before: 0.5em;
+  -webkit-margin-after: 0.5em;
 }
