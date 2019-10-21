@@ -181,6 +181,9 @@ angular.module('app', [])
             document.querySelector(".monster-image").style.cssText = "--stroke-color: #CC00FF";
         }
         else if (vm.selectedOutlineType == '4') {
+            document.querySelector(".monster-image").style.cssText = "--stroke-color: #FF6633";
+        }
+        else if (vm.selectedOutlineType == '5') {
             document.querySelector(".monster-image").style.cssText = "--stroke-color: " + vm.outlineCustomColor;
         }
     }
