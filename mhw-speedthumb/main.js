@@ -200,7 +200,7 @@ domtoimage
       img.classList.add("me-img");
       img.setAttribute("src", base64);
       // insert the img to dom
-      document.getElementById("bar").appendChild(img);
+      document.getElementById("body").appendChild(img);
     };
     reader.readAsDataURL(blob);
   }
