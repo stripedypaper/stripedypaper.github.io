@@ -144,3 +144,7 @@ input {
 .config-row {
   margin-bottom: 3px;
 }
+
+.smallertext {
+  font-size: 12px;
+}

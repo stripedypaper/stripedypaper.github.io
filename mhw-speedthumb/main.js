@@ -186,8 +186,7 @@ angular.module('app', [])
     }
 
     vm.download = function() {
-        var node = document.getElementById('.canvas-inside');
-        domtoimage.toBlob(document.getElementById('my-node'))
+        domtoimage.toBlob(document.getElementById('canvas-inside'))
         .then(function(blob) {
             window.saveAs(blob, 'thumbnail.png');
         });
