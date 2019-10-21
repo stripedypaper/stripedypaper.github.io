@@ -186,24 +186,11 @@ angular.module('app', [])
     }
 
     vm.download = function() {
-domtoimage
-    .toBlob(document.getElementById("canvas-inside"))
-    .then(function(blob) {
-      saveBlobAsFile(blob, "XX.png");
-    });
-  // this function is to convert blob to base64 img
-  function saveBlobAsFile(blob, fileName) {
-    var reader = new FileReader();
-    reader.onloadend = function() {
-      var base64 = reader.result;
-      var img = document.createElement("img");
-      img.classList.add("me-img");
-      img.setAttribute("src", base64);
-      // insert the img to dom
-      document.getElementById("body").appendChild(img);
-    };
-    reader.readAsDataURL(blob);
-  }
+        var node = document.getElementById('.canvas-inside');
+        domtoimage.toBlob(document.getElementById('my-node'))
+        .then(function(blob) {
+            window.saveAs(blob, 'thumbnail.png');
+        });
     }
 
     function initializeHuebee(vmVar, inputClass) {
