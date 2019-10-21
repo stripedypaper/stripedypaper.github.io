@@ -186,9 +186,12 @@ angular.module('app', [])
     }
 
     vm.download = function() {
-        domtoimage.toBlob(document.getElementById('canvas-inside'))
-        .then(function(blob) {
-            window.saveAs(blob, 'asd.png');
+        domtoimage.toJpeg(document.getElementById('canvas-inside'))
+        .then(function (dataUrl) {
+            var link = document.createElement('a');
+            link.download = 'my-image-name.jpeg';
+            link.href = dataUrl;
+            link.click();
         });
     }
 
