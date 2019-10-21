@@ -1,0 +1,146 @@
+.bg {
+  width: 1484px;
+  height: 1119px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.box {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background-color: #f00;
+  opacity: 0.3;
+  z-index: 100;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+}
+
+.spacer {
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.hspacer {
+  width: 40px;
+}
+
+.hspacersm {
+  width: 10px;
+}
+
+.hspacerxsm {
+  width: 5px;
+}
+
+.header {
+  font-size: 36px;
+  margin: auto;
+}
+
+.flexv {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.flexh {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex1 {
+  flex: 1;
+}
+
+.mauto {
+  margin: auto;
+}
+
+.canvas-inside {
+  width: 1280px;
+  height: 720px;
+  background-color: #271326;
+  overflow: hidden;
+}
+
+.canvas-outside {
+  /*outline: 2px dotted blue;*/
+  margin: auto;
+}
+
+.monster-image {
+  height: 330px;
+  --stroke-pos: 2px;
+  --stroke-neg: -2px;
+  --blur: 1px;
+  --stroke-color: #33CC66;
+  filter: drop-shadow(var(--stroke-pos) 0 var(--blur) var(--stroke-color)) 
+    drop-shadow(var(--stroke-neg) var(--blur) var(--stroke-color))
+    drop-shadow(0 var(--stroke-pos) var(--blur) var(--stroke-color))
+    drop-shadow(0 var(--stroke-neg) var(--blur) var(--stroke-color))
+    drop-shadow(var(--stroke-pos) var(--stroke-pos) var(--blur) var(--stroke-color)) 
+    drop-shadow(var(--stroke-pos) var(--stroke-neg) var(--blur) var(--stroke-color))
+    drop-shadow(var(--stroke-neg) var(--stroke-pos) var(--blur) var(--stroke-color))
+    drop-shadow(var(--stroke-neg) var(--stroke-neg) var(--blur) var(--stroke-color));
+}
+
+.monster-image-container {
+  margin: auto;
+}
+
+.info-container {
+  margin: auto;
+  padding-bottom: 20px;
+}
+
+.timetext {
+  font-family: 'Heebo';
+  font-weight: 500;
+  font-size: 140px;
+  color: white;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.tatext {
+  font-family: 'Heebo';
+  font-weight: 500;
+  font-size: 140px;
+  padding-left: 30px;
+  color: white;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.weapon-image {
+  height: 189px;
+  padding-right: 45px;
+}
+
+.clawtext {
+  font-size: 59px;
+  font-family: 'Heebo';
+  font-weight: 800;
+  margin-top: -70px;
+  margin-left: 38px;
+  color: white;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.select {
+
+}
+
+input {
+  width: 75px;
+}
+
+.config-row {
+  margin-bottom: 3px;
+}
