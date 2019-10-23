@@ -9,133 +9,155 @@
     <script src="dom-to-image.min.js"></script>
     <script src="main.js"></script>
     <link href="styles.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Heebo:400,500,700,800|Open+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Asap:400,500|Heebo:300,400,500|Open+Sans|Barlow+Condensed:300,500,600|Raleway:300,400,500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="huebee.css">
 </head>
 <body ng-app="app" ng-controller="MyController as vm" id="">
-    <div class="flexv">
+    <div class="flexv thing">
         <div class="header">MHW Speedrun Thumbnail Generator</div>
         <div class="spacer"></div>
         <div class="canvas-outside">
-            <div id="canvas-inside" class="canvas-inside flexv" ng-style="vm.getBgStyle()">
-                <div class="flex1"></div>
+            <div id="canvas-inside" class="canvas-inside" ng-class="'canvas-inside-' + vm.selectedLayout" ng-style="vm.getBgStyle()">
+                <div class="canvas-spacer" ng-class="'canvas-spacer-' + vm.selectedLayout"></div>
                 <div class="monster-image-container">
                     <img class="monster-image" ng-src="{{vm.monsters[vm.selectedMonster]}}"></img>
                 </div>
                 <div class="flex1"></div>
-                <div class="info-container flexh">
-                    <img class="weapon-image" ng-src="{{vm.weapons[vm.selectedWeapon]}}"></img>
-                    <div class="timetext" ng-style="vm.getColorStyle(vm.selectedTimeColorType, vm.timeColor, vm.timeColor2)">{{vm.timeText}}</div>
-                    <div>
-                        <div class="tatext" ng-if="vm.selectedRunCategory > 0" ng-style="vm.getColorStyle(vm.selectedCatColor, vm.catColor, vm.catColor2)">TA</div>
-                        <div ng-if="vm.selectedRunCategory == 2" ng-style="vm.getColorStyle(vm.selectedClawColor, vm.clawColor, vm.clawColor2)" class="clawtext">+Claw</div>
+                <div class="info-container" ng-class="'info-container-' + vm.selectedLayout">
+                    <img class="weapon-image mauto" ng-class="'weapon-image-' + vm.selectedLayout" ng-src="{{vm.weapons[vm.selectedWeapon]}}"></img>
+                    <div class="flexh" ng-class="'text-container-' + vm.selectedLayout">
+                        <div class="timetext mauto" ng-class="vm.fonts[vm.selectedFont]" ng-style="vm.getColorStyle(vm.selectedTimeColorType, vm.timeColor, vm.timeColor2)">{{vm.timeText}}</div>
+                        <div class="mauto flexv category-holder" ng-class="'category-holder-' + vm.selectedLayout">
+                            <div class="tatext" ng-class="vm.fonts[vm.selectedFont]" ng-if="vm.selectedRunCategory > 0" ng-style="vm.getColorStyle(vm.selectedCatColor, vm.catColor, vm.catColor2)">TA</div>
+                            <div ng-if="vm.selectedRunCategory == 2" ng-class="[vm.fonts[vm.selectedFont], vm.clawTextOffset[vm.selectedFont], 'clawtext-' + vm.selectedLayout]" ng-style="vm.getColorStyle(vm.selectedClawColor, vm.clawColor, vm.clawColor2)" class="clawtext">+Claw</div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex1"></div>
+                <div class="canvas-spacer" ng-class="'canvas-spacer-' + vm.selectedLayout"></div>
             </div>
         </div>
         <div class="spacer"></div>
         <div class="mauto"><button ng-click="vm.download()">Generate and download image</button></div>
-        <div class="mauto smallertext">Warning: image download does not work properly for Chrome. Please take a screenshot instead.</div>
+        <div class="spacersm"></div>
+        <div class="mauto smallertext">Warning: image download seems to only work in Firefox. For other browsers, please take a screenshot instead.</div>
         <div class="spacer"></div>
-        <div class="mauto config-row flexh">
-            <div>Weapon</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedWeapon">
-                <option ng-repeat="(key, value) in vm.weapons" value="{{key}}">{{key}}</option>
-            </select>
-            <div class="hspacerxsm"></div>
-            <button ng-click="vm.prevWeapon()"><</button>
-            <div class="hspacerxsm"></div>
-            <button ng-click="vm.nextWeapon()">></button>
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Monster</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedMonster">
-                <option ng-repeat="(key, value) in vm.monsters" value="{{key}}">{{key}}</option>
-            </select>
-            <div class="hspacerxsm"></div>
-            <button ng-click="vm.prevMonster()"><</button>
-            <div class="hspacerxsm"></div>
-            <button ng-click="vm.nextMonster()">></button>
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Time</div>
-            <div class="hspacersm"></div>
-            <input class="time-input" placeholder="1'23&quot;45" type="text" ng-model="vm.timeText"></input>
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Run category</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedRunCategory">
-                <option value="0">Non TA</option>
-                <option value="1">TA</option>
-                <option value="2">TA + Claw</option>
-            </select>
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Background color</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedBgType">
-                <option value="0">Single</option>
-                <option value="1">Gradient V.</option>
-                <option value="2">Gradient H.</option>
-            </select>
-            <div class="hspacerxsm"></div>
-            <input class="bg-color-input" ng-model="vm.bgColor" data-huebee />
-            <div class="hspacerxsm"></div>
-            <input class="bg-color-input2" ng-show="vm.selectedBgType > 0" ng-model="vm.bgColor2" data-huebee />
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Time text color</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedTimeColorType">
-                <option value="0">Single</option>
-                <option value="1">Gradient</option>
-            </select>
-            <div class="hspacerxsm"></div>
-            <input class="time-color-input" ng-model="vm.timeColor" data-huebee />
-            <div class="hspacerxsm"></div>
-            <input class="time-color-input2" ng-show="vm.selectedTimeColorType > 0" ng-model="vm.timeColor2" data-huebee />
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Category text color</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedCatColor">
-                <option value="0">Single</option>
-                <option value="1">Gradient</option>
-            </select>
-            <div class="hspacerxsm"></div>
-            <input class="cat-color-input" ng-model="vm.catColor" data-huebee />
-            <div class="hspacerxsm"></div>
-            <input class="cat-color-input2" ng-show="vm.selectedCatColor > 0" ng-model="vm.catColor2" data-huebee />
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Claw text color</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedClawColor">
-                <option value="0">Single</option>
-                <option value="1">Gradient</option>
-            </select>
-            <div class="hspacerxsm"></div>
-            <input class="claw-color-input" ng-model="vm.clawColor" data-huebee />
-            <div class="hspacerxsm"></div>
-            <input class="claw-color-input2" ng-show="vm.selectedClawColor > 0" ng-model="vm.clawColor2" data-huebee />
-        </div>
-        <div class="mauto config-row flexh">
-            <div>Monster outline color</div>
-            <div class="hspacersm"></div>
-            <select class="select" ng-model="vm.selectedOutlineType" ng-change="vm.outlineChange()">
-                <option value="0">None</option>
-                <option value="1">White</option>
-                <option value="2">Green</option>
-                <option value="3">Purple</option>
-                <option value="4">Orange</option>
-                <option value="5">Custom</option>
-            </select>
-            <div class="hspacerxsm"></div>
-            <input class="outline-color-input" ng-show="vm.selectedOutlineType == 5" ng-model="vm.outlineCustomColor" data-huebee />
+        <div class="mauto">
+            <div class="config-row flexh">
+                <div>Weapon</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedWeapon">
+                    <option ng-repeat="(key, value) in vm.weapons" value="{{key}}">{{key}}</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.prev('selectedWeapon', vm.weapons)"><</button>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.next('selectedWeapon', vm.weapons)">></button>
+            </div>
+            <div class="config-row flexh">
+                <div>Monster</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedMonster">
+                    <option ng-repeat="(key, value) in vm.monsters" value="{{key}}">{{key}}</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.prev('selectedMonster', vm.monsters)"><</button>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.next('selectedMonster', vm.monsters)">></button>
+            </div>
+            <div class="config-row flexh">
+                <div>Time</div>
+                <div class="hspacersm"></div>
+                <input class="time-input" placeholder="1'23&quot;45" type="text" ng-model="vm.timeText"></input>
+            </div>
+            <div class="config-row flexh">
+                <div>Run category</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedRunCategory">
+                    <option value="0">Non TA</option>
+                    <option value="1">TA</option>
+                    <option value="2">TA + Claw</option>
+                </select>
+            </div>
+            <div class="config-row flexh">
+                <div>Background color</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedBgType">
+                    <option value="0">Single</option>
+                    <option value="1">Gradient V.</option>
+                    <option value="2">Gradient H.</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <input class="bg-color-input" ng-model="vm.bgColor" data-huebee />
+                <div class="hspacerxsm"></div>
+                <input class="bg-color-input2" ng-show="vm.selectedBgType > 0" ng-model="vm.bgColor2" data-huebee />
+            </div>
+            <div class="config-row flexh">
+                <div>Time text color</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedTimeColorType">
+                    <option value="0">Single</option>
+                    <option value="1">Gradient</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <input class="time-color-input" ng-model="vm.timeColor" data-huebee />
+                <div class="hspacerxsm"></div>
+                <input class="time-color-input2" ng-show="vm.selectedTimeColorType > 0" ng-model="vm.timeColor2" data-huebee />
+            </div>
+            <div class="config-row flexh">
+                <div>Category text color</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedCatColor">
+                    <option value="0">Single</option>
+                    <option value="1">Gradient</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <input class="cat-color-input" ng-model="vm.catColor" data-huebee />
+                <div class="hspacerxsm"></div>
+                <input class="cat-color-input2" ng-show="vm.selectedCatColor > 0" ng-model="vm.catColor2" data-huebee />
+            </div>
+            <div class="config-row flexh">
+                <div>Claw text color</div>
+                <div class="hspacersm"></div>
+                <input class="claw-color-input" ng-model="vm.clawColor" data-huebee />
+                <div class="hspacerxsm"></div>
+                <input class="claw-color-input2" ng-show="vm.selectedClawColor > 0" ng-model="vm.clawColor2" data-huebee />
+            </div>
+            <div class="config-row flexh">
+                <div>Monster outline color</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedOutlineType" ng-change="vm.outlineChange()">
+                    <option value="0">None</option>
+                    <option value="1">White</option>
+                    <option value="2">Green</option>
+                    <option value="3">Purple</option>
+                    <option value="4">Orange</option>
+                    <option value="5">Custom</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <input class="outline-color-input" ng-show="vm.selectedOutlineType == 5" ng-model="vm.outlineCustomColor" data-huebee />
+            </div>
+            <div class="config-row flexh">
+                <div>Font</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedFont">
+                    <option ng-repeat="(key, value) in vm.fonts" value="{{key}}">{{key}}</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.prev('selectedFont', vm.fonts)"><</button>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.next('selectedFont', vm.fonts)">></button>
+            </div>
+            <div class="config-row flexh">
+                <div>Layout</div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedLayout">
+                    <option ng-repeat="(key, value) in vm.layouts" value="{{key}}">{{value}}</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.prev('selectedLayout', vm.layouts)"><</button>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.next('selectedLayout', vm.layouts)">></button>
+            </div>
         </div>
         <div class="spacer"></div>
         <div class="flex1"></div>

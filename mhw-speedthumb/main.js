@@ -58,7 +58,7 @@ angular.module('app', [])
         'Banbaro': 'monster_icons/MHWI-Banbaro_Icon.png',
         'Barioth': 'monster_icons/MHWI-Barioth_Icon.png',
         'Beotodus': 'monster_icons/MHWI-Beotodus_Icon.png',
-        'Blackveil Vaal_Hazak': 'monster_icons/MHWI-Blackveil_Vaal_Hazak_Icon.png',
+        'Blackveil Vaal Hazak': 'monster_icons/MHWI-Blackveil_Vaal_Hazak_Icon.png',
         'Brachydios': 'monster_icons/MHWI-Brachydios_Icon.png',
         'Brute Tigrex': 'monster_icons/MHWI-Brute_Tigrex_Icon.png',
         'Coral Pukei-Pukei': 'monster_icons/MHWI-Coral_Pukei-Pukei_Icon.png',
@@ -72,7 +72,7 @@ angular.module('app', [])
         'Rajang': 'monster_icons/MHWI-Rajang_Icon.png',
         'Ruiner Nergigante': 'monster_icons/MHWI-Ruiner_Nergigante_Icon.png',
         'Savage Deviljho': 'monster_icons/MHWI-Savage_Deviljho_Icon.png',
-        'Scarred Yian_Garuga': 'monster_icons/MHWI-Scarred_Yian_Garuga_Icon.png',
+        'Scarred Yian Garuga': 'monster_icons/MHWI-Scarred_Yian_Garuga_Icon.png',
         'Seething Bazelgeuse': 'monster_icons/MHWI-Seething_Bazelgeuse_Icon.png',
         'Shara Ishvalda': 'monster_icons/MHWI-Shara_Ishvalda_Icon.png',
         'Shrieking Legiana': 'monster_icons/MHWI-Shrieking_Legiana_Icon.png',
@@ -83,16 +83,50 @@ angular.module('app', [])
         'Yian Garuga': 'monster_icons/MHWI-Yian_Garuga_Icon.png',
         'Zinogre': 'monster_icons/MHWI-Zinogre_Icon.png'
     });
+    vm.fonts = Object.freeze({
+        "Heebo": 'heebo',
+        "Heebo (Light)": 'heebo-light',
+        "Heebo (Bold)": 'heebo-bold',
+        "Barlow": 'oswald',
+        "Barlow (Light)": 'oswald-light',
+        "Barlow (Bold)": 'oswald-bold',
+        "Raleway": 'raleway',
+        "Raleway (Bold)": 'raleway-bold',
+        "Asap": 'asap',
+        "Asap (Bold)": 'asap-bold'
+    });
+    vm.clawTextOffset = Object.freeze({
+        "Heebo": 'heebo-cto',
+        "Heebo (Light)": 'heebo-cto',
+        "Heebo (Bold)": 'heebo-cto',
+        "Barlow": 'oswald-cto',
+        "Barlow (Light)": 'oswald-cto',
+        "Barlow (Bold)": 'oswald-cto',
+        "Raleway": 'raleway-cto',
+        "Raleway (Bold)": 'raleway-cto',
+        "Asap": 'asap-cto',
+        "Asap (Bold)": 'asap-cto'
+    });
+    vm.layouts = Object.freeze({
+        'v': 'Vertical',
+        'vr': 'Vertical Reverse',
+        'h': 'Horizontal',
+        'h2' : 'Horizontal Alt',
+        'hr' :'Horizontal Reverse',
+        'h2r' :'Horizontal Alt Reverse'
+    });
 
     vm.selectedWeapon = _.keys(vm.weapons)[0];
     vm.selectedMonster = _.keys(vm.monsters)[10];
     vm.selectedRunCategory = '2';
-    vm.selectedBgType = '0';
+    vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
     vm.selectedCatColor = '1';
     vm.selectedClawColor = '0';
     vm.selectedOutlineType = '2';
     vm.selectedOutlineColor = '2';
+    vm.selectedFont = _.keys(vm.fonts)[2];
+    vm.selectedLayout = _.keys(vm.layouts)[0];
     vm.timeText = "1'23\"45";
     vm.bgColor = "#271326";
     vm.bgColor2 = "#337";
@@ -120,30 +154,17 @@ angular.module('app', [])
         $scope.$digest();
     });
 
-    vm.prevWeapon = function() {
-        var curIndex = _.findIndex(_.keys(vm.weapons), function(o) {
-            return o == vm.selectedWeapon;
+    vm.prev = function(selected, optionList) {
+        var curIndex = _.findIndex(_.keys(optionList), function(o) {
+            return o == vm[selected];
         });
-        vm.selectedWeapon = _.keys(vm.weapons)[Math.max(0, curIndex - 1)];
+        vm[selected] = _.keys(optionList)[Math.max(0, curIndex - 1)];
     };
-    vm.nextWeapon = function() {
-        var curIndex = _.findIndex(_.keys(vm.weapons), function(o) {
-            return o == vm.selectedWeapon;
+    vm.next = function(selected, optionList) {
+        var curIndex = _.findIndex(_.keys(optionList), function(o) {
+            return o == vm[selected];
         });
-        vm.selectedWeapon = _.keys(vm.weapons)[Math.min(_.keys(vm.weapons).length - 1, curIndex + 1)];
-    };
-
-    vm.prevMonster = function() {
-        var curIndex = _.findIndex(_.keys(vm.monsters), function(o) {
-            return o == vm.selectedMonster;
-        });
-        vm.selectedMonster = _.keys(vm.monsters)[Math.max(0, curIndex - 1)];
-    };
-    vm.nextMonster = function() {
-        var curIndex = _.findIndex(_.keys(vm.monsters), function(o) {
-            return o == vm.selectedMonster;
-        });
-        vm.selectedMonster = _.keys(vm.monsters)[Math.min(_.keys(vm.monsters).length - 1, curIndex + 1)];
+        vm[selected] = _.keys(optionList)[Math.min(_.keys(optionList).length - 1, curIndex + 1)];
     };
 
     vm.getBgStyle = function() {

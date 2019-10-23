@@ -24,6 +24,11 @@ body {
   flex-shrink: 0;
 }
 
+.spacersm {
+  height: 10px;
+  flex-shrink: 0;
+}
+
 .hspacer {
   width: 40px;
 }
@@ -44,8 +49,11 @@ body {
 .flexv {
   display: flex;
   flex-direction: column;
+}
+
+.thing {
   height: 100%;
-  overflow-y: auto;
+  overflow-y: scroll;
 }
 
 .flexh {
@@ -57,6 +65,10 @@ body {
   flex: 1;
 }
 
+.flex2 {
+  flex: 2;
+}
+
 .mauto {
   margin: auto;
 }
@@ -66,6 +78,26 @@ body {
   height: 720px;
   background-color: #271326;
   overflow: hidden;
+}
+
+.canvas-inside-v {
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-inside-vr {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.canvas-inside-h, .canvas-inside-h2 {
+  display: flex;
+  flex-direction: row;
+}
+
+.canvas-inside-hr, .canvas-inside-h2r {
+  display: flex;
+  flex-direction: row-reverse;
 }
 
 .canvas-outside {
@@ -95,12 +127,24 @@ body {
 
 .info-container {
   margin: auto;
-  padding-bottom: 20px;
+}
+
+.info-container-v, .info-container-vr {
+  display: flex;
+  flex-direction: row;
+}
+
+.info-container-h, .info-container-hr, .info-container-h2, .info-container-h2r {
+  display: flex;
+  flex-direction: column;
+}
+
+.text-container-h2, .text-container-h2r {
+  flex-direction: column;
 }
 
 .timetext {
-  font-family: 'Heebo';
-  font-weight: 500;
+  font-family: 'Heebo', sans-serif;
   font-size: 140px;
   color: white;
   -webkit-background-clip: text;
@@ -108,10 +152,8 @@ body {
 }
 
 .tatext {
-  font-family: 'Heebo';
-  font-weight: 500;
+  font-family: 'Heebo', sans-serif;
   font-size: 140px;
-  padding-left: 30px;
   color: white;
   -webkit-background-clip: text;
   background-clip: text;
@@ -119,18 +161,55 @@ body {
 
 .weapon-image {
   height: 189px;
-  padding-right: 45px;
+}
+
+.weapon-image-v, .weapon-image-vr {
+  padding-right: 40px;
+}
+
+.weapon-image-h, .weapon-image-hr, .weapon-image-h2, .weapon-image-h2r {
+  padding-bottom: 40px;
 }
 
 .clawtext {
+  height: 0;
   font-size: 59px;
-  font-family: 'Heebo';
-  font-weight: 800;
-  margin-top: -70px;
-  margin-left: 38px;
+  font-family: 'Heebo', sans-serif;
   color: white;
   -webkit-background-clip: text;
   background-clip: text;
+}
+
+.clawtext-v, .clawtext-vr {
+
+}
+
+.clawtext-h, .clawtext-hr {
+
+}
+
+.canvas-spacer {
+  flex: 2;
+}
+
+.canvas-spacer-h2, .canvas-spacer-h, .canvas-spacer-hr, .canvas-spacer-h2r {
+  flex: 1;
+}
+
+.category-holder {
+  align-items: center;
+}
+
+.category-holder-v, .category-holder-vr {
+  padding-left: 40px;
+}
+
+.category-holder-h, .category-holder-hr {
+  padding-left: 40px;
+}
+
+.category-holder-h2, .category-holder-h2r {
+
 }
 
 .select {
@@ -147,4 +226,83 @@ input {
 
 .smallertext {
   font-size: 12px;
+}
+
+.heebo-light {
+  font-family: 'Heebo', sans-serif;
+  font-weight: 300;
+}
+
+.heebo {
+  font-family: 'Heebo', sans-serif;
+}
+
+.heebo-bold {
+  font-family: 'Heebo', sans-serif;
+  font-weight: 500;
+}
+
+.heebo-cto {
+  position: relative;
+  bottom: 68px;
+}
+
+.oswald-light {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 300;
+  font-size: 160px;
+}
+
+.oswald {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 500;
+  font-size: 160px;
+}
+
+.oswald-bold {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 160px;
+}
+
+.oswald-bold.clawtext, .oswald.clawtext, .oswald-light.clawtext {
+  font-size: 65px;
+}
+
+.oswald-cto {
+  position: relative;
+  bottom: 43px;
+}
+
+.raleway-light {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 300;
+}
+
+.raleway {
+  font-family: 'Raleway', sans-serif;
+}
+
+.raleway-bold {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 500;
+}
+
+.raleway-cto {
+  position: relative;
+  bottom: 36px;
+}
+
+.asap {
+  font-family: 'Asap', sans-serif;
+}
+
+.asap-bold {
+  font-family: 'Asap', sans-serif;
+  font-weight: 500;
+}
+
+.asap-cto {
+  position: relative;
+  bottom: 33px;
 }
