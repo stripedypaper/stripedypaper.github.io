@@ -132,12 +132,14 @@ body {
 
 .monster-image-4-v, .monster-image-4-vr {
   padding: 0 20px;
-  height: 250px;
+  width: 250px;
+  height: unset;
 }
 
 .monster-image-5-v, .monster-image-5-vr {
   padding: 0 15px;
-  height: 210px;
+  width: 210px;
+  height: unset;
 }
 
 .monster-image-2-h, .monster-image-2-hr, .monster-image-2-h2, .monster-image-2-h2r {
