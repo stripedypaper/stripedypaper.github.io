@@ -2,7 +2,7 @@
     <title>MHW Speedrun Thumbnail Generator</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
     <script src="huebee.pkgd.min.js"></script>
-    <script src="html2canvas.min.js"></script>
+    <script src="html2canvasmod.js"></script>
     <script src="jquery.min.js"></script>
     <script src="lodash.min.js"></script>
     <script src="FileSaver.min.js"></script>
@@ -19,8 +19,8 @@
         <div class="canvas-outside">
             <div id="canvas-inside" class="canvas-inside" ng-class="'canvas-inside-' + vm.selectedLayout" ng-style="vm.getBgStyle()">
                 <div class="canvas-spacer" ng-class="'canvas-spacer-' + vm.selectedLayout"></div>
-                <div class="monster-image-container">
-                    <img class="monster-image" ng-src="{{vm.monsters[vm.selectedMonster]}}"></img>
+                <div class="monster-image-container" ng-class="'monster-image-container-' + vm.numMonsters + '-' + vm.selectedLayout">
+                    <img class="monster-image" ng-class="'monster-image-' + vm.numMonsters + '-' + vm.selectedLayout" ng-repeat="i in [0,1,2,3,4]" ng-show="i < vm.numMonsters" ng-src="{{vm.monsters[vm.selectedMonster[i]]}}"></img>
                 </div>
                 <div class="flex1"></div>
                 <div class="info-container" ng-class="'info-container-' + vm.selectedLayout">
@@ -39,9 +39,9 @@
         <div class="spacer"></div>
         <div class="mauto"><button ng-click="vm.download()">Generate and download image</button></div>
         <div class="spacersm"></div>
-        <div class="mauto smallertext">Warning: image download seems to only work in Firefox. For other browsers, please take a screenshot instead.</div>
+        <div class="mauto smallertext">Warning: image download is very buggy. If you encounter problems, please take a screenshot instead.</div>
         <div class="spacer"></div>
-        <div class="mauto">
+        <div class="mauto" id="test">
             <div class="config-row flexh">
                 <div>Weapon</div>
                 <div class="hspacersm"></div>
@@ -53,16 +53,22 @@
                 <div class="hspacerxsm"></div>
                 <button ng-click="vm.next('selectedWeapon', vm.weapons)">></button>
             </div>
-            <div class="config-row flexh">
-                <div>Monster</div>
+            <div class="config-row flexh" ng-repeat="i in [0,1,2,3,4]" ng-show="i < vm.numMonsters">
+                <div>Monster {{i + 1}}</div>
                 <div class="hspacersm"></div>
-                <select class="select" ng-model="vm.selectedMonster">
+                <select class="select" ng-model="vm.selectedMonster[i]">
                     <option ng-repeat="(key, value) in vm.monsters" value="{{key}}">{{key}}</option>
                 </select>
                 <div class="hspacerxsm"></div>
-                <button ng-click="vm.prev('selectedMonster', vm.monsters)"><</button>
+                <button ng-click="vm.prev2('selectedMonster', i, vm.monsters)"><</button>
                 <div class="hspacerxsm"></div>
-                <button ng-click="vm.next('selectedMonster', vm.monsters)">></button>
+                <button ng-click="vm.next2('selectedMonster', i, vm.monsters)">></button>
+                <div ng-if="i == 0" class="flexh">
+                    <div class="hspacerxsm"></div>
+                    <button ng-click="vm.inc('numMonsters', 5)" ng-disabled="vm.numMonsters == 5">+</button>
+                    <div class="hspacerxsm"></div>
+                    <button ng-click="vm.dec('numMonsters', 1)" ng-disabled="vm.numMonsters == 1">-</button>
+                </div>
             </div>
             <div class="config-row flexh">
                 <div>Time</div>
