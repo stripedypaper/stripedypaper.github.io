@@ -18,6 +18,18 @@ angular.module('app', [])
         'Heavy Bowgun': 'weapon_icons/heavy-bowgun.png',
         'Bow': 'weapon_icons/bow.png'
     });
+    vm.weaponElements = Object.freeze({
+        'None': null,
+        'Fire': 'weapon_element_icons/Status_Effect-Fireblight_MHW_Icon.png',
+        'Water': 'weapon_element_icons/Status_Effect-Waterblight_MHW_Icon.png',
+        'Ice': 'weapon_element_icons/Status_Effect-Iceblight_MHW_Icon.png',
+        'Thunder': 'weapon_element_icons/Status_Effect-Thunderblight_MHW_Icon.png',
+        'Dragon': 'weapon_element_icons/Status_Effect-Dragonblight_MHW_Icon.png',
+        'Poison': 'weapon_element_icons/Status_Effect-Poison_MHW_Icon.png',
+        'Paralysis': 'weapon_element_icons/Status_Effect-Paralysis_MHW_Icon.png',
+        'Sleep': 'weapon_element_icons/Status_Effect-Sleep_MHW_Icon.png',
+        'Blast': 'weapon_element_icons/Status_Effect-Blastblight_MHW_Icon.png'
+    });
     vm.monsters = Object.freeze({
         'Acidic Glavenus': 'monster_icons/MHWI-Acidic_Glavenus_Icon.png',
         'Ancient Leshen': 'monster_icons/MHW-Ancient_Leshen_Icon.png',
@@ -70,6 +82,7 @@ angular.module('app', [])
         'Shara Ishvalda': 'monster_icons/MHWI-Shara_Ishvalda_Icon.png',
         'Shrieking Legiana': 'monster_icons/MHWI-Shrieking_Legiana_Icon.png',
         'Silver Rathalos': 'monster_icons/MHWI-Silver_Rathalos_Icon.png',
+        'Stygian Zinogre': 'monster_icons/MHWI-Stygian_Zinogre_Icon.png',
         'Teostra': 'monster_icons/MHW-Teostra_Icon.png',
         'Tigrex': 'monster_icons/MHWI-Tigrex_Icon.png',
         'Tobi-Kadachi': 'monster_icons/MHW-Tobi-Kadachi_Icon.png',
@@ -81,7 +94,8 @@ angular.module('app', [])
         'Xeno\'jiiva': 'monster_icons/MHW-Xeno\'jiiva_Icon.png',
         'Yian Garuga': 'monster_icons/MHWI-Yian_Garuga_Icon.png',
         'Zinogre': 'monster_icons/MHWI-Zinogre_Icon.png',
-        'Zorah Magdaros': 'monster_icons/MHW-Zorah_Magdaros_Icon.png'
+        'Zorah Magdaros': 'monster_icons/MHW-Zorah_Magdaros_Icon.png',
+        '???': 'monster_icons/q.png'
     });
     vm.fonts = Object.freeze({
         "Heebo": 'heebo',
@@ -117,7 +131,8 @@ angular.module('app', [])
     });
 
     vm.selectedWeapon = _.keys(vm.weapons)[0];
-    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[10])));
+    vm.selectedWeaponElement = "None";
+    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[51])));
     vm.selectedRunCategory = '2';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';

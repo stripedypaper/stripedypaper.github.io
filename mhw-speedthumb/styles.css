@@ -369,3 +369,13 @@ input {
   position: relative;
   bottom: 33px;
 }
+
+.new {
+  color: #7E7;
+  font-size: 12px;
+}
+
+.no-space {
+  width: 0;
+  height: 0;
+}

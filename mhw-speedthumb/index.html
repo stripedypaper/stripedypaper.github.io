@@ -23,7 +23,12 @@
                 </div>
                 <div class="flex1"></div>
                 <div class="info-container" ng-class="'info-container-' + vm.selectedLayout">
-                    <img class="weapon-image mauto" ng-class="'weapon-image-' + vm.selectedLayout" ng-src="{{vm.weapons[vm.selectedWeapon]}}"></img>
+                    <div class="flexh">
+                        <img class="weapon-image mauto" ng-class="'weapon-image-' + vm.selectedLayout" ng-src="{{vm.weapons[vm.selectedWeapon]}}"></img>
+                        <div class="no-space">
+                            <img class="weapon-element-image mauto" ng-src="{{vm.weaponElements[vm.selectedWeaponElement]}}"></img>
+                        </div>
+                    </div>
                     <div class="flexh" ng-class="'text-container-' + vm.selectedLayout">
                         <div class="timetext mauto" ng-class="vm.fonts[vm.selectedFont]" ng-style="vm.getColorStyle(vm.selectedTimeColorType, vm.timeColor, vm.timeColor2)">{{vm.timeText}}</div>
                         <div class="mauto flexv category-holder" ng-class="'category-holder-' + vm.selectedLayout">
@@ -52,6 +57,19 @@
                 <div class="hspacerxsm"></div>
                 <button ng-click="vm.next('selectedWeapon', vm.weapons)">></button>
             </div>
+            <!--
+            <div class="config-row flexh">
+                <div>Weapon Element <span class="new">new</span></div>
+                <div class="hspacersm"></div>
+                <select class="select" ng-model="vm.selectedWeaponElement">
+                    <option ng-repeat="(key, value) in vm.weaponElements" value="{{key}}">{{key}}</option>
+                </select>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.prev('selectedWeaponElement', vm.weaponElements)"><</button>
+                <div class="hspacerxsm"></div>
+                <button ng-click="vm.next('selectedWeaponElement', vm.weaponElements)">></button>
+            </div>
+            -->
             <div class="config-row flexh" ng-repeat="i in [0,1,2,3,4]" ng-show="i < vm.numMonsters">
                 <div>Monster {{i + 1}}</div>
                 <div class="hspacersm"></div>
@@ -78,7 +96,7 @@
                 <div>Run category</div>
                 <div class="hspacersm"></div>
                 <select class="select" ng-model="vm.selectedRunCategory">
-                    <option value="0">Non TA</option>
+                    <option value="0">None</option>
                     <option value="1">TA</option>
                     <option value="2">TA + Claw</option>
                 </select>
