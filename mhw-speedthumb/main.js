@@ -76,6 +76,7 @@ angular.module('app', [])
         'Rathalos': 'monster_icons/MHW-Rathalos_Icon.png',
         'Rathian': 'monster_icons/MHW-Rathian_Icon.png',
         'Ruiner Nergigante': 'monster_icons/MHWI-Ruiner_Nergigante_Icon.png',
+        'Safi\'jiiva': 'monster_icons/MHWI-Safi\'jiiva_Icon.png',
         'Savage Deviljho': 'monster_icons/MHWI-Savage_Deviljho_Icon.png',
         'Scarred Yian Garuga': 'monster_icons/MHWI-Scarred_Yian_Garuga_Icon.png',
         'Seething Bazelgeuse': 'monster_icons/MHWI-Seething_Bazelgeuse_Icon.png',
@@ -132,7 +133,7 @@ angular.module('app', [])
 
     vm.selectedWeapon = _.keys(vm.weapons)[0];
     vm.selectedWeaponElement = "None";
-    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[51])));
+    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[52])));
     vm.selectedRunCategory = '2';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
