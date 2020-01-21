@@ -19,14 +19,16 @@
             <div id="canvas-inside" class="canvas-inside" ng-class="'canvas-inside-' + vm.selectedLayout" ng-style="vm.getBgStyle()">
                 <div class="canvas-spacer" ng-class="'canvas-spacer-' + vm.selectedLayout"></div>
                 <div class="monster-image-container" ng-class="'monster-image-container-' + vm.numMonsters + '-' + vm.selectedLayout">
-                    <img class="monster-image" ng-class="'monster-image-' + vm.numMonsters + '-' + vm.selectedLayout" ng-repeat="i in [0,1,2,3,4]" ng-show="i < vm.numMonsters" ng-src="{{vm.monsters[vm.selectedMonster[i]]}}"></img>
+                    <img class="monster-image" ng-repeat="i in [0,1,2,3,4]" ng-show="i < vm.numMonsters" ng-src="{{vm.monsters[vm.selectedMonster[i]]}}" ng-class="['monster-image-' + vm.numMonsters + '-' + vm.selectedLayout, {'invisible': !vm.monsters[vm.selectedMonster[i]]}]"></img>
                 </div>
                 <div class="flex1"></div>
-                <div class="info-container" ng-class="'info-container-' + vm.selectedLayout">
+                <div class="info-container" ng-class="['info-container-' + vm.selectedLayout, {'text-shadow': vm.selectedBgType == 3}]">
                     <div class="flexh">
-                        <img class="weapon-image mauto" ng-class="'weapon-image-' + vm.selectedLayout" ng-src="{{vm.weapons[vm.selectedWeapon]}}"></img>
-                        <div class="no-space">
-                            <img class="weapon-element-image mauto" ng-src="{{vm.weaponElements[vm.selectedWeaponElement]}}"></img>
+                        <div class="mauto flexh" ng-class="'weapon-image-' + vm.selectedLayout">
+                            <img class="weapon-image" ng-src="{{vm.weapons[vm.selectedWeapon]}}"></img>
+                            <div class="no-space">
+                                <img class="weapon-element-image" ng-show="vm.weaponElements[vm.selectedWeaponElement]" ng-src="{{vm.weaponElements[vm.selectedWeaponElement]}}"></img>
+                            </div>
                         </div>
                     </div>
                     <div class="flexh" ng-class="'text-container-' + vm.selectedLayout">
@@ -57,7 +59,6 @@
                 <div class="hspacerxsm"></div>
                 <button ng-click="vm.next('selectedWeapon', vm.weapons)">></button>
             </div>
-            <!--
             <div class="config-row flexh">
                 <div>Weapon Element <span class="new">new</span></div>
                 <div class="hspacersm"></div>
@@ -69,7 +70,6 @@
                 <div class="hspacerxsm"></div>
                 <button ng-click="vm.next('selectedWeaponElement', vm.weaponElements)">></button>
             </div>
-            -->
             <div class="config-row flexh" ng-repeat="i in [0,1,2,3,4]" ng-show="i < vm.numMonsters">
                 <div>Monster {{i + 1}}</div>
                 <div class="hspacersm"></div>
@@ -85,6 +85,7 @@
                     <button ng-click="vm.inc('numMonsters', 5)" ng-disabled="vm.numMonsters == 5">+</button>
                     <div class="hspacerxsm"></div>
                     <button ng-click="vm.dec('numMonsters', 1)" ng-disabled="vm.numMonsters == 1">-</button>
+                    <div class="hspacerxsm"></div>
                 </div>
             </div>
             <div class="config-row flexh">
@@ -102,17 +103,35 @@
                 </select>
             </div>
             <div class="config-row flexh">
-                <div>Background color</div>
+                <div>Background <span class="new">new</span></div>
                 <div class="hspacersm"></div>
                 <select class="select" ng-model="vm.selectedBgType">
                     <option value="0">Single</option>
                     <option value="1">Gradient V.</option>
                     <option value="2">Gradient H.</option>
+                    <option value="3">Custom upload</option>
                 </select>
                 <div class="hspacerxsm"></div>
-                <input class="bg-color-input" ng-model="vm.bgColor" data-huebee />
+                <input class="bg-color-input" ng-show="vm.selectedBgType <= 2" ng-model="vm.bgColor" data-huebee />
+                <div ng-show="vm.selectedBgType > 0 && vm.selectedBgType <= 2">
+                    <div class="hspacerxsm"></div>
+                    <input class="bg-color-input2" ng-model="vm.bgColor2" data-huebee />
+                </div>
+                <div ng-show="vm.selectedBgType == 3">
+                    <div class="hspacerxsm"></div>
+                    <input type="file" id="file" name="file" value="Upload Image" />
+                </div>
+            </div>
+            <div class="config-row flexh" ng-show="vm.selectedBgType == 3">
+                <select class="select" ng-model="vm.selectedBgFit">
+                    <option value="0">Stretch</option>
+                    <option value="1">Stretch (keep aspect ratio)</option>
+                    <option value="2">Tile</option>
+                </select>
                 <div class="hspacerxsm"></div>
-                <input class="bg-color-input2" ng-show="vm.selectedBgType > 0" ng-model="vm.bgColor2" data-huebee />
+                <input ng-show="vm.selectedBgFit > 0" type="range" min="0" max="100" value="50" ng-model="vm.bgSlider">
+                <div class="hspacerxsm"></div>
+                <input ng-show="vm.selectedBgFit > 1" type="range" min="0" max="100" value="50" ng-model="vm.bgSlider2">
             </div>
             <div class="config-row flexh">
                 <div>Time text color</div>
@@ -185,5 +204,6 @@
         <div class="spacer"></div>
         <div class="flex1"></div>
         <div class="mauto">Problems? Message <a href="https://twitter.com/stripedypaper" target="_blank">@stripedypaper</a></div>
+        <div id="uploaded"></div>
     </div>
 </body>

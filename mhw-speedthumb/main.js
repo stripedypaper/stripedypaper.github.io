@@ -31,6 +31,7 @@ angular.module('app', [])
         'Blast': 'weapon_element_icons/Status_Effect-Blastblight_MHW_Icon.png'
     });
     vm.monsters = Object.freeze({
+        'None': null,
         'Acidic Glavenus': 'monster_icons/MHWI-Acidic_Glavenus_Icon.png',
         'Ancient Leshen': 'monster_icons/MHW-Ancient_Leshen_Icon.png',
         'Anjanath': 'monster_icons/MHW-Anjanath_Icon.png',
@@ -133,7 +134,7 @@ angular.module('app', [])
 
     vm.selectedWeapon = _.keys(vm.weapons)[0];
     vm.selectedWeaponElement = "None";
-    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[52])));
+    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[53])));
     vm.selectedRunCategory = '2';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
@@ -141,6 +142,7 @@ angular.module('app', [])
     vm.selectedClawColor = '0';
     vm.selectedOutlineType = '2';
     vm.selectedOutlineColor = '2';
+    vm.selectedBgFit = '0';
     vm.selectedFont = _.keys(vm.fonts)[2];
     vm.selectedLayout = _.keys(vm.layouts)[0];
     vm.timeText = "1'23\"45";
@@ -172,6 +174,8 @@ angular.module('app', [])
         vm.outlineChange();
         $scope.$digest();
     });
+
+    var uploadedSrc = null;
 
     vm.prev = function(selected, optionList) {
         var curIndex = _.findIndex(_.keys(optionList), function(o) {
@@ -208,6 +212,29 @@ angular.module('app', [])
         }
         else if (vm.selectedBgType == '2') {
             return {"background": "linear-gradient(to right, " + vm.bgColor + ", " + vm.bgColor2 + ")"};
+        }
+        else if (vm.selectedBgType == '3' && uploadedSrc) {
+            var result = {"background": "url(\"" + uploadedSrc + "\")"};
+            if (vm.selectedBgFit === '0') {
+                result["background-size"] = "cover";
+                result["background-repeat"] = "round";
+            }
+            else if (vm.selectedBgFit === '1') {
+                result["background-size"] = "cover";
+                result["background-repeat"] = "unset";
+                result["background-position-x"] = vm.bgSlider + "%";
+                result["background-position-y"] = vm.bgSlider + "%";
+            }
+            else {
+                result["background-size"] = "unset";
+                result["background-repeat"] = "unset";
+                result["background-position-x"] = vm.bgSlider + "%";
+                result["background-position-y"] = vm.bgSlider2 + "%";
+            }
+            return result;
+        }
+        else {
+            return {};
         }
     }
 
@@ -272,4 +299,20 @@ angular.module('app', [])
             $scope.$digest();
         });
     }
+
+    // image upload
+    $("#file").change(function(e) {
+        var image, file;
+        var _URL = window.URL || window.webkitURL;
+        if ((file = this.files[0])) {
+            image = new Image();
+            image.onload = function() {
+                    uploadedSrc = this.src;
+                    console.info('uploaded image', uploadedSrc);
+                    $scope.$digest();
+                    e.preventDefault();
+                }
+            };
+            image.src = _URL.createObjectURL(file);
+    });
 });

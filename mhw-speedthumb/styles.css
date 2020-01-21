@@ -234,6 +234,11 @@ body {
   padding-bottom: 40px;
 }
 
+.weapon-element-image {
+  margin-left: -50px;
+  width: 80px;
+}
+
 .clawtext {
   height: 0;
   font-size: 59px;
@@ -281,6 +286,10 @@ body {
 
 input {
   width: 75px;
+}
+
+input[type=file] {
+  width: unset;
 }
 
 .config-row {
@@ -373,9 +382,35 @@ input {
 .new {
   color: #7E7;
   font-size: 12px;
+  -webkit-animation: newcolorani 1s ease 0s;
+  -webkit-animation-iteration-count:infinite;
+  animation: newcolorani 1s ease 0s;
+  animation-iteration-count:infinite;
 }
+
+@-webkit-keyframes newcolorani {0%{color:#7E7;} 50%{color:#33D333;} 100%{color:#7e7;}}
 
 .no-space {
   width: 0;
   height: 0;
+}
+
+#uploadPreview {
+    border: 1px solid red;
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+}
+
+#uploadPreview img {
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.text-shadow {
+  filter: drop-shadow(0 0 4px black) drop-shadow(0 0 12px black);
+}
+
+.invisible {
+  opacity: 0;
 }
