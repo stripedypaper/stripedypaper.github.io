@@ -35,7 +35,7 @@
                         <div class="timetext mauto" ng-class="vm.fonts[vm.selectedFont]" ng-style="vm.getColorStyle(vm.selectedTimeColorType, vm.timeColor, vm.timeColor2)">{{vm.timeText}}</div>
                         <div class="mauto flexv category-holder" ng-class="'category-holder-' + vm.selectedLayout">
                             <div class="tatext" ng-class="vm.fonts[vm.selectedFont]" ng-if="vm.selectedRunCategory > 0" ng-style="vm.getColorStyle(vm.selectedCatColor, vm.catColor, vm.catColor2)">TA</div>
-                            <div ng-if="vm.selectedRunCategory == 2" ng-class="[vm.fonts[vm.selectedFont], vm.clawTextOffset[vm.selectedFont], 'clawtext-' + vm.selectedLayout]" ng-style="vm.getColorStyle(vm.selectedClawColor, vm.clawColor, vm.clawColor2)" class="clawtext">+Claw</div>
+                            <div ng-if="vm.selectedRunCategory == 2" ng-class="[vm.fonts[vm.selectedFont], vm.clawTextOffset[vm.selectedFont], 'clawtext-' + vm.selectedLayout]" ng-style="vm.getColorStyle(vm.selectedClawColor, vm.clawColor, vm.clawColor2)" class="clawtext">no Claw</div>
                         </div>
                     </div>
                 </div>
@@ -99,7 +99,7 @@
                 <select class="select" ng-model="vm.selectedRunCategory">
                     <option value="0">None</option>
                     <option value="1">TA</option>
-                    <option value="2">TA + Claw</option>
+                    <option value="2">TA No Claw</option>
                 </select>
             </div>
             <div class="config-row flexh">

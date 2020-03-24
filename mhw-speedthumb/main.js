@@ -137,7 +137,7 @@ angular.module('app', [])
     vm.selectedWeapon = _.keys(vm.weapons)[0];
     vm.selectedWeaponElement = "None";
     vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[43])));
-    vm.selectedRunCategory = '2';
+    vm.selectedRunCategory = '1';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
     vm.selectedCatColor = '1';
