@@ -51,6 +51,7 @@ angular.module('app', [])
         'Dodogama': 'monster_icons/MHW-Dodogama_Icon.png',
         'Ebony Odogaron': 'monster_icons/MHWI-Ebony_Odogaron_Icon.png',
         'Fulgur Anjanath': 'monster_icons/MHWI-Fulgur_Anjanath_Icon.png',
+        'Furious Rajang': 'monster_icons/MHWI-Furious_Rajang_icon.png',
         'Glavenus': 'monster_icons/MHWI-Glavenus_Icon.png',
         'Gold Rathian': 'monster_icons/MHWI-Gold_Rathian_Icon.png',
         'Great Girros': 'monster_icons/MHW-Great_Girros_Icon.png',
@@ -73,6 +74,7 @@ angular.module('app', [])
         'Pink Rathian': 'monster_icons/MHW-Pink_Rathian_Icon.png',
         'Pukei-Pukei': 'monster_icons/MHW-Pukei-Pukei_Icon.png',
         'Radobaan': 'monster_icons/MHW-Radobaan_Icon.png',
+        'Raging Brachydios': 'monster_icons/MHWI-Raging_Brachydios_Icon.png',
         'Rajang': 'monster_icons/MHWI-Rajang_Icon.png',
         'Rathalos': 'monster_icons/MHW-Rathalos_Icon.png',
         'Rathian': 'monster_icons/MHW-Rathian_Icon.png',
@@ -134,7 +136,7 @@ angular.module('app', [])
 
     vm.selectedWeapon = _.keys(vm.weapons)[0];
     vm.selectedWeaponElement = "None";
-    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[53])));
+    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[43])));
     vm.selectedRunCategory = '2';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
