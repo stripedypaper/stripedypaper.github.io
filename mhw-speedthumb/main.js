@@ -51,7 +51,7 @@ angular.module('app', [])
         'Dodogama': 'monster_icons/MHW-Dodogama_Icon.png',
         'Ebony Odogaron': 'monster_icons/MHWI-Ebony_Odogaron_Icon.png',
         'Fulgur Anjanath': 'monster_icons/MHWI-Fulgur_Anjanath_Icon.png',
-        'Furious Rajang': 'monster_icons/MHWI-Furious_Rajang_icon.png',
+        'Furious Rajang': 'monster_icons/MHWI-Furious_Rajang_Icon.png',
         'Glavenus': 'monster_icons/MHWI-Glavenus_Icon.png',
         'Gold Rathian': 'monster_icons/MHWI-Gold_Rathian_Icon.png',
         'Great Girros': 'monster_icons/MHW-Great_Girros_Icon.png',
