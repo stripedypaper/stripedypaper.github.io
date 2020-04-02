@@ -1,0 +1,90 @@
+@media screen and (min-width: 1180px) {
+    .content-wrapper {
+        padding: 3em 8em;
+    }
+    
+    .content-area {
+        width: 100% !important;
+    }
+    
+    .sidebar-widget-area {
+        width: 0 !important;
+    }
+}
+
+.submenu {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.submenu div {
+    flex: 1;
+    display: flex;
+}
+
+.submenu div a {
+    padding: 16px 4px;
+    text-align: center;
+	  margin: auto;
+    width: 100%;
+    color: white;
+    font-weight: 500;
+}
+
+.submenu div a:hover {
+    color: white;
+}
+
+.shaded {
+    border-bottom: 2px solid rgba(0,0,0,.15);
+}
+
+.submenu-1 {
+    background-color: #64B5F6;
+}
+
+.submenu-2 {
+    background-color: #9575CD;
+}
+
+.submenu-3 {
+    background-color: #90A4AE;
+}
+
+.submenu-4 {
+    background-color: #4DB6AC;
+}
+
+.submenu-5 {
+    background-color: #e57373;
+}
+
+.submenu-6 {
+    background-color: #81C784;
+}
+
+.submenu-unavailable {
+    opacity: .5;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.page-title {
+    text-align: center;
+    font-size: 36px;
+}
+
+.spacer {
+    height: 10px;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.page-id-350 .entry-title, .page-id-342 .entry-title, .page-id-130 .entry-title, .page-id-15 .entry-title, .page-id-561 .entry-title, .page-id-574 .entry-title {
+    display: none;
+}
