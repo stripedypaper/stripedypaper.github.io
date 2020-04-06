@@ -28,7 +28,8 @@ angular.module('app', [])
         'Poison': 'weapon_element_icons/Status_Effect-Poison_MHW_Icon.png',
         'Paralysis': 'weapon_element_icons/Status_Effect-Paralysis_MHW_Icon.png',
         'Sleep': 'weapon_element_icons/Status_Effect-Sleep_MHW_Icon.png',
-        'Blast': 'weapon_element_icons/Status_Effect-Blastblight_MHW_Icon.png'
+        'Blast': 'weapon_element_icons/Status_Effect-Blastblight_MHW_Icon.png',
+        'Stun': 'weapon_element_icons/mhw-stun-status-effect.png'
     });
     vm.monsters = Object.freeze({
         'None': null,
