@@ -134,8 +134,8 @@ angular.module('app', [])
         'h2r' :'Horizontal Alt Reverse'
     });
 
-    vm.selectedWeapon = _.keys(vm.weapons)[0];
-    vm.selectedWeaponElement = "None";
+    vm.selectedWeapon = _.assign({}, _.times(5, _.constant(_.keys(vm.weapons)[0])));
+    vm.selectedWeaponElement = _.assign({}, _.times(4, _.constant("None")));
     vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[43])));
     vm.selectedRunCategory = '1';
     vm.selectedBgType = '1';
@@ -159,7 +159,7 @@ angular.module('app', [])
     vm.outlineCustomColor = "#FFF";
 
     vm.numMonsters = 1;
-    vm.numAdditionalWeapons = 0;
+    vm.numWeapons = 1;
 
     initializeHuebee('bgColor', '.bg-color-input');
     initializeHuebee('bgColor2', '.bg-color-input2');
@@ -285,6 +285,10 @@ angular.module('app', [])
     }
 
     vm.inc = function(varName, limit) {
+        if (varName == 'numWeapons' && vm.numWeapons == 1) {
+            vm.selectedRunCategory = '0';
+        }
+
         if (vm[varName] < limit)
             vm[varName]++;
     }

@@ -24,12 +24,14 @@
                 <div class="flex1"></div>
                 <div class="info-container" ng-class="['info-container-' + vm.selectedLayout, {'text-shadow': vm.selectedBgType == 3}]">
                     <div class="flexh">
-                        <div class="mauto flexh" ng-class="'weapon-image-' + vm.selectedLayout">
-                            <img class="weapon-image" ng-src="{{vm.weapons[vm.selectedWeapon]}}"></img>
+                        <div class="flex1"></div>
+                        <div class="mauto flexh" ng-class="['weapon-image-' + vm.selectedLayout, 'weapon-image-' + vm.numWeapons]" ng-repeat="i in [0,1,2,3]" ng-if="i < vm.numWeapons">
+                            <img class="weapon-image" ng-src="{{vm.weapons[vm.selectedWeapon[i]]}}"></img>
                             <div class="no-space">
-                                <img class="weapon-element-image" ng-show="vm.weaponElements[vm.selectedWeaponElement]" ng-src="{{vm.weaponElements[vm.selectedWeaponElement]}}"></img>
+                                <img class="weapon-element-image" ng-show="vm.weaponElements[vm.selectedWeaponElement[i]]" ng-src="{{vm.weaponElements[vm.selectedWeaponElement[i]]}}"></img>
                             </div>
                         </div>
+                        <div class="flex1"></div>
                     </div>
                     <div class="flexh" ng-class="'text-container-' + vm.selectedLayout">
                         <div class="timetext mauto" ng-class="vm.fonts[vm.selectedFont]" ng-style="vm.getColorStyle(vm.selectedTimeColorType, vm.timeColor, vm.timeColor2)">{{vm.timeText}}</div>
@@ -48,30 +50,40 @@
         <div class="mauto smallertext">Warning: image download is very buggy. If you encounter problems, please take a screenshot instead.</div>
         <div class="spacer"></div>
         <div class="mauto" id="test">
-            <div class="config-row flexh">
-                <div>Weapon</div>
-                <div class="hspacersm"></div>
-                <select class="select" ng-model="vm.selectedWeapon">
-                    <option ng-repeat="(key, value) in vm.weapons" value="{{key}}">{{key}}</option>
-                </select>
-                <div class="hspacerxsm"></div>
-                <button ng-click="vm.prev('selectedWeapon', vm.weapons)"><</button>
-                <div class="hspacerxsm"></div>
-                <button ng-click="vm.next('selectedWeapon', vm.weapons)">></button>
-            </div>
-            <div class="config-row flexh">
-                <div>Weapon Element <span class="new">new</span></div>
-                <div class="hspacersm"></div>
-                <select class="select" ng-model="vm.selectedWeaponElement">
-                    <option ng-repeat="(key, value) in vm.weaponElements" value="{{key}}">{{key}}</option>
-                </select>
-                <div class="hspacerxsm"></div>
-                <button ng-click="vm.prev('selectedWeaponElement', vm.weaponElements)"><</button>
-                <div class="hspacerxsm"></div>
-                <button ng-click="vm.next('selectedWeaponElement', vm.weaponElements)">></button>
+            <div ng-repeat="i in [0,1,2,3]" ng-show="i < vm.numWeapons">
+                <div class="config-row flexh">
+                    <div>Weapon {{i+1}}</div>
+                    <div class="hspacersm"></div>
+                    <select class="select" ng-model="vm.selectedWeapon[i]">
+                        <option ng-repeat="(key, value) in vm.weapons" value="{{key}}">{{key}}</option>
+                    </select>
+                    <div class="hspacerxsm"></div>
+                    <button ng-click="vm.prev2('selectedWeapon', i, vm.weapons)"><</button>
+                    <div class="hspacerxsm"></div>
+                    <button ng-click="vm.next2('selectedWeapon', i, vm.weapons)">></button>
+                    <div ng-if="i == 0" class="flexh">
+                        <div class="hspacerxsm"></div>
+                        <button ng-click="vm.inc('numWeapons', 4)" ng-disabled="vm.numWeapons == 4">+</button>
+                        <div class="hspacerxsm"></div>
+                        <button ng-click="vm.dec('numWeapons', 1)" ng-disabled="vm.numWeapons == 1">-</button>
+                        <div class="hspacerxsm"></div>
+                        <span class="new">new</span>
+                    </div>
+                </div>
+                <div class="config-row flexh">
+                    <div>Weapon {{i+1}} Element</div>
+                    <div class="hspacersm"></div>
+                    <select class="select" ng-model="vm.selectedWeaponElement[i]">
+                        <option ng-repeat="(key, value) in vm.weaponElements" value="{{key}}">{{key}}</option>
+                    </select>
+                    <div class="hspacerxsm"></div>
+                    <button ng-click="vm.prev2('selectedWeaponElement', i, vm.weaponElements)"><</button>
+                    <div class="hspacerxsm"></div>
+                    <button ng-click="vm.next2('selectedWeaponElement', i, vm.weaponElements)">></button>
+                </div>
             </div>
             <div class="config-row flexh" ng-repeat="i in [0,1,2,3,4]" ng-show="i < vm.numMonsters">
-                <div>Monster {{i + 1}}</div>
+                <div>Monster {{i+1}}</div>
                 <div class="hspacersm"></div>
                 <select class="select" ng-model="vm.selectedMonster[i]">
                     <option ng-repeat="(key, value) in vm.monsters" value="{{key}}">{{key}}</option>
@@ -103,7 +115,7 @@
                 </select>
             </div>
             <div class="config-row flexh">
-                <div>Background <span class="new">new</span></div>
+                <div>Background</div>
                 <div class="hspacersm"></div>
                 <select class="select" ng-model="vm.selectedBgType">
                     <option value="0">Single</option>

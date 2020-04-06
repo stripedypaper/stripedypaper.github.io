@@ -230,8 +230,28 @@ body {
   padding-right: 40px;
 }
 
+.weapon-image-v.weapon-image-3, .weapon-image-vr.weapon-image-3 {
+  width: 90px;
+}
+
+.weapon-image-v.weapon-image-4, .weapon-image-vr.weapon-image-4 {
+  width: 70px;
+}
+
+.weapon-image-v.weapon-image-3:nth-last-child(2),
+.weapon-image-vr.weapon-image-3:nth-last-child(2),
+.weapon-image-v.weapon-image-4:nth-last-child(2),
+.weapon-image-vr.weapon-image-4:nth-last-child(2) {
+  width: unset;
+}
+
 .weapon-image-h, .weapon-image-hr, .weapon-image-h2, .weapon-image-h2r {
   padding-bottom: 40px;
+  padding-right: 40px;
+}
+
+.weapon-image-h:nth-last-child(2), .weapon-image-hr:nth-last-child(2), .weapon-image-h2:nth-last-child(2), .weapon-image-h2r:nth-last-child(2) {
+  padding-right: 0;
 }
 
 .weapon-element-image {
