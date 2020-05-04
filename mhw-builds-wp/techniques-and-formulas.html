@@ -10,6 +10,7 @@
 <p style="font-size:14px;"><a href="#aed-shortcuts">SAED shortcuts</a>
 <a href="#guard-faq">Guard FAQ</a>
 <a href="#guard-points">Guard Points</a>
+<a href="#offensive-guard">Offensive Guard FAQ</a>
 <a href="#motion-values">Motion Values</a>
 <a href="#phial-calculation">Phial Damage Calculation</a>
 </p>
@@ -54,7 +55,7 @@ PS4: (Sword mode) R2 + △ > O > O / (Sheathed) R2 > O > O / (Axe mode) O > O > 
 Xbox: (Sword mode) RT + Y > B > B / (Sheathed) RT > B > B / (Axe mode) B > B > B
 PC: (Sword mode) Ctrl + LMB > RMB > RMB / (Sheathed) Ctrl > RMB > RMB / (Axe mode) RMB > RMB > RMB
 <p>&nbsp;</p>
-<h1 id="guard-faq" style="margin-top:-40px;padding-top:40px;"><a href="#guard-faq">#</a> Guard FAQ</h4>
+<h1 id="guard-faq" style="margin-top:-40px;padding-top:40px;"><a href="#guard-faq">#</a> Guard FAQ</h1>
 TL;DR
 <p style="font-size:14px;">
 - You need some Guard to be able to GP AED/SAED all attacks
@@ -103,7 +104,6 @@ Blocking using Guard Points instead of regular blocking using R2/RT/Ctrl has sev
     <li>Guard Points can allow you to block earlier than pressing R2/RT/Ctrl to block (see below video)</li>
 </ol>
 [video src="https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/media/gp-faster.webm" loop="true"]
-<p>&nbsp;</p>
 <p>&nbsp;</p>
 <h4 id="gp-axe-morph" style="margin-top:-40px;padding-top:40px;"><a href="#gp-axe-morph">#</a> Sword: Morph Slash</h4>
 [video width="400" src="https://raw.githubusercontent.com/stripedypaper/stripedypaper.github.io/master/media/gp-morph.webm" loop="true"]
@@ -171,6 +171,15 @@ PC: ?
 Timing:
 As soon as the attack begins, lasting for about 0.25 seconds.
 Keep in mind you can only use the attack after the startup of SAED which is about 1 second.
+<p>&nbsp;</p>
+<h1 id="offensive-guard" style="margin-top:-40px;padding-top:40px;"><a href="#offensive-guard">#</a> Offensive Guard FAQ</h1>
+Why use Offensive Guard on Charge Blade?
+<p style="font-size:14px;">As a block and counter-based weapon, Offensive Guard is a strong option for Charge Blade once you have all your other core skills, giving 15% bonus attack at max level for a short time (~10 seconds). With Guard Points, Charge Blade has an easy way to access blocking by canceling out of ending lag of other attacks (something that Lance can also do but Gunlance cannot do). The bonus attack from Offensive Guard also increases your damage with Impact Phials by a substantial amount.</p>
+How do you activate Offensive Guard?
+<p style="font-size:14px;">You must block a monster's attack (other players and barrel bombs cannot trigger it), and the attack must be blocked within about 0.5 seconds of entering blocking state. This means that if you start holding block (or enter a guard point) and you are hit within 0.5 seconds it will trigger, and if you are hit after 0.5 seconds it will not trigger. There is another peculiarity with these rules which will be covered below.</p>
+Sometimes I block within 0.5 seconds and Offensive Guard does not trigger
+<p style="font-size:14px;">You may notice this happens when you are standing (not attacking) waiting for a monster to hit you, then you input BLOCK followed by ATTACK with the goal of doing an Axe morph guard point, then mysteriously OG does not trigger. The issue with this is that <b>Offensive Guard window ends when you enter a new blocking state</b>. If you held BLOCK for a brief moment before pressing ATTACK to perform the morph, your player will have transitioned from idle to regular block (when you pressed BLOCK), then regular block to guard point (when you pressed ATTACK). Because there were two blocking states, Offensive Guard was only eligible to be triggered during the first blocking state (when BLOCK was held down before pressing ATTACK).</p>
+<p style="font-size:14px;">What this means is if you want to trigger Offensive Guard from an Axe Morph from idle, you must perform a perfect input and not hold BLOCK briefly before the morph. If you have time, you can do a weak slash chained into Axe Morph, which works because even if you hold BLOCK before pressing ATTACK, you won't do a regular block as long as you input ATTACK before the ending lag of weak slash is over.</p>
 <p>&nbsp;</p>
 <h1 id="motion-values" style="margin-top:-40px;padding-top:40px;"><a href="#motion-values">#</a> Motion Values</h1>
 
