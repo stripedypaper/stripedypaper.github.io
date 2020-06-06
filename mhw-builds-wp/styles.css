@@ -65,6 +65,10 @@
     background-color: #81C784;
 }
 
+.submenu-7 {
+    background-color: #9575CD;
+}
+
 .submenu-unavailable {
     opacity: .5;
 }
@@ -85,6 +89,120 @@
     margin-bottom: 10px;
 }
 
-.page-id-350 .entry-title, .page-id-342 .entry-title, .page-id-130 .entry-title, .page-id-15 .entry-title, .page-id-561 .entry-title, .page-id-574 .entry-title {
+.spacer-big {
+    background-color:#f25f70;
+    border-bottom:2px solid rgba(0,0,0,.15);
+    height: 6px;
+    width: 100%;
+    margin-top: 72px;
+    margin-bottom: 24px;
+}
+
+.spacer-small {
+    height: 6px;
+    width: 100%;
+    margin-top: 48px;
+    margin-bottom: 24px;
+}
+
+.page-id-350 .entry-title, .page-id-342 .entry-title, .page-id-130 .entry-title, .page-id-15 .entry-title, .page-id-561 .entry-title, .page-id-574 .entry-title, .page-id-832 .entry-title {
     display: none;
+}
+
+summary {
+    cursor: pointer;
+    color: #e1122a;
+}
+
+summary::selection { background: transparent; }
+
+.details-inside {
+    box-shadow: inset 0 2px 1px rgba(0,0,0,.05);
+    -webkit-box-shadow: inset 0 2px 1px rgba(0,0,0,.05);
+    background: #f6f6f6;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin: 10px 0px;
+    padding:10px;
+}
+
+.back-to-top {
+    font-size: 13px;
+    float: right;
+}
+
+.offset-id {
+    margin-top:-40px;
+    padding-top:40px;
+}
+
+.guide-video-outer {
+    display: flex;
+}
+
+.guide-video-inner {
+    margin: auto;
+    width: 720px;
+}
+
+.guide-video-inner > .jetpack-video-wrapper {
+    margin-bottom: 0;
+}
+
+.guide-video-caption {
+    margin-top: -1px;
+    background: black;
+    color: white;
+    font-size: 18px;
+    padding: 6px;
+    text-align: center;
+    margin-bottom: 25px;
+    display:flex;
+    flex-direction: column;
+}
+
+.guide-video-caption > br {
+    display: none;
+}
+
+.input-caption > .cwhite {
+    color: white;
+}
+
+.input-caption > .cps4 {
+    color: #64B5F6;
+}
+
+.input-caption > .cxb {
+    color: #AED581;
+}
+
+.input-caption > .cpc {
+    color: #B39DDB;
+}
+
+.input-caption > span {
+    padding-right: 15px;
+    color: #ccc;
+}
+
+.input-caption > span:last-child {
+    padding-right: 0;
+}
+
+.bottom-caption {
+    padding-top: 13px;
+}
+
+.pfix > p, .guide-video-inner > p {
+    margin:0;
+}
+
+ul > ul {
+    margin-bottom: 0;
+}
+
+.post-832 > .entry-content {
+        max-width: 720px;
+      margin: auto;
 }
