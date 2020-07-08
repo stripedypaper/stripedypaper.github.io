@@ -34,6 +34,7 @@ angular.module('app', [])
     vm.monsters = Object.freeze({
         'None': null,
         'Acidic Glavenus': 'monster_icons/MHWI-Acidic_Glavenus_Icon.png',
+        'Alatreon': 'monster_icons/MHWI-Alatreon_Icon.png',
         'Ancient Leshen': 'monster_icons/MHW-Ancient_Leshen_Icon.png',
         'Anjanath': 'monster_icons/MHW-Anjanath_Icon.png',
         'Azure Rathalos': 'monster_icons/MHW-Azure_Rathalos_Icon.png',
@@ -137,7 +138,7 @@ angular.module('app', [])
 
     vm.selectedWeapon = _.assign({}, _.times(5, _.constant(_.keys(vm.weapons)[0])));
     vm.selectedWeaponElement = _.assign({}, _.times(4, _.constant("None")));
-    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[43])));
+    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[2])));
     vm.selectedRunCategory = '1';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
