@@ -15,6 +15,9 @@ angular.module('app', [])
     if (storage.getItem(storageKey)) {
         editor.session.setValue(storage.getItem(storageKey));
     }
+    else {
+        editor.selection.moveTo(999, 999);
+    }
 
     $timeout(parseText);
     editor.session.on('change', function(delta) {
