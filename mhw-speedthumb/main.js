@@ -52,6 +52,7 @@ angular.module('app', [])
         'Diablos': 'monster_icons/MHW-Diablos_Icon.png',
         'Dodogama': 'monster_icons/MHW-Dodogama_Icon.png',
         'Ebony Odogaron': 'monster_icons/MHWI-Ebony_Odogaron_Icon.png',
+        'Frostfang Barioth': 'monster_icons/MHWI-Frostfang_Barioth_Icon.png',
         'Fulgur Anjanath': 'monster_icons/MHWI-Fulgur_Anjanath_Icon.png',
         'Furious Rajang': 'monster_icons/MHWI-Furious_Rajang_Icon.png',
         'Glavenus': 'monster_icons/MHWI-Glavenus_Icon.png',
@@ -138,7 +139,7 @@ angular.module('app', [])
 
     vm.selectedWeapon = _.assign({}, _.times(5, _.constant(_.keys(vm.weapons)[0])));
     vm.selectedWeaponElement = _.assign({}, _.times(4, _.constant("None")));
-    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[2])));
+    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[20])));
     vm.selectedRunCategory = '1';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
