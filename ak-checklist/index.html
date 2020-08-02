@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Arknights Checklist Creator</title>
+        <style type="text/css" media="screen">
+            #editor { 
+                position: absolute;
+                top: 40px;
+                right: 40px;
+                bottom: 40px;
+                left: 60px;
+            }
+
+            body {
+                background: #282a36;
+            }
+
+            .akchecklist-checkbox {
+                /*margin-top: 40px;*/
+                position: absolute;
+                font: 14px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+                background: unset;
+                cursor: pointer;
+                -webkit-user-select: none;  
+                -moz-user-select: none;    
+                -ms-user-select: none;      
+                user-select: none;
+                z-index: 1000;
+            }
+
+            .ak-container {
+                position: absolute;
+                top: 40px;
+                bottom: 40px;
+                left: 0px;
+                right: 0px;
+                overflow: hidden;
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+        <script src="jquery.min.js"></script>
+        <script src="https://pagecdn.io/lib/ace/1.4.5/ace.js" integrity="sha256-5Xkhn3k/1rbXB+Q/DX/2RuAtaB4dRRyQvMs83prFjpM=" crossorigin="anonymous"></script>
+        <script src="main.js"></script>
+    </head>
+    <body ng-app="app" ng-controller="MyController as vm" id="">
+    <div class='ak-container'></div>
+<div id="editor">Chen E2
+4 polymer prep
+    4 orirock concentration
+    0/4 oriron block
+    0/4 keton colloid
+0/6 white horse kohl
+    0/6 loxic kohl
+    3/6 RMA-24
+    6/6 sugar pack
+4/4 guard dualchip
+    8/8 guard chip pack
+    4/4 chip catalyst</div>
+    </div>
+    </body>
+</html>
