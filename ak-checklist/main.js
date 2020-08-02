@@ -40,10 +40,17 @@ angular.module('app', [])
 
             // add checkbox
             var newCheckBox = document.createElement('div');
-            newCheckBox.innerHTML = getCheckState(quantity) ? '[x]' : '[ ]';
+            var checkState = getCheckState(quantity);
+            newCheckBox.innerHTML = checkState ? '[x]' : '[ ]';
             newCheckBox.classList.add('akchecklist');
             newCheckBox.classList.add('akchecklist-checkbox');
             newCheckBox.classList.add('ace-dracula');
+            if (checkState) {
+                newCheckBox.classList.add('done');
+            }
+            else if (quantity.current && quantity.current > 0) {
+                newCheckBox.classList.add('in-progress');
+            }
             newCheckBox.style.top = lineHeight * i + 'px';
             newCheckBox.style.left = '30px';
             newCheckBox.onclick = () => clickCheck(newCheckBox, line, i);
