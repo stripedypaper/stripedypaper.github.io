@@ -34,8 +34,6 @@ angular.module('app', [])
         var longestLineLength = 0;
         editor.session.doc.$lines.forEach((line) => longestLineLength = Math.max(line.length, longestLineLength));
         editor.session.doc.$lines.forEach((line, i) => {
-            if (line.trim().length === 0) return;
-
             var quantity = getQuantityFromString(line);
 
             // add checkbox
@@ -51,9 +49,13 @@ angular.module('app', [])
             else if (quantity.current && quantity.current > 0) {
                 newCheckBox.classList.add('in-progress');
             }
+            if (line.trim().length === 0) {
+                newCheckBox.classList.add('invisible');
+            }
             newCheckBox.style.top = lineHeight * i + 'px';
             newCheckBox.style.left = '30px';
             newCheckBox.onclick = () => clickCheck(newCheckBox, line, i);
+            addScrollOverride(newCheckBox);
             document.querySelector('.ak-container').appendChild(newCheckBox);
 
             if (!quantity.goal) return;
@@ -67,6 +69,7 @@ angular.module('app', [])
             newPlus.style.top = lineHeight * i + 'px';
             newPlus.style.left = 60 + 45 + longestLineLength * charWidth + 'px';
             newPlus.onclick = () => clickQtyChange(newCheckBox, line, i, 1);
+            addScrollOverride(newPlus);
             document.querySelector('.ak-container').appendChild(newPlus);
 
             var newMinus = document.createElement('div');
@@ -77,6 +80,7 @@ angular.module('app', [])
             newMinus.style.top = lineHeight * i + 'px';
             newMinus.style.left = 60 + 70 + longestLineLength * charWidth + 'px';
             newMinus.onclick = () => clickQtyChange(newCheckBox, line, i, -1);
+            addScrollOverride(newMinus);
             document.querySelector('.ak-container').appendChild(newMinus);
         });
     }
@@ -168,6 +172,13 @@ angular.module('app', [])
     function getCheckState(quantity) {
         if (quantity.current && quantity.goal && quantity.current >= quantity.goal) return true;
         return false;
+    }
+
+    function addScrollOverride(element) {
+        element.addEventListener('mousewheel', function (e) {
+            e.preventDefault();
+            editor.session.setScrollTop(editor.session.getScrollTop() + e.deltaY);
+        }, { passive: false });
     }
 });
 
