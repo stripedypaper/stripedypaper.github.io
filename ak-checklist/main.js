@@ -3,6 +3,7 @@ angular.module('app', [])
     var vm = this;
     var lineHeight = 17;
     var charWidth = 7.7;
+    var tabSize = 4;
     var storage = window.localStorage;
     var storageKey = 'freeText';
 
@@ -10,6 +11,8 @@ angular.module('app', [])
     editor.setOption('showGutter', false);
     editor.setOption('showPrintMargin', false);
     editor.setOption('fontSize', 14);
+    editor.setOption('enableBasicAutocompletion', true);
+    editor.setOption('enableLiveAutocompletion', true);
     editor.setTheme("ace/theme/dracula");
 
     if (storage.getItem(storageKey)) {
@@ -27,6 +30,143 @@ angular.module('app', [])
         document.querySelector('.ak-container').scrollTop = event;
     });
 
+    // highlight rules
+    var oop = ace.require("ace/lib/oop");
+    var TextMode = ace.require("ace/mode/text").Mode;
+    var TextHighlightRules = ace.require("ace/mode/text_highlight_rules").TextHighlightRules;
+
+    var CustomHighlightRules = function(){
+        this.$rules = {
+            start: [
+                {
+                  regex: /\b(.)\b/,
+                  next: 'otherRules'
+                }
+            ],
+            otherRules: [
+                {
+                  regex: /\b(polymerization_preparation|bipolar_nanoflake|d32_steel)\b/,
+                  caseInsensitive: true,
+                  token: "material_t5"
+                },
+                {
+                  regex: /\b(chip_catalyst|[a-zA-Z]+_chip_pack|rma70\-24|grindstone_pentahydrate|manganese_trihydrate|white_horse_kohl|optimized_device|keton_colloid|oriron_block|polyester_lump|sugar_lump|orirock_concentration|polymerized_gel|incandescent_alloy_block)\b/,
+                  caseInsensitive: true,
+                  token: "material_t4"
+                },
+                {
+                  regex: /\b([a-zA-Z]+_chip|manganese_ore|grindstone|integrated_device|aketon|oriron_cluster|polyester_pack|sugar_pack|orirock_cluster|loxic_kohl|rma70\-12|incandescent_alloy|coagulating_gel)\b/,
+                  caseInsensitive: true,
+                  token: "material_t3"
+                },
+                {
+                  regex: /\b(device|polyketon|polyester|sugar|orirock_cube)\b/,
+                  caseInsensitive: true,
+                  token: "material_t2"
+                },
+                {
+                  regex: /\b(ester|damaged_device|oriron_shard|orirock|sugar_substitute|diketon)\b/,
+                  caseInsensitive: true,
+                  token: "material_t1"
+                },
+                {
+                  regex: /\b(oriron)\b/,
+                  caseInsensitive: true,
+                  token: "material_t2"
+                }
+            ]
+        };
+    };
+
+    oop.inherits(CustomHighlightRules, TextHighlightRules);
+
+    var Mode = function() {
+        this.HighlightRules = CustomHighlightRules;
+    };
+    oop.inherits(Mode,TextMode);
+
+    (function() {
+        this.$id = "ace/mode/custom";
+    }).call(Mode.prototype);
+
+    editor.session.setMode(new Mode);
+    // end highlight rules
+
+    var expandMap = {
+        bipolar_nanoflake: {
+            'optimized_device': 1,
+            'white_horse_kohl': 2
+        },
+        polymerization_preparation: {
+            'orirock_concentration': 1,
+            'oriron_block': 1,
+            'keton_colloid': 1
+        },
+        d32_steel: {
+            'RMA70-24': 1,
+            'grindstone_pentahydrate': 1,
+            'manganese_trihydrate': 1
+        },
+        incandescent_alloy_block: {
+            integrated_device: 1,
+            grindstone: 1,
+            incandescent_alloy: 1
+        },
+        polymerized_gel: {
+            oriron_cluster: 1,
+            coagulating_gel: 1,
+            incandescent_alloy: 1
+        },
+        'RMA70-24': {
+            'RMA70-12': 1,
+            orirock_cluster: 2,
+            aketon: 1
+        },
+        grindstone_pentahydrate: {
+            grindstone: 1,
+            oriron_cluster: 1,
+            integrated_device: 1
+        },
+        manganese_trihydrate: {
+            manganese_ore: 2,
+            polyester_pack: 1,
+            loxic_kohl: 1
+        },
+        white_horse_kohl: {
+            loxic_kohl: 2,
+            sugar_pack: 1,
+            'RMA70-12': 1
+        },
+        keton_colloid: {
+            aketon: 2,
+            sugar_pack: 1,
+            manganese_ore: 1
+        },
+        optimized_device: {
+            integrated_device: 1,
+            orirock_cluster: 2,
+            grindstone: 1
+        },
+        oriron_block: {
+            oriron_cluster: 2,
+            integrated_device: 1,
+            polyester_pack: 1
+        },
+        polyester_lump: {
+            polyester_pack: 2,
+            aketon: 1,
+            loxic_kohl: 1
+        },
+        sugar_lump: {
+            sugar_pack: 2,
+            oriron_cluster: 1,
+            manganese_ore: 1
+        },
+        orirock_concentration: {
+            orirock_cluster: 4
+        }
+    };
+
     function parseText() {
         storage.setItem(storageKey, editor.session.getValue());
 
@@ -35,6 +175,8 @@ angular.module('app', [])
         editor.session.doc.$lines.forEach((line) => longestLineLength = Math.max(line.length, longestLineLength));
         editor.session.doc.$lines.forEach((line, i) => {
             var quantity = getQuantityFromString(line);
+            var item = line.trim().split(' ')[1];
+            var whitespacePrefix = line.match(/^\s*/)[0];
 
             // add checkbox
             var newCheckBox = document.createElement('div');
@@ -82,6 +224,20 @@ angular.module('app', [])
             newMinus.onclick = () => clickQtyChange(newCheckBox, line, i, -1);
             addScrollOverride(newMinus);
             document.querySelector('.ak-container').appendChild(newMinus);
+
+            var newExpandBtn = document.createElement('div');
+            newExpandBtn.innerHTML = '[sub]';
+            newExpandBtn.classList.add('akchecklist');
+            newExpandBtn.classList.add('akchecklist-checkbox');
+            newExpandBtn.classList.add('ace-dracula');
+            newExpandBtn.style.top = lineHeight * i + 'px';
+            newExpandBtn.style.left = 60 + 95 + longestLineLength * charWidth + 'px';
+            if (!expandMap[item]) {
+                newExpandBtn.classList.add('invisible');
+            }
+            newExpandBtn.onclick = () => expandSubmaterials(i, item, quantity, whitespacePrefix);
+            addScrollOverride(newExpandBtn);
+            document.querySelector('.ak-container').appendChild(newExpandBtn);
         });
     }
 
@@ -179,6 +335,19 @@ angular.module('app', [])
             e.preventDefault();
             editor.session.setScrollTop(editor.session.getScrollTop() + e.deltaY);
         }, { passive: false });
+    }
+
+    function expandSubmaterials(lineIndex, item, quantity, whitespacePrefix) {
+        var stringToInsert = '';
+        for (var submaterial in expandMap[item]) {
+            var requiredQuantity = expandMap[item][submaterial];
+            stringToInsert += `${whitespacePrefix}${' '.repeat(tabSize)}${quantity.current*requiredQuantity || 0}/${quantity.goal*requiredQuantity} ${submaterial}\n`;
+        }
+        editor.session.insert({
+            row: lineIndex + 1,
+            column: 0
+        }, stringToInsert);
+        editor.focus();
     }
 });
 
