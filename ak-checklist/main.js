@@ -133,7 +133,7 @@ angular.module('app', [])
             loxic_kohl: 1
         },
         white_horse_kohl: {
-            loxic_kohl: 2,
+            loxic_kohl: 1,
             sugar_pack: 1,
             'RMA70-12': 1
         },
