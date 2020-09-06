@@ -7,6 +7,8 @@ angular.module('app', [])
     var storage = window.localStorage;
     var storageKey = 'freeText';
 
+    var checkboxElements = [];
+
     var editor = ace.edit('editor');
     editor.setOption('showGutter', false);
     editor.setOption('showPrintMargin', false);
@@ -90,6 +92,7 @@ angular.module('app', [])
     }).call(Mode.prototype);
 
     editor.session.setMode(new Mode);
+    editor.setOption('fontSize', 14);
     // end highlight rules
 
     var expandMap = {
@@ -170,75 +173,70 @@ angular.module('app', [])
     function parseText() {
         storage.setItem(storageKey, editor.session.getValue());
 
-        document.querySelectorAll('.akchecklist').forEach((node) => node.remove());
         var longestLineLength = 0;
-        editor.session.doc.$lines.forEach((line) => longestLineLength = Math.max(line.length, longestLineLength));
-        editor.session.doc.$lines.forEach((line, i) => {
+        var t0 = performance.now();
+        var lines = editor.session.doc.$lines;
+        adjustCheckboxElements(lines);
+
+        lines.forEach((line) => longestLineLength = Math.max(line.length, longestLineLength));
+        lines.forEach((line, i) => {
             var quantity = getQuantityFromString(line);
             var item = line.trim().split(' ')[1];
             var whitespacePrefix = line.match(/^\s*/)[0];
 
-            // add checkbox
-            var newCheckBox = document.createElement('div');
+            var nextLine = i < lines.length - 1 ? lines[i + 1] : null;
+            var isExpanded = nextLine != null && nextLine.match(/^\s*/)[0].length > whitespacePrefix.length;
+
+            var checkbox = checkboxElements[i].checkbox;
             var checkState = getCheckState(quantity);
-            newCheckBox.innerHTML = checkState ? '[x]' : '[ ]';
-            newCheckBox.classList.add('akchecklist');
-            newCheckBox.classList.add('akchecklist-checkbox');
-            newCheckBox.classList.add('ace-dracula');
+            var newInnerHtml = checkState ? '[x]' : '[ ]';
+            if (checkbox.innerHTML != newInnerHtml) checkbox.innerHTML = newInnerHtml;
+            checkbox.classList.remove('done', 'in-progress', 'invisible');
             if (checkState) {
-                newCheckBox.classList.add('done');
+                checkbox.classList.add('done');
             }
             else if (quantity.current && quantity.current > 0) {
-                newCheckBox.classList.add('in-progress');
+                checkbox.classList.add('in-progress');
             }
             if (line.trim().length === 0) {
-                newCheckBox.classList.add('invisible');
+                checkbox.classList.add('invisible');
             }
-            newCheckBox.style.top = lineHeight * i + 'px';
-            newCheckBox.style.left = '30px';
-            newCheckBox.onclick = () => clickCheck(newCheckBox, line, i);
-            addScrollOverride(newCheckBox);
-            document.querySelector('.ak-container').appendChild(newCheckBox);
+            var newTop = lineHeight * i + 'px';
+            var newLeft = '30px';
+            if (checkbox.style.top != newTop) checkbox.style.top = newTop;
+            if (checkbox.style.left != newLeft) checkbox.style.left = newLeft;
+            checkbox.onclick = () => clickCheck(checkbox, line, i);
 
-            if (!quantity.goal) return;
+            var newPlus = checkboxElements[i].plus;
+            newPlus.classList.add('invisible');
+            if (quantity.goal) newPlus.classList.remove('invisible');
+            newLeft = 60 + 45 + longestLineLength * charWidth + 'px';
+            if (newPlus.style.top != newTop) newPlus.style.top = newTop;
+            if (newPlus.style.left != newLeft) newPlus.style.left = newLeft;
+            newPlus.onclick = () => clickQtyChange(checkbox, line, i, 1);
 
-            // add right side buttons
-            var newPlus = document.createElement('div');
-            newPlus.innerHTML = '[+]';
-            newPlus.classList.add('akchecklist');
-            newPlus.classList.add('akchecklist-checkbox');
-            newPlus.classList.add('ace-dracula');
-            newPlus.style.top = lineHeight * i + 'px';
-            newPlus.style.left = 60 + 45 + longestLineLength * charWidth + 'px';
-            newPlus.onclick = () => clickQtyChange(newCheckBox, line, i, 1);
-            addScrollOverride(newPlus);
-            document.querySelector('.ak-container').appendChild(newPlus);
-
-            var newMinus = document.createElement('div');
-            newMinus.innerHTML = '[-]';
-            newMinus.classList.add('akchecklist');
-            newMinus.classList.add('akchecklist-checkbox');
-            newMinus.classList.add('ace-dracula');
-            newMinus.style.top = lineHeight * i + 'px';
+            var newMinus = checkboxElements[i].minus;
+            newMinus.classList.add('invisible');
+            if (quantity.goal) newMinus.classList.remove('invisible');
+            newLeft = 60 + 70 + longestLineLength * charWidth + 'px';
             newMinus.style.left = 60 + 70 + longestLineLength * charWidth + 'px';
-            newMinus.onclick = () => clickQtyChange(newCheckBox, line, i, -1);
-            addScrollOverride(newMinus);
-            document.querySelector('.ak-container').appendChild(newMinus);
+            if (newMinus.style.top != newTop) newMinus.style.top = newTop;
+            if (newMinus.style.left != newLeft) newMinus.style.left = newLeft;
+            newMinus.onclick = () => clickQtyChange(checkbox, line, i, -1);
 
-            var newExpandBtn = document.createElement('div');
-            newExpandBtn.innerHTML = '[sub]';
-            newExpandBtn.classList.add('akchecklist');
-            newExpandBtn.classList.add('akchecklist-checkbox');
-            newExpandBtn.classList.add('ace-dracula');
-            newExpandBtn.style.top = lineHeight * i + 'px';
+            var newExpandBtn = checkboxElements[i].expandBtn;
+            newInnerHtml = isExpanded ? '[shrink]' : '[expand]';
+            if (newExpandBtn.innerHTML != newInnerHtml) newExpandBtn.innerHTML = newInnerHtml;
+            newLeft = 60 + 95 + longestLineLength * charWidth + 'px';
             newExpandBtn.style.left = 60 + 95 + longestLineLength * charWidth + 'px';
-            if (!expandMap[item]) {
-                newExpandBtn.classList.add('invisible');
-            }
-            newExpandBtn.onclick = () => expandSubmaterials(i, item, quantity, whitespacePrefix);
-            addScrollOverride(newExpandBtn);
-            document.querySelector('.ak-container').appendChild(newExpandBtn);
+            if (newExpandBtn.style.top != newTop) newExpandBtn.style.top = newTop;
+            if (newExpandBtn.style.left != newLeft) newExpandBtn.style.left = newLeft;
+            newExpandBtn.classList.add('invisible');
+            if (isExpanded || expandMap[item]) newExpandBtn.classList.remove('invisible');
+            newExpandBtn.onclick = !isExpanded ? (() => expandSubmaterials(i, item, quantity, whitespacePrefix)) : (() => shrinkLine(i, line, whitespacePrefix));
         });
+        var t1 = performance.now();
+        console.log('refresh took ' + (t1 - t0) + 'ms');
     }
 
     function getQuantityFromString(line) {
@@ -348,6 +346,70 @@ angular.module('app', [])
             column: 0
         }, stringToInsert);
         editor.focus();
+    }
+
+    function shrinkLine(i, line, whitespacePrefix) {
+        var lines = editor.session.doc.$lines;
+        var line;
+        var prefix;
+        var linesToDelete = [];
+        for (++i; true; i++) {
+            line = lines[i];
+            prefix = line.match(/^\s*/)[0];
+            if (prefix.length > whitespacePrefix.length) {
+                linesToDelete.push(i);
+            }
+            else {
+                break;
+            }
+        }
+        editor.session.remove({
+            start: { row: linesToDelete[0], column: 0 },
+            end: { row: linesToDelete.pop() + 1, column: 0 }
+        });
+    }
+
+    function adjustCheckboxElements(lines) {
+        var diff = Math.abs(lines.length - checkboxElements.length);
+        if (lines.length > checkboxElements.length) {
+            while (lines.length > checkboxElements.length) {
+                var newCheckBox = document.createElement('div');
+                var newPlus = document.createElement('div');
+                var newMinus = document.createElement('div');
+                var newExpandBtn = document.createElement('div');
+                newCheckBox.classList.add('akchecklist', 'akchecklist-checkbox', 'ace-dracula');
+                newPlus.classList.add('akchecklist', 'akchecklist-checkbox', 'ace-dracula');
+                newPlus.innerHTML = '[+]';
+                newMinus.classList.add('akchecklist', 'akchecklist-checkbox', 'ace-dracula');
+                newMinus.innerHTML = '[-]';
+                newExpandBtn.classList.add('akchecklist', 'akchecklist-checkbox', 'ace-dracula');
+                document.querySelector('.ak-container').appendChild(newCheckBox);
+                document.querySelector('.ak-container').appendChild(newPlus);
+                document.querySelector('.ak-container').appendChild(newMinus);
+                document.querySelector('.ak-container').appendChild(newExpandBtn);
+                addScrollOverride(newCheckBox);
+                addScrollOverride(newPlus);
+                addScrollOverride(newMinus);
+                addScrollOverride(newExpandBtn);
+                checkboxElements.push({
+                    checkbox: newCheckBox,
+                    plus: newPlus,
+                    minus: newMinus,
+                    expandBtn: newExpandBtn
+                });
+            }
+            console.log('added ' + diff + ' lines', checkboxElements.length);
+        }
+        if (lines.length < checkboxElements.length) {
+            while (lines.length < checkboxElements.length) {
+                var elementMap = checkboxElements.pop();
+                elementMap.checkbox.remove();
+                elementMap.plus.remove();
+                elementMap.minus.remove();
+                elementMap.expandBtn.remove();
+            }
+            console.log('removed ' + diff + ' lines', checkboxElements.length);
+        }
     }
 });
 
