@@ -52,6 +52,7 @@ angular.module('app', [])
         'Diablos': 'monster_icons/MHW-Diablos_Icon.png',
         'Dodogama': 'monster_icons/MHW-Dodogama_Icon.png',
         'Ebony Odogaron': 'monster_icons/MHWI-Ebony_Odogaron_Icon.png',
+        'Fatalis': 'monster_icons/MHWI-Fatalis_Icon.png',
         'Frostfang Barioth': 'monster_icons/MHWI-Frostfang_Barioth_Icon.png',
         'Fulgur Anjanath': 'monster_icons/MHWI-Fulgur_Anjanath_Icon.png',
         'Furious Rajang': 'monster_icons/MHWI-Furious_Rajang_Icon.png',

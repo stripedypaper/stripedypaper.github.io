@@ -167,6 +167,9 @@ angular.module('app', [])
         },
         orirock_concentration: {
             orirock_cluster: 4
+        },
+        orirock_cluster: {
+            orirock_cube: 5
         }
     };
 
