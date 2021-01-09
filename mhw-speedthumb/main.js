@@ -33,6 +33,7 @@ angular.module('app', [])
     });
     vm.monsters = Object.freeze({
         'None': null,
+        'MHW': -1,
         'Acidic Glavenus': 'monster_icons/MHWI-Acidic_Glavenus_Icon.png',
         'Alatreon': 'monster_icons/MHWI-Alatreon_Icon.png',
         'Ancient Leshen': 'monster_icons/MHW-Ancient_Leshen_Icon.png',
@@ -103,6 +104,12 @@ angular.module('app', [])
         'Yian Garuga': 'monster_icons/MHWI-Yian_Garuga_Icon.png',
         'Zinogre': 'monster_icons/MHWI-Zinogre_Icon.png',
         'Zorah Magdaros': 'monster_icons/MHW-Zorah_Magdaros_Icon.png',
+        'MHR': -1,
+        'Arzuros': 'monster_icons/MHRise-Arzuros_Icon.png',
+        'Great Izuchi': 'monster_icons/MHRise-Great_Izuchi_Icon.png',
+        'Mizutsune': 'monster_icons/MHRise-Mizutsune_Icon.png',
+        'Rathian (MHR)': 'monster_icons/MHRise-Rathian_Icon.png',
+        'Other': -1,
         '???': 'monster_icons/q.png'
     });
     vm.fonts = Object.freeze({
@@ -140,8 +147,8 @@ angular.module('app', [])
 
     vm.selectedWeapon = _.assign({}, _.times(5, _.constant(_.keys(vm.weapons)[0])));
     vm.selectedWeaponElement = _.assign({}, _.times(4, _.constant("None")));
-    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[20])));
-    vm.selectedRunCategory = '1';
+    vm.selectedMonster = _.assign({}, _.times(5, _.constant(_.keys(vm.monsters)[75])));
+    vm.selectedRunCategory = '0';
     vm.selectedBgType = '1';
     vm.selectedTimeColorType = '1';
     vm.selectedCatColor = '1';
@@ -200,13 +207,25 @@ angular.module('app', [])
         var curIndex = _.findIndex(_.keys(optionList), function(o) {
             return o == vm[selected][key];
         });
-        vm[selected][key] = _.keys(optionList)[Math.max(0, curIndex - 1)];
+        var newIndex = Math.max(0, curIndex - 1);
+        var v = _.values(optionList)[newIndex];
+        if (v == -1) {
+            newIndex--;
+        }
+        vm[selected][key] = _.keys(optionList)[newIndex];
+        window.index = newIndex;
     }
     vm.next2 = function(selected, key, optionList) {
         var curIndex = _.findIndex(_.keys(optionList), function(o) {
             return o == vm[selected][key];
         });
-        vm[selected][key] = _.keys(optionList)[Math.min(_.keys(optionList).length - 1, curIndex + 1)];
+        var newIndex = Math.min(_.keys(optionList).length - 1, curIndex + 1);
+        var v = _.values(optionList)[newIndex];
+        if (v == -1) {
+            newIndex++;
+        }
+        vm[selected][key] = _.keys(optionList)[newIndex];
+        window.index = newIndex;
     }
 
     vm.getBgStyle = function() {

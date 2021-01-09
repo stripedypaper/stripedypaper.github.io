@@ -1,5 +1,5 @@
 <head>
-    <title>MHW Speedrun Thumbnail Generator</title>
+    <title>MHW/MHR Speedrun Thumbnail Generator</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
     <script src="huebee.pkgd.min.js"></script>
     <script src="jquery.min.js"></script>
@@ -13,7 +13,7 @@
 </head>
 <body ng-app="app" ng-controller="MyController as vm" id="">
     <div class="flexv thing">
-        <div class="header">MHW Speedrun Thumbnail Generator</div>
+        <div class="header">MHW/MHR Speedrun Thumbnail Generator</div>
         <div class="spacer"></div>
         <div class="canvas-outside">
             <div id="canvas-inside" class="canvas-inside" ng-class="'canvas-inside-' + vm.selectedLayout" ng-style="vm.getBgStyle()">
@@ -86,7 +86,7 @@
                 <div>Monster {{i+1}}</div>
                 <div class="hspacersm"></div>
                 <select class="select" ng-model="vm.selectedMonster[i]">
-                    <option ng-repeat="(key, value) in vm.monsters" value="{{key}}">{{key}}</option>
+                    <option ng-repeat="(key, value) in vm.monsters" ng-disabled="value == -1" value="{{key}}">{{key}}</option>
                 </select>
                 <div class="hspacerxsm"></div>
                 <button ng-click="vm.prev2('selectedMonster', i, vm.monsters)"><</button>
