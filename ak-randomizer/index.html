@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Arknights Randomizer</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+    <script src="jquery.min.js"></script>
+    <script src="lodash.js"></script>
+    <script src="main.js"></script>
+    <link href="styles.css" rel="stylesheet"></link>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+</head>
+<body ng-app="app" ng-controller="MyController as vm" id="">
+    <div ng-if="vm.isLoading">Loading</div>
+    <div ng-if="!vm.isLoading">
+        <div class="block">
+            <h3>Random Stage</h3>
+            <div class="block">
+                <button type="button" class="btn btn-primary" ng-click="vm.randomize_stage()">Pick Stage</button>
+            </div>
+            <div>
+                <div ng-if="vm.result.stage">
+                    {{vm.result.stage.code}}
+                </div>
+            </div>
+        </div>
+        <div class="block">
+            <h3>Random Operator</h3>
+            <div class="block">
+                <div ng-repeat="(option_name, option_value) in vm.options">
+                    <div>{{option_name}}</div>
+                    <input type="number" ng-model="vm.options[option_name]"></input>
+                </div>
+            </div>
+            <div class="block">
+                <button type="button" class="btn btn-primary" ng-click="vm.randomize()">Pick Operators</button>
+            </div>
+            <div>
+                <div ng-if="vm.result.operators">
+                    <div ng-repeat="operator in vm.result.operators">
+                        {{operator.long_name}}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="block" ng-repeat="rarity in vm.rarities">
+            <h3>{{rarity}} star</h3>
+            <div class="operatorlist">
+                <div class="operator" ng-repeat="character in vm.characters[rarity - 1]">
+                    <input type="checkbox" ng-model="character.enabled" ng-attr-id="{{character.name}}"></input>
+                    <label ng-attr-for="{{character.name}}" class="charname">{{character.name}}</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+.charname {
+    display: inline-block;
+}
+
+body {
+    padding: 15px;
+}
+
+.rarityblock {
+    padding-bottom: 25px;
+}
+
+.operatorlist {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.operator {
+    width: 200px;
+}
+
+.block {
+    padding-bottom:15px;
+}

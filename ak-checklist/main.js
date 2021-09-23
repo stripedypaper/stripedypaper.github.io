@@ -47,17 +47,17 @@ angular.module('app', [])
             ],
             otherRules: [
                 {
-                  regex: /\b(polymerization_preparation|bipolar_nanoflake|d32_steel)\b/,
+                  regex: /\b(polymerization_preparation|bipolar_nanoflake|d32_steel|crystal_electronic_unit)\b/,
                   caseInsensitive: true,
                   token: "material_t5"
                 },
                 {
-                  regex: /\b(chip_catalyst|[a-zA-Z]+_chip_pack|rma70\-24|grindstone_pentahydrate|manganese_trihydrate|white_horse_kohl|optimized_device|keton_colloid|oriron_block|polyester_lump|sugar_lump|orirock_concentration|polymerized_gel|incandescent_alloy_block)\b/,
+                  regex: /\b(chip_catalyst|[a-zA-Z]+_chip_pack|rma70\-24|grindstone_pentahydrate|manganese_trihydrate|white_horse_kohl|optimized_device|keton_colloid|oriron_block|polyester_lump|sugar_lump|orirock_concentration|polymerized_gel|incandescent_alloy_block|crystal_circuit)\b/,
                   caseInsensitive: true,
                   token: "material_t4"
                 },
                 {
-                  regex: /\b([a-zA-Z]+_chip|manganese_ore|grindstone|integrated_device|aketon|oriron_cluster|polyester_pack|sugar_pack|orirock_cluster|loxic_kohl|rma70\-12|incandescent_alloy|coagulating_gel)\b/,
+                  regex: /\b([a-zA-Z]+_chip|manganese_ore|grindstone|integrated_device|aketon|oriron_cluster|polyester_pack|sugar_pack|orirock_cluster|loxic_kohl|rma70\-12|incandescent_alloy|coagulating_gel|crystal_element)\b/,
                   caseInsensitive: true,
                   token: "material_t3"
                 },
@@ -109,6 +109,16 @@ angular.module('app', [])
             'RMA70-24': 1,
             'grindstone_pentahydrate': 1,
             'manganese_trihydrate': 1
+        },
+        crystal_electronic_unit: {
+            crystal_circuit: 1,
+            polymerized_gel: 2,
+            incandescent_alloy_block: 1
+        },
+        crystal_circuit: {
+            crystal_element: 2,
+            coagulating_gel: 1,
+            incandescent_alloy: 1
         },
         incandescent_alloy_block: {
             integrated_device: 1,
@@ -175,6 +185,7 @@ angular.module('app', [])
 
     function parseText() {
         storage.setItem(storageKey, editor.session.getValue());
+        storage.setItem(storageKey + " " + (new Date()).getDate(), editor.session.getValue());
 
         var longestLineLength = 0;
         var t0 = performance.now();
