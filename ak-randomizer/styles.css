@@ -22,3 +22,24 @@ body {
 .block {
     padding-bottom:15px;
 }
+
+.card {
+    padding: 15px;
+}
+
+.mb {
+    margin-bottom: 15px;
+}
+
+.flexh {
+    display: flex;
+    flex-direction: row;
+}
+
+.flexh > * {
+    margin-left: 15px;
+}
+
+.flexh > *:nth-child(1) {
+    margin-left: 0;
+}

@@ -1,47 +1,91 @@
 angular.module('app', [])
-.controller('MyController', function($scope, $timeout) {
+.controller('MyController', function($scope, $timeout, $interval) {
     var vm = this;
 
     vm.isLoading = true;
 
     characters = null;
     stages = null;
+    zones = null;
 
     vm.characters = {}
     vm.rarities = [6, 5, 4, 3, 2, 1];
     vm.result = {}
-    vm.randomize = randomize;
-    vm.toggle_operator = toggle_operator;
-    vm.randomize_stage = randomize_stage;
+    vm.showOptions = false;
 
     var storage = window.localStorage;
 
-    allowed_zones = {
-        'main_5': true,
-        'main_6': true,
-        'main_8': true,
-        'main_7': true
-        //'main_4': true
+    vm.options = {
+        'Max 6 stars': [2, 0, 12],
+        'Operators': [12, 1, 12]
+    };
+    vm.stageoptions = {
+        'Number of stages': [1, 1, 12]
     };
 
-    vm.options = {
-        'Max 6 stars': 2,
-        'Operators': 12
-    };
+    default_zones = {'main_5':true, 'main_6':true, 'main_7':true, 'main_8':true, 'camp_zone_1':true, 'camp_zone_3':true, 'camp_zone_4':true};
+
+    function getDangerLevelNum(dangerLevel) {
+        if (dangerLevel == '-') {
+            return 999;
+        }
+        else if (dangerLevel[0] == 'L') {
+            return Number(dangerLevel.split('.')[1])
+        }
+        else if (dangerLevel[6] == '1') {
+            return 100 + Number(dangerLevel.split('.')[1])
+        }
+        else {
+            return 200 + Number(dangerLevel.split('.')[1])
+        }
+    }
 
     function init() {
+        $interval(save, 5000);
+
         return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/character_table.json", function(json) {
             characters = json;
         })
         .then(function() {
             return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/stage_table.json", function(json) {
                 stages = json;
+                stages.stages = _.filter(stages.stages, function(stage) {
+                    if (default_zones[stage.zoneId] && stage.stageType == 'ACTIVITY') {
+                        return false;
+                    }
+                    return stage.difficulty == 'NORMAL' && stage.canBattleReplay == true;
+                });
+                _.each(stages.stages, function(stage) {
+                    stage.dangerLevelNum = getDangerLevelNum(stage.dangerLevel);
+                })
             })
         })
         .then(function() {
-            console.log(characters, stages);
+            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/zone_table.json", function(json) {
+                zones = json;
+            })
+        })
+        .then(function() {
+            console.log(characters, stages, zones);
             vm.isLoading = false;
         })
+    }
+
+    function save() {
+        var enabled_operators = _.filter(characters, 'enabled');
+        var enabled_map = {};
+        _.each(enabled_operators, function(operator) {
+            enabled_map[operator.name] = true;
+        });
+        storage.setItem('enabled_operators', JSON.stringify(enabled_map));
+
+        var enabled_stages = _.filter(stages.stages, 'enabled');
+        var enabled_stage_map = {};
+        _.each(enabled_stages, function(stage) {
+            enabled_stage_map[stage.stageId] = true;
+        });
+        storage.setItem('enabled_stages', JSON.stringify(enabled_stage_map));
+        console.log("saved", enabled_map, enabled_stages);
     }
 
     init()
@@ -59,6 +103,13 @@ angular.module('app', [])
             console.log("you messed up", storage.getItem('enabled_operators'));
         }
 
+        enabled_stages = undefined;
+        try {
+            enabled_stages = JSON.parse(storage.getItem('enabled_stages'));
+        } catch(e) {
+            console.log("you messed up", storage.getItem('enabled_stages'));
+        }
+
         _.each(characters, function(value, key) {
             if (!value.isNotObtainable && value.profession != 'TRAP' && value.profession != 'TOKEN') {
                 if (enabled_operators != undefined) {
@@ -74,35 +125,36 @@ angular.module('app', [])
 
         });
 
+        console.log(enabled_stages);
+        _.each(stages.stages, function(stage) {
+            if (enabled_stages != undefined) {
+                stage.enabled = !!enabled_stages[stage.stageId];
+            }
+            else {
+                stage.enabled = !!default_zones[stage.zoneId] && stage.stageType != 'ACTIVITY';
+            }
+        });
+
+        vm.stages = _.groupBy(stages.stages, function(stage) {
+            return stage.zoneId;
+        });
+
         for (var i = 0; i <= 5; i++) {
             vm.characters[i] = _.sortBy(vm.characters[i], 'name');
         }
 
-        console.log(vm.characters);
+        console.log(vm.characters, vm.stages);
 
         $scope.$digest();
     });
 
-    function toggle_operator(operator) {
-        operator.enabled = !operator.enabled;
+    vm.randomize_stage = function() {
+        var s = _.filter(stages.stages, 'enabled');
+
+        vm.result.stages = _.sortBy(_.shuffle(s).slice(0, vm.stageoptions['Number of stages'][0]), ['code', 'dangerLevelNum']);
     }
 
-    function isvalid() {
-
-    }
-
-    function randomize_stage() {
-        var s = _.filter(stages.stages, function(stage) {
-            return (stage.stageType == 'MAIN' || stage.stageType == 'SUB') && stage.difficulty == 'NORMAL' && stage.canPractice == true && stage.isStoryOnly == false && allowed_zones[stage.zoneId];
-        });
-
-        //console.log(stages, s);
-
-        vm.result.stage = _.shuffle(s)[0];
-        //console.log(vm.result.stage)
-    }
-
-    function randomize() {
+    vm.randomize = function() {
         var enabled_operators = _.filter(characters, 'enabled');
 
         var scramble = _.shuffle(enabled_operators);
@@ -110,8 +162,8 @@ angular.module('app', [])
         var six_stars = 0
 
         var i = 0;
-        while (result.length < Math.min(enabled_operators.length, vm.options['Operators'])) {
-            if (six_stars >= vm.options['Max 6 stars'] && scramble[i].rarity == 5) {
+        while (result.length < Math.min(enabled_operators.length, vm.options['Operators'][0])) {
+            if (six_stars >= vm.options['Max 6 stars'][0] && scramble[i].rarity == 5) {
                 i++;
                 continue;
             }
@@ -126,12 +178,35 @@ angular.module('app', [])
             return -a.rarity;
         });
         vm.result.operators = result;
+    }
 
-        var enabled_map = {};
-        _.each(enabled_operators, function(operator) {
-            enabled_map[operator.name] = true;
-        });
-        storage.setItem('enabled_operators', JSON.stringify(enabled_map));
+    vm.toggleconfig = function() {
+        vm.showOptions = !vm.showOptions;
+    }
+
+    vm.selectOps = function(enable, rarity) {
+        _.each(vm.characters[rarity], function(char) {
+            char.enabled = enable;
+        })
+    }
+
+    vm.selectStages = function(enable, zoneId) {
+        _.each(vm.stages[zoneId], function(stage) {
+            stage.enabled = enable;
+        })
+    }
+
+    vm.getZoneName = function(zoneId) {
+        var r = '';
+        var zoneInfo = zones.zones[zoneId];
+        return zoneInfo.zoneNameFirst || zoneInfo.zoneNameSecond || 'Annihilation';
+    }
+
+    vm.getStageName = function(stage) {
+        if (stage.zoneId.slice(0, 4) == 'camp') {
+            return stage.name;
+        }
+        return stage.code;
     }
 });
 

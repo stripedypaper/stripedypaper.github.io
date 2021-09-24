@@ -15,11 +15,19 @@
         <div class="block">
             <h3>Random Stage</h3>
             <div class="block">
+                <div ng-repeat="(option_name, option_value) in vm.stageoptions">
+                    <div>{{option_name}}</div>
+                    <input type="number" ng-model="vm.stageoptions[option_name][0]" step=1 ng-attr-min="{{option_value[1]}}" ng-attr-max="{{option_value[2]}}"></input>
+                </div>
+            </div>
+            <div class="block">
                 <button type="button" class="btn btn-primary" ng-click="vm.randomize_stage()">Pick Stage</button>
             </div>
             <div>
-                <div ng-if="vm.result.stage">
-                    {{vm.result.stage.code}}
+                <div ng-if="vm.result.stages">
+                    <div ng-repeat="stage in vm.result.stages">
+                        {{vm.getStageName(stage)}}
+                    </div>
                 </div>
             </div>
         </div>
@@ -28,7 +36,7 @@
             <div class="block">
                 <div ng-repeat="(option_name, option_value) in vm.options">
                     <div>{{option_name}}</div>
-                    <input type="number" ng-model="vm.options[option_name]"></input>
+                    <input type="number" ng-model="vm.options[option_name][0]" step=1 ng-attr-min="{{option_value[1]}}" ng-attr-max="{{option_value[2]}}"></input>
                 </div>
             </div>
             <div class="block">
@@ -42,12 +50,39 @@
                 </div>
             </div>
         </div>
-        <div class="block" ng-repeat="rarity in vm.rarities">
-            <h3>{{rarity}} star</h3>
-            <div class="operatorlist">
-                <div class="operator" ng-repeat="character in vm.characters[rarity - 1]">
-                    <input type="checkbox" ng-model="character.enabled" ng-attr-id="{{character.name}}"></input>
-                    <label ng-attr-for="{{character.name}}" class="charname">{{character.name}}</label>
+
+        <button type="button" class="btn btn-secondary mb" ng-click="vm.toggleconfig()">Configuration</button>
+        <div class="card" ng-show="vm.showOptions">
+            <div class="block">
+                <h3 class="block">Operators</h3>
+                <div class="block" ng-repeat="rarity in vm.rarities">
+                    <div class="flexh block">
+                        <h4>{{rarity}} star</h4>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(true, rarity-1)">All</button>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(false, rarity-1)">None</button>
+                    </div>
+                    <div class="operatorlist">
+                        <div class="operator" ng-repeat="character in vm.characters[rarity - 1]">
+                            <input type="checkbox" ng-model="character.enabled" ng-attr-id="{{character.name}}"></input>
+                            <label ng-attr-for="{{character.name}}" class="charname">{{character.name}}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="block">
+                <h3 class="block">Stages</h3>
+                <div class="block" ng-repeat="(zoneId, stages) in vm.stages">
+                    <div class="flexh block">
+                        <h4>{{vm.getZoneName(zoneId)}}</h4>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(true, zoneId)">All</button>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(false, zoneId)">None</button>
+                    </div>
+                    <div class="operatorlist">
+                        <div class="operator" ng-repeat="stage in vm.stages[zoneId]">
+                            <input type="checkbox" ng-model="stage.enabled" ng-attr-id="{{stage.stageId}}"></input>
+                            <label ng-attr-for="{{stage.stageId}}" class="charname">{{vm.getStageName(stage)}}</label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
