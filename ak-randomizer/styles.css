@@ -47,3 +47,11 @@ body {
 .form-select {
     width: auto !important;
 }
+
+.flex1 {
+    flex: 1;
+}
+
+.flex0 {
+    flex: 0;
+}

@@ -3,21 +3,34 @@
 <head>
     <title>Arknights Randomizer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular-route.min.js"></script>
     <script src="jquery.min.js"></script>
     <script src="lodash.js"></script>
     <script src="main.js"></script>
     <link href="styles.css" rel="stylesheet"></link>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <base href="/ak-randomizer">
 </head>
 <body ng-app="app" ng-controller="MyController as vm" id="">
     <div ng-if="vm.isLoading">Loading</div>
     <div ng-if="!vm.isLoading">
-        <div class="block">
-            <select class="form-select" ng-model="vm.mode">
-                <option value="0" selected>No restrictions</option>
-                <option value="1">Highlander</option>
-                <option value="2">All for one</option>
-            </select>
+        <div class="flexh">
+            <div class="block">
+                <select class="form-select" ng-model="vm.mode">
+                    <option value="0" selected>No restrictions</option>
+                    <option value="1">Highlander</option>
+                    <option value="2">All for one</option>
+                </select>
+            </div>
+            <div class="flex1"></div>
+            <div class="block">
+                <select class="form-select" ng-change="vm.selectlanguage()" ng-model="vm.lang">
+                    <option value="en_US">English</option>
+                    <option value="ja_JP">日本語</option>
+                    <option value="ko_KR">한국어</option>
+                    <option value="zh_CN">中文</option>
+                </select>
+            </div>
         </div>
         <div class="block" ng-if="vm.mode=='1'">
             Highlander: exactly one of each class. At most 8 operators in total will be picked.
@@ -101,5 +114,6 @@
         </div>
     </div>
 </div>
+<div>Tweet suggestions or bugs to <a target="blank" href="https://twitter.com/boardwalkhotel_">@boardwalkhotel_</a></div>
 </body>
 </html>

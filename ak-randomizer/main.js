@@ -1,5 +1,8 @@
-angular.module('app', [])
-.controller('MyController', function($scope, $timeout, $interval) {
+angular.module('app', ['ngRoute'])
+.config(function($locationProvider) {
+    $locationProvider.html5Mode(true);
+})
+.controller('MyController', function($scope, $timeout, $interval, $location, $window) {
     var vm = this;
 
     vm.isLoading = true;
@@ -8,11 +11,17 @@ angular.module('app', [])
     stages = null;
     zones = null;
 
+    allowed_languages = {'en_US':true, 'ja_JP':true, 'ko_KR':true, 'zh_CN':true};
+
     vm.characters = {}
     vm.rarities = [6, 5, 4, 3, 2, 1];
     vm.result = {}
     vm.showOptions = false;
     vm.mode = '0';
+    vm.lang = 'en_US';
+    if ($location.search().lang && allowed_languages[$location.search().lang]) {
+        vm.lang = $location.search().lang;
+    }
 
     var storage = window.localStorage;
 
@@ -44,16 +53,16 @@ angular.module('app', [])
     function init() {
         $interval(save, 5000);
 
-        return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/character_table.json", function(json) {
+        return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/character_table.json", function(json) {
             characters = json;
         })
         .then(function() {
-            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/zone_table.json", function(json) {
+            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/zone_table.json", function(json) {
                 zones = json;
             })
         })
         .then(function() {
-            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/stage_table.json", function(json) {
+            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/stage_table.json", function(json) {
                 stages = json;
                 stages.stages = _.filter(stages.stages, function(stage) {
                     if (zones.zones[stage.zoneId] && zones.zones[stage.zoneId].type == 'MAINLINE' && stage.stageType == 'ACTIVITY') {
@@ -80,14 +89,14 @@ angular.module('app', [])
         _.each(enabled_operators, function(operator) {
             enabled_map[operator.name] = true;
         });
-        storage.setItem('enabled_operators', JSON.stringify(enabled_map));
+        storage.setItem('enabled_operators' + vm.lang, JSON.stringify(enabled_map));
 
         var enabled_stages = _.filter(stages.stages, 'enabled');
         var enabled_stage_map = {};
         _.each(enabled_stages, function(stage) {
             enabled_stage_map[stage.stageId] = true;
         });
-        storage.setItem('enabled_stages', JSON.stringify(enabled_stage_map));
+        storage.setItem('enabled_stages' + vm.lang, JSON.stringify(enabled_stage_map));
         console.log("saved", enabled_map, enabled_stages);
     }
 
@@ -101,16 +110,16 @@ angular.module('app', [])
 
         enabled_operators = undefined;
         try {
-            enabled_operators = JSON.parse(storage.getItem('enabled_operators'));
+            enabled_operators = JSON.parse(storage.getItem('enabled_operators' + vm.lang));
         } catch(e) {
-            console.log("you messed up", storage.getItem('enabled_operators'));
+            console.log("you messed up", storage.getItem('enabled_operators' + vm.lang));
         }
 
         enabled_stages = undefined;
         try {
-            enabled_stages = JSON.parse(storage.getItem('enabled_stages'));
+            enabled_stages = JSON.parse(storage.getItem('enabled_stages' + vm.lang));
         } catch(e) {
-            console.log("you messed up", storage.getItem('enabled_stages'));
+            console.log("you messed up", storage.getItem('enabled_stages' + vm.lang));
         }
 
         _.each(characters, function(value, key) {
@@ -194,6 +203,9 @@ angular.module('app', [])
             var classes = _.shuffle(_.keys(classgroups));
 
             _.each(classes, function(cls) {
+                if (result.length >= limit) {
+                    return;
+                }
                 result = result.concat(pick_units(classgroups[cls], 1));
             });
         }
@@ -242,6 +254,11 @@ angular.module('app', [])
             return stage.name;
         }
         return stage.code;
+    }
+
+    vm.selectlanguage = function() {
+        console.log(vm.lang);
+        $window.location.href = $location.path() + '?lang=' + vm.lang;
     }
 });
 
