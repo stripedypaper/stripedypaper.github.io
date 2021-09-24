@@ -13,6 +13,19 @@
     <div ng-if="vm.isLoading">Loading</div>
     <div ng-if="!vm.isLoading">
         <div class="block">
+            <select class="form-select" ng-model="vm.mode">
+                <option value="0" selected>No restrictions</option>
+                <option value="1">Highlander</option>
+                <option value="2">All for one</option>
+            </select>
+        </div>
+        <div class="block" ng-if="vm.mode=='1'">
+            Highlander: exactly one of each class. At most 8 operators in total will be picked.
+        </div>
+        <div class="block" ng-if="vm.mode=='2'">
+            All for one: a random class will be picked and all operators will belong to that class (Medic can't be rolled).
+        </div>
+        <div class="block">
             <h3>Random Stage</h3>
             <div class="block">
                 <div ng-repeat="(option_name, option_value) in vm.stageoptions">

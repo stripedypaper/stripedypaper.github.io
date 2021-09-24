@@ -43,3 +43,7 @@ body {
 .flexh > *:nth-child(1) {
     margin-left: 0;
 }
+
+.form-select {
+    width: auto !important;
+}

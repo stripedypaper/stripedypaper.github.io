@@ -12,6 +12,7 @@ angular.module('app', [])
     vm.rarities = [6, 5, 4, 3, 2, 1];
     vm.result = {}
     vm.showOptions = false;
+    vm.mode = '0';
 
     var storage = window.localStorage;
 
@@ -160,20 +161,52 @@ angular.module('app', [])
         var enabled_operators = _.filter(characters, 'enabled');
 
         var scramble = _.shuffle(enabled_operators);
-        var result = []
-        var six_stars = 0
+        var result = [];
+        var six_stars = 0;
+        var limit = vm.options['Operators'][0];
+        var sixlimit = vm.options['Max 6 stars'][0];
 
-        var i = 0;
-        while (result.length < Math.min(enabled_operators.length, vm.options['Operators'][0])) {
-            if (six_stars >= vm.options['Max 6 stars'][0] && scramble[i].rarity == 5) {
-                i++;
-                continue;
+        function pick_units(list, num) {
+            var units = [];
+            var scrambled = _.shuffle(list);
+            var i = 0;
+
+            for (var k = 0; k < num; k++) {
+                while (i < list.length) {
+                    if (six_stars >= sixlimit && scrambled[i].rarity == 5) {
+                        i++;
+                        continue;
+                    }
+                    if (scrambled[i].rarity == 5) {
+                        six_stars++;
+                    }
+                    units.push(scrambled[i]);
+                    i++;
+                    break;
+                }
             }
-            if (scramble[i].rarity == 5) {
-                six_stars++;
-            }
-            result.push(scramble[i]);
-            i++;
+
+            return units;
+        }
+
+        if (vm.mode == '1') {
+            var classgroups = _.groupBy(enabled_operators, 'profession');
+            var classes = _.shuffle(_.keys(classgroups));
+
+            _.each(classes, function(cls) {
+                result = result.concat(pick_units(classgroups[cls], 1));
+            });
+        }
+        else if (vm.mode == '2') {
+            var classgroups = _.groupBy(enabled_operators, 'profession');
+            var classes = _.shuffle(_.filter(_.keys(classgroups), function(k) {
+                return k != 'MEDIC'
+            }));
+
+            result = pick_units(classgroups[classes[0]], limit);
+        }
+        else {
+            result = pick_units(enabled_operators, limit);
         }
 
         result = _.sortBy(result, function(a) {
