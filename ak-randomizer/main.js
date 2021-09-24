@@ -16,8 +16,8 @@ angular.module('app', [])
     var storage = window.localStorage;
 
     vm.options = {
-        'Max 6 stars': [2, 0, 12],
-        'Operators': [12, 1, 12]
+        'Max 6 stars': [2, 0, 99],
+        'Operators': [12, 1, 99]
     };
     vm.stageoptions = {
         'Number of stages': [1, 1, 12]
@@ -47,10 +47,17 @@ angular.module('app', [])
             characters = json;
         })
         .then(function() {
+            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/zone_table.json", function(json) {
+                zones = json;
+            })
+        })
+        .then(function() {
             return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/stage_table.json", function(json) {
                 stages = json;
                 stages.stages = _.filter(stages.stages, function(stage) {
-                    if (default_zones[stage.zoneId] && stage.stageType == 'ACTIVITY') {
+                    if (zones.zones[stage.zoneId] && zones.zones[stage.zoneId].type == 'MAINLINE' && stage.stageType == 'ACTIVITY') {
+
+                        // todo: put these somewhere else instead of skipping
                         return false;
                     }
                     return stage.difficulty == 'NORMAL' && stage.canBattleReplay == true;
@@ -58,11 +65,6 @@ angular.module('app', [])
                 _.each(stages.stages, function(stage) {
                     stage.dangerLevelNum = getDangerLevelNum(stage.dangerLevel);
                 })
-            })
-        })
-        .then(function() {
-            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/en_US/gamedata/excel/zone_table.json", function(json) {
-                zones = json;
             })
         })
         .then(function() {
@@ -151,7 +153,7 @@ angular.module('app', [])
     vm.randomize_stage = function() {
         var s = _.filter(stages.stages, 'enabled');
 
-        vm.result.stages = _.sortBy(_.shuffle(s).slice(0, vm.stageoptions['Number of stages'][0]), ['code', 'dangerLevelNum']);
+        vm.result.stages = _.sortBy(_.shuffle(s).slice(0, vm.stageoptions['Number of stages'][0]), ['dangerLevelNum', 'stageId']);
     }
 
     vm.randomize = function() {
