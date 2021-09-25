@@ -33,7 +33,7 @@ angular.module('app', ['ngRoute'])
         'Number of stages': [1, 1, 12]
     };
 
-    default_zones = {'main_5':true, 'main_6':true, 'main_7':true, 'main_8':true, 'camp_zone_1':true, 'camp_zone_3':true, 'camp_zone_4':true};
+    default_zones = {'main_5':true, 'main_6':true, 'main_7':true, 'main_8':true};
 
     function getDangerLevelNum(dangerLevel) {
         if (dangerLevel == '-') {
