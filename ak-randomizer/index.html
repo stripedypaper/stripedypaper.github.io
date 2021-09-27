@@ -4,18 +4,20 @@
     <title>Arknights Randomizer</title>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular-route.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.min.js" integrity="sha384-skAcpIdS7UcVUC05LJ9Dxay8AXcDYfBJqt1CJ85S/CFujBsIzCIv+l9liuYLaMQ/" crossorigin="anonymous"></script>
     <script src="jquery.min.js"></script>
     <script src="lodash.js"></script>
     <script src="main.js"></script>
     <link href="styles.css" rel="stylesheet"></link>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <base href="/ak-randomizer">
 </head>
 <body ng-app="app" ng-controller="MyController as vm" id="">
     <div ng-if="vm.isLoading">Loading</div>
     <div ng-if="!vm.isLoading">
         <div class="flexh">
-            <div class="block">
+            <h1 class="display-4 block">Arknights Randomizer</h1>
+            <div class="block" hidden>
                 <select class="form-select" ng-model="vm.mode">
                     <option value="0" selected>No restrictions</option>
                     <option value="1">Highlander</option>
@@ -58,7 +60,7 @@
             </div>
         </div>
         <div class="block">
-            <h3>Random Operator</h3>
+            <h3>Random Team</h3>
             <div class="block">
                 <div ng-repeat="(option_name, option_value) in vm.options">
                     <div>{{option_name}}</div>
@@ -77,43 +79,90 @@
             </div>
         </div>
 
-        <button type="button" class="btn btn-secondary mb" ng-click="vm.toggleconfig()">Configuration</button>
-        <div class="card" ng-show="vm.showOptions">
-            <div class="block">
-                <h3 class="block">Operators</h3>
-                <div class="block" ng-repeat="rarity in vm.rarities">
-                    <div class="flexh block">
-                        <h4>{{rarity}} star</h4>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(true, rarity-1)">All</button>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(false, rarity-1)">None</button>
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#opchecklist">Operator checklist</button>
+        <button type="button" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#stagechecklist">Stage checklist</button>
+        <button type="button" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">Advanced options</button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="opchecklist" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Operators</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="operatorlist">
-                        <div class="operator" ng-repeat="character in vm.characters[rarity - 1]">
-                            <input type="checkbox" ng-model="character.enabled" ng-attr-id="{{character.name}}"></input>
-                            <label ng-attr-for="{{character.name}}" class="charname">{{character.name}}</label>
+                    <div class="modal-body">
+                        <div class="block">
+                            <div class="block" ng-repeat="rarity in vm.rarities">
+                                <div class="flexh block">
+                                    <h4>{{rarity}} star</h4>
+                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(true, rarity-1)">All</button>
+                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(false, rarity-1)">None</button>
+                                </div>
+                                <div class="operatorlist">
+                                    <div class="operator" ng-repeat="character in vm.characters[rarity - 1]">
+                                        <input type="checkbox" ng-model="character.enabled" ng-attr-id="{{character.name}}"/>
+                                        <label ng-attr-for="{{character.name}}" class="charname">{{character.name}}</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="block">
-                <h3 class="block">Stages</h3>
-                <div class="block" ng-repeat="(zoneId, stages) in vm.stages">
-                    <div class="flexh block">
-                        <h4>{{vm.getZoneName(zoneId)}}</h4>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(true, zoneId)">All</button>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(false, zoneId)">None</button>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="stagechecklist" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Stages</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="operatorlist">
-                        <div class="operator" ng-repeat="stage in vm.stages[zoneId]">
-                            <input type="checkbox" ng-model="stage.enabled" ng-attr-id="{{stage.stageId}}"></input>
-                            <label ng-attr-for="{{stage.stageId}}" class="charname">{{vm.getStageName(stage)}}</label>
+                    <div class="modal-body">
+                        <div class="block">
+                            <div class="block" ng-repeat="(zoneId, stages) in vm.stages">
+                                <div class="flexh block">
+                                    <h4>{{vm.getZoneName(zoneId)}}</h4>
+                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(true, zoneId)">All</button>
+                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(false, zoneId)">None</button>
+                                </div>
+                                <div class="operatorlist">
+                                    <div class="operator" ng-repeat="stage in vm.stages[zoneId]">
+                                        <input type="checkbox" ng-model="stage.enabled" ng-attr-id="{{stage.stageId}}"/>
+                                        <label ng-attr-for="{{stage.stageId}}" class="charname">{{vm.getStageName(stage)}}</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade" id="advanced" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Advanced options</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="block">
+                            <div ng-repeat="(option_name, option_value) in vm.advancedoptions">
+                                <div>{{option_name}}</div>
+                                <input type="number" ng-model="vm.advancedoptions[option_name][0]" step=1 ng-attr-min="{{option_value[1]}}" ng-attr-max="{{option_value[2]}}"></input>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary mb" ng-click="vm.setdefault()">Reset to default</button>
+                        <button type="button" class="btn btn-secondary mb" ng-click="vm.presetbalanced()">Preset: Balanced team</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<div>Tweet suggestions or bugs to <a target="blank" href="https://twitter.com/boardwalkhotel_">@boardwalkhotel_</a></div>
+<div class="small">Tweet suggestions, bugs, or translations to <a target="blank" href="https://twitter.com/boardwalkhotel_">@boardwalkhotel_</a></div>
 </body>
 </html>

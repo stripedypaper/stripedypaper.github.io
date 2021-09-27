@@ -26,12 +26,47 @@ angular.module('app', ['ngRoute'])
     var storage = window.localStorage;
 
     vm.options = {
-        'Max 6 stars': [2, 0, 99],
         'Operators': [12, 1, 99]
     };
     vm.stageoptions = {
         'Number of stages': [1, 1, 12]
     };
+    vm.advancedoptions = {
+        'Max 6* operators': [2, 0, 99, (op) => op.rarity == 5, true],
+        'Min 6* operators': [null, 1, 99, (op) => op.rarity == 5, false],
+        'Max 5* operators': [null, 0, 99, (op) => op.rarity == 4, true],
+        'Min 5* operators': [null, 1, 99, (op) => op.rarity == 4, false],
+        'Max 4* operators': [null, 0, 99, (op) => op.rarity == 3, true],
+        'Min 4* operators': [null, 1, 99, (op) => op.rarity == 3, false],
+        'Max 3* operators': [null, 0, 99, (op) => op.rarity == 2, true],
+        'Min 3* operators': [null, 1, 99, (op) => op.rarity == 2, false],
+        'Max 2* operators': [null, 0, 99, (op) => op.rarity == 1, true],
+        'Min 2* operators': [null, 1, 99, (op) => op.rarity == 1, false],
+        'Max 1* operators': [null, 0, 99, (op) => op.rarity == 0, true],
+        'Min 1* operators': [null, 1, 99, (op) => op.rarity == 0, false],
+        'Max Melee operators': [null, 0, 99, (op) => op.position == 'MELEE', true],
+        'Min Melee operators': [null, 1, 99, (op) => op.position == 'MELEE', false],
+        'Max Ranged operators': [null, 0, 99, (op) => op.position == 'RANGED', true],
+        'Min Ranged operators': [null, 1, 99, (op) => op.position == 'RANGED', false],
+        'Max Vanguard operators': [null, 0, 99, (op) => op.profession == 'PIONEER', true],
+        'Min Vanguard operators': [null, 1, 99, (op) => op.profession == 'PIONEER', false],
+        'Max Guard operators': [null, 0, 99, (op) => op.profession == 'WARRIOR', true],
+        'Min Guard operators': [null, 1, 99, (op) => op.profession == 'WARRIOR', false],
+        'Max Sniper operators': [null, 0, 99, (op) => op.profession == 'SNIPER', true],
+        'Min Sniper operators': [null, 1, 99, (op) => op.profession == 'SNIPER', false],
+        'Max Defender operators': [null, 0, 99, (op) => op.profession == 'TANK', true],
+        'Min Defender operators': [null, 1, 99, (op) => op.profession == 'TANK', false],
+        'Max Medic operators': [null, 0, 99, (op) => op.profession == 'MEDIC', true],
+        'Min Medic operators': [null, 1, 99, (op) => op.profession == 'MEDIC', false],
+        'Max Supporter operators': [null, 0, 99, (op) => op.profession == 'SUPPORT', true],
+        'Min Supporter operators': [null, 1, 99, (op) => op.profession == 'SUPPORT', false],
+        'Max Caster operators': [null, 0, 99, (op) => op.profession == 'CASTER', true],
+        'Min Caster operators': [null, 1, 99, (op) => op.profession == 'CASTER', false],
+        'Max Specialist operators': [null, 0, 99, (op) => op.profession == 'SPECIAL', true],
+        'Min Specialist operators': [null, 1, 99, (op) => op.profession == 'SPECIAL', false]
+    };
+
+    advancedoptionsdefault = _.map(vm.advancedoptions, (v, k) => [k, v[0]]);
 
     default_zones = {'main_5':true, 'main_6':true, 'main_7':true, 'main_8':true};
 
@@ -97,7 +132,7 @@ angular.module('app', ['ngRoute'])
             enabled_stage_map[stage.stageId] = true;
         });
         storage.setItem('enabled_stages' + vm.lang, JSON.stringify(enabled_stage_map));
-        console.log("saved", enabled_map, enabled_stages);
+        console.info("saved", enabled_map, enabled_stages);
     }
 
     init()
@@ -171,11 +206,11 @@ angular.module('app', ['ngRoute'])
 
         var scramble = _.shuffle(enabled_operators);
         var result = [];
+        var result_map = {};
         var six_stars = 0;
         var limit = vm.options['Operators'][0];
-        var sixlimit = vm.options['Max 6 stars'][0];
 
-        function pick_units(list, num) {
+        /*function pick_units(list, num) {
             var units = [];
             var scrambled = _.shuffle(list);
             var i = 0;
@@ -196,7 +231,47 @@ angular.module('app', ['ngRoute'])
             }
 
             return units;
+        }*/
+
+        function pick_units2(list, to_pick) {
+            var picked = 0;
+            var eligible = _.shuffle(list);
+
+            _.each(eligible, function(op) {
+                if (result.length >= limit || picked >= to_pick) {
+                    return
+                }
+
+                var allowed = !result_map[op.name];
+                for (var max_restriction of max_restrictions) {
+                    if (max_restriction[1](op) && max_restriction[0] <= 0) {
+                        allowed = false;
+                        break;
+                    }
+                }
+
+                if (allowed) {
+                    result.push(op);
+                    result_map[op.name] = true;
+                    picked++;
+
+                    for (var max_restriction of max_restrictions) {
+                        if (max_restriction[1](op)) {
+                            max_restriction[0] = max_restriction[0] - 1;
+                        }
+                    }
+                }
+            });
         }
+
+        var min_restrictions = _.filter(vm.advancedoptions, function(val) {
+            return val[0] != null && val[0] > 0 && val[4] == false;
+        });
+        var max_restrictions = _.map(_.filter(vm.advancedoptions, function(val) {
+            return val[0] != null && val[4] == true;
+        }), function(val) {
+            return [val[0], val[3]]
+        });
 
         if (vm.mode == '1') {
             var classgroups = _.groupBy(enabled_operators, 'profession');
@@ -218,17 +293,27 @@ angular.module('app', ['ngRoute'])
             result = pick_units(classgroups[classes[0]], limit);
         }
         else {
-            result = pick_units(enabled_operators, limit);
+            _.each(min_restrictions, function(restriction) {
+                pick_units2(_.filter(enabled_operators, restriction[3]), restriction[0]);
+            });
+
+            pick_units2(enabled_operators, limit);
         }
 
         result = _.sortBy(result, function(a) {
             return -a.rarity;
         });
         vm.result.operators = result;
+
+        //console.log(result, result_map);
     }
 
     vm.toggleconfig = function() {
         vm.showOptions = !vm.showOptions;
+    }
+
+    vm.toggle = function(name) {
+        vm[name] = !vm[name];
     }
 
     vm.selectOps = function(enable, rarity) {
@@ -259,6 +344,28 @@ angular.module('app', ['ngRoute'])
     vm.selectlanguage = function() {
         console.log(vm.lang);
         $window.location.href = $location.path() + '?lang=' + vm.lang;
+    }
+
+    vm.setdefault = function() {
+        _.each(advancedoptionsdefault, function(option) {
+            vm.advancedoptions[option[0]][0] = option[1];
+        });
+    }
+
+    vm.presetbalanced = function() {
+        var p = [["Max Melee operators",null],["Min Melee operators",null],["Max Ranged operators",null],["Min Ranged operators",null],["Max Vanguard operators",2],["Min Vanguard operators",2],["Max Guard operators",null],["Min Guard operators",1],["Max Sniper operators",null],["Min Sniper operators",1],["Max Defender operators",null],["Min Defender operators",1],["Max Medic operators",2],["Min Medic operators",2],["Max Supporter operators",null],["Min Supporter operators",null],["Max Caster operators",null],["Min Caster operators",1],["Max Specialist operators",null],["Min Specialist operators",null]];
+
+        _.each(p, function(option) {
+            vm.advancedoptions[option[0]][0] = option[1];
+        });
+    }
+
+    vm.presethighlander = function() {
+        var p = [["Max Melee operators",null],["Min Melee operators",null],["Max Ranged operators",null],["Min Ranged operators",null],["Max Vanguard operators",2],["Min Vanguard operators",2],["Max Guard operators",null],["Min Guard operators",1],["Max Sniper operators",null],["Min Sniper operators",1],["Max Defender operators",null],["Min Defender operators",1],["Max Medic operators",2],["Min Medic operators",2],["Max Supporter operators",null],["Min Supporter operators",1],["Max Caster operators",null],["Min Caster operators",1],["Max Specialist operators",null],["Min Specialist operators",1]];
+
+        _.each(p, function(option) {
+            vm.advancedoptions[option[0]][0] = option[1];
+        });
     }
 });
 
