@@ -233,12 +233,11 @@ angular.module('app', ['ngRoute'])
             return units;
         }*/
 
-        function pick_units2(list, to_pick) {
-            var picked = 0;
+        function pick_units2(list, restriction) {
             var eligible = _.shuffle(list);
 
             _.each(eligible, function(op) {
-                if (result.length >= limit || picked >= to_pick) {
+                if (result.length >= limit || restriction[0] <= 0) {
                     return
                 }
 
@@ -253,19 +252,26 @@ angular.module('app', ['ngRoute'])
                 if (allowed) {
                     result.push(op);
                     result_map[op.name] = true;
-                    picked++;
 
                     for (var max_restriction of max_restrictions) {
                         if (max_restriction[1](op)) {
                             max_restriction[0] = max_restriction[0] - 1;
                         }
                     }
+
+                    for (var min_restriction of min_restrictions) {
+                        if (min_restriction[1](op)) {
+                            min_restriction[0] = min_restriction[0] - 1;
+                        }
+                    }
                 }
             });
         }
 
-        var min_restrictions = _.filter(vm.advancedoptions, function(val) {
+        var min_restrictions = _.map(_.filter(vm.advancedoptions, function(val) {
             return val[0] != null && val[0] > 0 && val[4] == false;
+        }), function(val) {
+            return [val[0], val[3]]
         });
         var max_restrictions = _.map(_.filter(vm.advancedoptions, function(val) {
             return val[0] != null && val[4] == true;
@@ -294,7 +300,7 @@ angular.module('app', ['ngRoute'])
         }
         else {
             _.each(min_restrictions, function(restriction) {
-                pick_units2(_.filter(enabled_operators, restriction[3]), restriction[0]);
+                pick_units2(_.filter(enabled_operators, restriction[1]), restriction);
             });
 
             pick_units2(enabled_operators, limit);
