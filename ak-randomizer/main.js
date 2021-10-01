@@ -22,6 +22,7 @@ angular.module('app', ['ngRoute'])
     if ($location.search().lang && allowed_languages[$location.search().lang]) {
         vm.lang = $location.search().lang;
     }
+    vm.stats = {};
 
     var storage = window.localStorage;
 
@@ -67,8 +68,23 @@ angular.module('app', ['ngRoute'])
     };
 
     advancedoptionsdefault = _.map(vm.advancedoptions, (v, k) => [k, v[0]]);
-
+    classorder = {
+        PIONEER: 7,
+        WARRIOR: 0,
+        SNIPER: 1,
+        TANK: 2,
+        MEDIC: 3,
+        SUPPORT: 4,
+        CASTER: 5,
+        SPECIAL: 6
+    };
     default_zones = {'main_5':true, 'main_6':true, 'main_7':true, 'main_8':true};
+
+    function log(message) {
+        if ($location.search().debug) {
+            console.log(message);
+        }
+    }
 
     function getDangerLevelNum(dangerLevel) {
         if (dangerLevel == '-') {
@@ -90,6 +106,10 @@ angular.module('app', ['ngRoute'])
 
         return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/character_table.json", function(json) {
             characters = json;
+            _.each(characters, function(char, key) {
+                char.characterPrefabKey = key;
+                char.avatar = 'https://aceship.github.io/AN-EN-Tags/img/avatars/' + key + '.png';
+            });
         })
         .then(function() {
             return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/zone_table.json", function(json) {
@@ -113,7 +133,7 @@ angular.module('app', ['ngRoute'])
             })
         })
         .then(function() {
-            console.log(characters, stages, zones);
+            log(characters, stages, zones);
             vm.isLoading = false;
         })
     }
@@ -147,14 +167,14 @@ angular.module('app', ['ngRoute'])
         try {
             enabled_operators = JSON.parse(storage.getItem('enabled_operators' + vm.lang));
         } catch(e) {
-            console.log("you messed up", storage.getItem('enabled_operators' + vm.lang));
+            log("you messed up", storage.getItem('enabled_operators' + vm.lang));
         }
 
         enabled_stages = undefined;
         try {
             enabled_stages = JSON.parse(storage.getItem('enabled_stages' + vm.lang));
         } catch(e) {
-            console.log("you messed up", storage.getItem('enabled_stages' + vm.lang));
+            log("you messed up", storage.getItem('enabled_stages' + vm.lang));
         }
 
         _.each(characters, function(value, key) {
@@ -172,7 +192,7 @@ angular.module('app', ['ngRoute'])
 
         });
 
-        console.log(enabled_stages);
+        log(enabled_stages);
         _.each(stages.stages, function(stage) {
             if (enabled_stages != undefined) {
                 stage.enabled = !!enabled_stages[stage.stageId];
@@ -190,7 +210,7 @@ angular.module('app', ['ngRoute'])
             vm.characters[i] = _.sortBy(vm.characters[i], 'name');
         }
 
-        console.log(vm.characters, vm.stages);
+        log(vm.characters, vm.stages);
 
         $scope.$digest();
     });
@@ -306,12 +326,17 @@ angular.module('app', ['ngRoute'])
             pick_units2(enabled_operators, limit);
         }
 
-        result = _.sortBy(result, function(a) {
-            return -a.rarity;
+        result = _.sortBy(result, a => -a.rarity, a => classorder[a.profession], a => a.name);
+
+        _.each(result, function(op) {
+            if (vm.stats[op.name] == undefined) {
+                vm.stats[op.name] = 0;
+            }
+            vm.stats[op.name]++;
         });
         vm.result.operators = result;
 
-        //console.log(result, result_map);
+        log(result);
     }
 
     vm.toggleconfig = function() {
@@ -348,7 +373,7 @@ angular.module('app', ['ngRoute'])
     }
 
     vm.selectlanguage = function() {
-        console.log(vm.lang);
+        log(vm.lang);
         $window.location.href = $location.path() + '?lang=' + vm.lang;
     }
 

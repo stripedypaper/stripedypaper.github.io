@@ -72,13 +72,15 @@
             </div>
             <div>
                 <div ng-if="vm.result.operators">
-                    <div ng-repeat="operator in vm.result.operators">
-                        {{operator.long_name}}
+                    <div ng-repeat="operator in vm.result.operators" class="flexh">
+                        <img ng-src="{{operator.avatar}}" class="operator-avatar">
+                        <div class="operator-name">{{operator.long_name}}</div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!--<div ng-repeat="(key, val) in vm.stats">{{key}} {{val}}</div>-->
         <!-- Button trigger modal -->
         <button type="button" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#opchecklist">Operator checklist</button>
         <button type="button" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#stagechecklist">Stage checklist</button>
@@ -149,10 +151,14 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
+                        <!--<div class="block">
+
+                        </div>-->
                         <div class="block">
-                            <div ng-repeat="(option_name, option_value) in vm.advancedoptions">
-                                <div>{{option_name}}</div>
-                                <input type="number" ng-model="vm.advancedoptions[option_name][0]" step=1 ng-attr-min="{{option_value[1]}}" ng-attr-max="{{option_value[2]}}"></input>
+                            <div ng-repeat="(option_name, option_value) in vm.advancedoptions" class="flexh option-outer">
+                                <div class="option-text">{{option_name}}</div>
+                                <input class="option-input" type="number" ng-model="vm.advancedoptions[option_name][0]" step=1 ng-attr-min="{{option_value[1]}}" ng-attr-max="{{option_value[2]}}"></input>
+                                <div class="flex1"></div>
                             </div>
                         </div>
                         <button type="button" class="btn btn-secondary mb" ng-click="vm.setdefault()">Reset to default</button>
