@@ -84,5 +84,19 @@ body {
 }
 
 .option-input {
-    
+
+}
+
+.btn-sm {
+    height: fit-content;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+.dangerlevel {
+    font-size: 12px;
+    background: #C65342;
+    margin-left: 5px;
+    color: white;
+    padding: 0 5px;
 }

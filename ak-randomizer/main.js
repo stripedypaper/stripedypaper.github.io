@@ -32,6 +32,9 @@ angular.module('app', ['ngRoute'])
     vm.stageoptions = {
         'Number of stages': [1, 1, 12]
     };
+    vm.otheroptions = {
+        useE2art: false
+    };
     vm.advancedoptions = {
         'Max 6* operators': [2, 0, 99, (op) => op.rarity == 5, true],
         'Min 6* operators': [null, 1, 99, (op) => op.rarity == 5, false],
@@ -102,13 +105,11 @@ angular.module('app', ['ngRoute'])
     }
 
     function init() {
-        $interval(save, 5000);
-
         return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/character_table.json", function(json) {
             characters = json;
             _.each(characters, function(char, key) {
                 char.characterPrefabKey = key;
-                char.avatar = 'https://aceship.github.io/AN-EN-Tags/img/avatars/' + key + '.png';
+                char.avatar = 'https://aceship.github.io/AN-EN-Tags/img/avatars/' + key;
             });
         })
         .then(function() {
@@ -134,6 +135,7 @@ angular.module('app', ['ngRoute'])
         })
         .then(function() {
             log(characters, stages, zones);
+            $interval(save, 5000);
             vm.isLoading = false;
         })
     }

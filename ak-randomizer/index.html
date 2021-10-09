@@ -99,8 +99,8 @@
                             <div class="block" ng-repeat="rarity in vm.rarities">
                                 <div class="flexh block">
                                     <h4>{{rarity}} star</h4>
-                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(true, rarity-1)">All</button>
-                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectOps(false, rarity-1)">None</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" ng-click="vm.selectOps(true, rarity-1)">All</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" ng-click="vm.selectOps(false, rarity-1)">None</button>
                                 </div>
                                 <div class="operatorlist">
                                     <div class="operator" ng-repeat="character in vm.characters[rarity - 1]">
@@ -127,13 +127,14 @@
                             <div class="block" ng-repeat="(zoneId, stages) in vm.stages">
                                 <div class="flexh block">
                                     <h4>{{vm.getZoneName(zoneId)}}</h4>
-                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(true, zoneId)">All</button>
-                                    <button type="button" class="btn btn-secondary" ng-click="vm.selectStages(false, zoneId)">None</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" ng-click="vm.selectStages(true, zoneId)">All</button>
+                                    <button type="button" class="btn btn-secondary btn-sm" ng-click="vm.selectStages(false, zoneId)">None</button>
                                 </div>
-                                <div class="operatorlist">
-                                    <div class="operator" ng-repeat="stage in vm.stages[zoneId]">
+                                <div class="">
+                                    <div class="" ng-repeat="stage in vm.stages[zoneId]">
                                         <input type="checkbox" ng-model="stage.enabled" ng-attr-id="{{stage.stageId}}"/>
                                         <label ng-attr-for="{{stage.stageId}}" class="charname">{{vm.getStageName(stage)}}</label>
+                                        <label ng-attr-for="{{stage.stageId}}" class="dangerlevel">{{stage.dangerLevel}}</label>
                                     </div>
                                 </div>
                             </div>
