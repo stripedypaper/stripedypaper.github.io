@@ -113,9 +113,9 @@
                                     <button type="button" class="btn btn-secondary btn-sm" ng-click="vm.selectOps(false, rarity-1)">None</button>
                                 </div>
                                 <div class="operatorlist">
-                                    <div class="operator" ng-repeat="character in vm.characters[rarity - 1]">
-                                        <input type="checkbox" ng-model="character.enabled" ng-attr-id="{{character.name}}"/>
-                                        <label ng-attr-for="{{character.name}}" class="charname">{{character.name}}</label>
+                                    <div class="flexh" ng-repeat="character in vm.characters[rarity - 1]">
+                                        <input class="mauto" type="checkbox" ng-model="character.enabled" ng-attr-id="{{character.name}}"/>
+                                        <label ng-attr-for="{{character.name}}" class="charname mauto">{{character.name}}</label>
                                     </div>
                                 </div>
                             </div>
@@ -143,7 +143,7 @@
                                 <div class="">
                                     <div class="" ng-repeat="stage in vm.stages[zoneId]">
                                         <input type="checkbox" ng-model="stage.enabled" ng-attr-id="{{stage.stageId}}"/>
-                                        <label ng-attr-for="{{stage.stageId}}" class="charname">{{vm.getStageName(stage)}}</label>
+                                        <label ng-attr-for="{{stage.stageId}}" class="stagename">{{vm.getStageName(stage)}}</label>
                                         <label ng-attr-for="{{stage.stageId}}" class="dangerlevel">{{stage.dangerLevel}}</label>
                                     </div>
                                 </div>

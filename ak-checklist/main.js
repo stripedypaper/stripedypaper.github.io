@@ -212,7 +212,7 @@ angular.module('app', [])
             else if (quantity.current && quantity.current > 0) {
                 checkbox.classList.add('in-progress');
             }
-            if (line.trim().length === 0) {
+            if (line.trim().length === 0 || line[line.length - 1] == ' ') {
                 checkbox.classList.add('invisible');
             }
             var newTop = lineHeight * i + 'px';

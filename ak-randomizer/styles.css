@@ -1,5 +1,13 @@
 .charname {
+    width: 175px;
+}
+
+.stagename {
     display: inline-block;
+}
+
+.mauto {
+    margin: auto;
 }
 
 body {
@@ -16,7 +24,8 @@ body {
 }
 
 .operator {
-    width: 200px;
+    display: flex;
+    flex-direction: row;
 }
 
 .block {
@@ -37,7 +46,7 @@ body {
 }
 
 .flexh > * {
-    margin-left: 15px;
+    margin-left: 8px;
 }
 
 .flexh > *:nth-child(1) {
@@ -81,10 +90,6 @@ body {
 
 .option-text {
     margin: auto;
-}
-
-.option-input {
-
 }
 
 .btn-sm {
