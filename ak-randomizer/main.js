@@ -105,7 +105,7 @@ angular.module('app', ['ngRoute'])
     }
 
     function init() {
-        return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/character_table.json", function(json) {
+        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
             characters = json;
             _.each(characters, function(char, key) {
                 char.characterPrefabKey = key;
@@ -113,12 +113,12 @@ angular.module('app', ['ngRoute'])
             });
         })
         .then(function() {
-            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/zone_table.json", function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/${vm.lang}/gamedata/excel/zone_table.json`, function(json) {
                 zones = json;
             })
         })
         .then(function() {
-            return $.getJSON("https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/" + vm.lang + "/gamedata/excel/stage_table.json", function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData/master/${vm.lang}/gamedata/excel/stage_table.json`, function(json) {
                 stages = json;
                 stages.stages = _.filter(stages.stages, function(stage) {
                     if (zones.zones[stage.zoneId] && zones.zones[stage.zoneId].type == 'MAINLINE' && stage.stageType == 'ACTIVITY') {
