@@ -109,7 +109,7 @@ angular.module('app', ['ngRoute'])
             characters = json;
             _.each(characters, function(char, key) {
                 char.characterPrefabKey = key;
-                char.avatar = 'https://aceship.github.io/AN-EN-Tags/img/avatars/' + key;
+                char.avatar = 'https://raw.githubusercontent.com/Aceship/Arknight-Images/main/avatars/' + key;
             });
         })
         .then(function() {
