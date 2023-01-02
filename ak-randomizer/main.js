@@ -72,14 +72,14 @@ angular.module('app', ['ngRoute'])
 
     advancedoptionsdefault = _.map(vm.advancedoptions, (v, k) => [k, v[0]]);
     classorder = {
-        PIONEER: 7,
-        WARRIOR: 0,
-        SNIPER: 1,
+        PIONEER: 0,
+        WARRIOR: 1,
         TANK: 2,
-        MEDIC: 3,
-        SUPPORT: 4,
-        CASTER: 5,
-        SPECIAL: 6
+        SNIPER: 3,
+        CASTER: 4,
+        MEDIC: 5,
+        SUPPORT: 6,
+        SPECIAL: 7
     };
     default_zones = {'main_5':true, 'main_6':true, 'main_7':true, 'main_8':true};
 
