@@ -171,7 +171,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         const skinsArray = _.values(vm.skins)
         const i = _.random(0, skinsArray.length - 1)
         if (skinsArray[i] == vm.skin) {
-            vm.test()
+            vm.test(isSkip)
+            return
         }
         if (vm.skin) {
             vm.previousSkin = vm.skin
