@@ -150,6 +150,7 @@ body {
 
 .skin-image {
     position: relative;
+    pointer-events: none;
 }
 
 .loading-image {

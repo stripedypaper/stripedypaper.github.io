@@ -2,6 +2,16 @@
 <html lang="en">
 <head>
     <title>Arknights Guesser</title>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-NFH81TE3QE"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-NFH81TE3QE');
+    </script>
+
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.8/angular-route.min.js"></script>
     <!-- <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" crossorigin="anonymous"> -->
@@ -38,7 +48,7 @@
             <div class="flexh block">
                 <div ng-if="vm.skin">
                     <div class="skin-container">
-                        <img ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" ng-on-load="vm.testOnLoad($event)" class="skin-image" ng-style="vm.viewPortInfo.style">
+                        <img draggable="false" ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" ng-on-load="vm.testOnLoad($event)" class="skin-image" ng-style="vm.viewPortInfo.style">
                         <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png">
                     </div>
                 </div>
@@ -85,14 +95,14 @@
 
             <!--<div ng-repeat="(key, val) in vm.stats">{{key}} {{val}}</div>-->
             <!-- Button trigger modal -->
-            <!-- <button type="button" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">Options</button> -->
+            <!-- <button type="button" ng-show="vm.timeLeftSeconds < 0" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">Options</button> -->
 
             <!-- Modal -->
             <div class="modal fade" id="advanced" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Advanced options</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">Options</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
