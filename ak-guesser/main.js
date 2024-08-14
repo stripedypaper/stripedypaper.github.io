@@ -249,6 +249,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.selectSkin = function(item) {
         vm.skinInput = null
 
+        if (vm.timeLeftSeconds < 0) {
+            return
+        }
+        
         if (item.portraitId == vm.skin.portraitId) {
             vm.score += vm.scoreIfGuessed
             vm.test()
