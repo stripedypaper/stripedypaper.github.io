@@ -7,15 +7,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
     vm.isLoading = true;
 
-    characters = null;
-    stages = null;
-    zones = null;
-    skins = null;
+    enemy = null;
 
     allowed_languages = {'en_US':true, 'ja_JP':true, 'ko_KR':true, 'zh_CN':false};
 
     vm.characters = {}
-    vm.rarities = [6, 5, 4, 3, 2, 1];
     vm.result = {}
     vm.showOptions = false;
     vm.mode = '0';
@@ -25,28 +21,12 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.scoreIfGuessed = 0
     vm.timeLeftSeconds = -1
 
-    const scoreAtZoom = {
-        0: 50,
-        1: 30,
-        2: 15,
-        3: 10,
-        4: 5,
-    }
-    const maxDimensionAtZoom = {
-        0: 12000, // 9600 12800
-        1: 5600, // 4800 6400
-        2: 2600, // 2400 3200
-        3: 1200, // 1200 1600
-        4: 600, // 600 800
-    }
     var alreadyGuessed = {}
 
     if ($location.search().lang && allowed_languages[$location.search().lang]) {
         vm.lang = $location.search().lang;
     }
     vm.stats = {};
-
-    var storage = window.localStorage;
 
     vm.options = {
         endless: false,
@@ -74,6 +54,12 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/skin_table.json`, function(json) {
                 skins = json;
                 log(skins);
+            })
+        })
+        .then(function() {
+            return $.getJSON(`https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/${vm.lang}/gamedata/levels/enemydata/enemy_database.json`, function(json) {
+                enemy = json;
+                log(enemy);
             })
         })
         .then(function() {
