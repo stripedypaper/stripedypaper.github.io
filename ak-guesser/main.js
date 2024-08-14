@@ -24,7 +24,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.skins = []
     vm.score = 0
     vm.scoreIfGuessed = 0
-    vm.timeLeftSeconds = 0
+    vm.timeLeftSeconds = -1
 
     const scoreAtZoom = {
         0: 50,
@@ -61,21 +61,6 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     function log(message) {
         if ($location.search().debug) {
             console.log(message);
-        }
-    }
-
-    function getDangerLevelNum(dangerLevel) {
-        if (!dangerLevel || dangerLevel == '-') {
-            return 999;
-        }
-        else if (dangerLevel[0] == 'L') {
-            return Number(dangerLevel.split('.')[1])
-        }
-        else if (dangerLevel[6] == '1') {
-            return 100 + Number(dangerLevel.split('.')[1])
-        }
-        else {
-            return 200 + Number(dangerLevel.split('.')[1])
         }
     }
 
@@ -118,6 +103,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         console.info("saved", enabled_map, enabled_stages);
     }
 
+    vm.getNextImageText = function() {
+        if (!vm.skin || vm.timeLeftSeconds < 0) {
+            return 'New game'
+        } else {
+            return 'Skip'
+        }
+    }
+
     init()
     .then(function() {
         vm.isLoading = false;
@@ -155,6 +148,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         $scope.$digest();
     });
 
+    var timer = null
     vm.test = function(isSkip) {
         const skinsArray = _.values(skins)
         const i = _.random(0, skinsArray.length - 1)
@@ -163,12 +157,56 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         }
         if (vm.skin) {
             vm.previousSkin = vm.skin
-            vm.previousScore = isSkip ? `Skipped` : `${vm.viewPortInfo.guesses + 1}x guess + ${vm.viewPortInfo.zoomStep}x zoom out = ${vm.scoreIfGuessed} points`
+        }
+        if (isSkip) {
+            vm.previousScore = 'Skipped'
+            vm.previousViewPortInfo = null
+        } else {
+            vm.previousScore = `${vm.viewPortInfo.guesses + 1}x guess + ${vm.viewPortInfo.zoomStep}x zoom out = ${vm.scoreIfGuessed} points`
+            // calculate zoom for smaller viewport
+            
+            vm.previousViewPortInfo = _.clone(vm.viewPortInfo)
+            const isLast = vm.viewPortInfo.zoomStep >= 4
+            vm.previousViewPortInfo.maxDimension = maxDimensionAtZoom[vm.viewPortInfo.zoomStep] / 2 // half size
+            const centerPointX = isLast ? 0.5 : vm.viewPortInfo.centerPointX
+            const centerPointY = isLast ? 0.5 : vm.viewPortInfo.centerPointY
+            const scale = vm.previousViewPortInfo.maxDimension / Math.max(vm.viewPortInfo.originalHeight, vm.viewPortInfo.originalWidth)
+            const scaledHeight = scale * vm.viewPortInfo.originalHeight
+            const scaledWidth = scale * vm.viewPortInfo.originalWidth
+            const rightOffset = centerPointX * scaledWidth - 150
+            const bottomOffset = centerPointY * scaledHeight - 150
+            vm.previousViewPortInfo.style = {
+                'height': scaledHeight + 'px',
+                'width': scaledWidth + 'px',
+                'right': rightOffset + 'px',
+                'bottom': bottomOffset + 'px'
+            }
         }
         vm.skin = skinsArray[i]
         vm.showSkin = false
         vm.skinInput = null
-        vm.timeLeftSeconds = 300
+
+        if (vm.timeLeftSeconds < 0) {
+            vm.timeLeftSeconds = 300
+            if (timer) {
+                $interval.cancel(timer)
+            }
+            timer = $interval(() => {
+                vm.timeLeftSeconds--
+            }, 1000)
+            vm.previousSkin = null
+            vm.score = 0
+        }
+    }
+
+    vm.getTimeText = function() {
+        if (vm.timeLeftSeconds < 0) {
+            return 'Time\'s up!'
+        } else {
+            return moment.duration(vm.timeLeftSeconds * 1000).format('mm:ss', {
+                trim: false
+            })
+        }
     }
 
     vm.testOnLoad = function($event) {
@@ -177,7 +215,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         vm.showSkin = true
 
         const centerPointX = _.random(0.4, 0.6)
-        const centerPointY = _.random(0.25, 0.75)
+        const centerPointY = _.random(0.20, 0.75)
         // const centerPointX = 0.5
         // const centerPointY = 0.5
         const zoomStep = 0
@@ -294,56 +332,9 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         vm[name] = !vm[name];
     }
 
-    vm.selectOps = function(enable, rarity) {
-        _.each(vm.characters[rarity], function(char) {
-            char.enabled = enable;
-        })
-    }
-
-    vm.selectStages = function(enable, zoneId) {
-        _.each(vm.stages[zoneId], function(stage) {
-            stage.enabled = enable;
-        })
-    }
-
-    vm.getZoneName = function(zoneId) {
-        var r = '';
-        var zoneInfo = zones.zones[zoneId];
-        return zoneInfo.zoneNameFirst || zoneInfo.zoneNameSecond || 'Annihilation';
-    }
-
-    vm.getStageName = function(stage) {
-        if (stage.zoneId.slice(0, 4) == 'camp') {
-            return stage.name;
-        }
-        return stage.code;
-    }
-
     vm.selectlanguage = function() {
         log(vm.lang);
         $window.location.href = $location.path() + '?lang=' + vm.lang;
-    }
-
-    vm.setdefault = function() {
-        _.each(advancedoptionsdefault, function(option) {
-            vm.advancedoptions[option[0]][0] = option[1];
-        });
-    }
-
-    vm.presetbalanced = function() {
-        var p = [["Max Melee operators",null],["Min Melee operators",null],["Max Ranged operators",null],["Min Ranged operators",null],["Max Vanguard operators",2],["Min Vanguard operators",2],["Max Guard operators",null],["Min Guard operators",1],["Max Sniper operators",null],["Min Sniper operators",1],["Max Defender operators",null],["Min Defender operators",1],["Max Medic operators",2],["Min Medic operators",2],["Max Supporter operators",null],["Min Supporter operators",null],["Max Caster operators",null],["Min Caster operators",1],["Max Specialist operators",null],["Min Specialist operators",null]];
-
-        _.each(p, function(option) {
-            vm.advancedoptions[option[0]][0] = option[1];
-        });
-    }
-
-    vm.presethighlander = function() {
-        var p = [["Max Melee operators",null],["Min Melee operators",null],["Max Ranged operators",null],["Min Ranged operators",null],["Max Vanguard operators",2],["Min Vanguard operators",2],["Max Guard operators",null],["Min Guard operators",1],["Max Sniper operators",null],["Min Sniper operators",1],["Max Defender operators",null],["Min Defender operators",1],["Max Medic operators",2],["Min Medic operators",2],["Max Supporter operators",null],["Min Supporter operators",1],["Max Caster operators",null],["Min Caster operators",1],["Max Specialist operators",null],["Min Specialist operators",1]];
-
-        _.each(p, function(option) {
-            vm.advancedoptions[option[0]][0] = option[1];
-        });
     }
 });
 
