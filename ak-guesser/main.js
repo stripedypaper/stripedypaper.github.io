@@ -6,6 +6,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     var vm = this;
 
     vm.isLoading = true;
+    vm.theme = 'dark'
 
     characters = null;
     stages = null;
@@ -51,6 +52,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.options = {
         endless: false,
         enableE0: true,
+        darkMode: storage.getItem("theme") == 'dark',
     }
 
     const skinGroupIdFriendlyName = {
@@ -66,6 +68,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     function init() {
+        applyTheme()
         return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
             characters = json;
             log(characters);
@@ -104,6 +107,17 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         } else {
             return 'Skip'
         }
+    }
+
+    const applyTheme = function() {
+        const theme = vm.options.darkMode ? 'dark' : 'light'
+        storage.setItem('theme', theme)
+        $('body').attr("data-bs-theme", theme)
+    }
+
+    vm.toggleDarkMode = function() {
+        vm.options.darkMode = !vm.options.darkMode
+        applyTheme()
     }
 
     const setSkins = function() {
