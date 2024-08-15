@@ -153,6 +153,12 @@ body {
     pointer-events: none;
 }
 
+.enemy-image {
+    height: 316px;
+    width: 316px;
+    margin: auto;
+}
+
 .loading-image {
     
 }
