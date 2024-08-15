@@ -99,6 +99,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         if (vm.questionIndex >= vm.questions) {
             console.log('resetting game')
             vm.questionIndex = -1
+            vm.score = 0
             vm.errorOffset = 0
             vm.previousEnemy = null
         }
