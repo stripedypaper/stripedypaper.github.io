@@ -19,6 +19,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.lang = 'en_US';
     vm.skins = []
     vm.score = 0
+    vm.maxScore = 1000
     vm.scoreIfGuessed = 0
     vm.timeLeftSeconds = -1
 

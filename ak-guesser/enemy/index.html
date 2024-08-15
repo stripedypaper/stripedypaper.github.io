@@ -87,8 +87,9 @@
             <div ng-if="vm.questionIndex >= 0">
                 <div class="block">
                     <div ng-hide="vm.questionIndex >= vm.questions">Score increase if guessed: {{vm.scoreIfGuessed}}</div>
-                    <div>Current score: {{vm.score}}</div>
-                    <div ng-hide="vm.options.endless">Questions remaining: {{vm.questions - vm.questionIndex}}</div>
+                    <div ng-hide="vm.questionIndex >= vm.questions">Current score: {{vm.score}}</div>
+                    <div ng-hide="vm.options.endless || vm.questionIndex >= vm.questions">Questions remaining: {{vm.questions - vm.questionIndex}}</div>
+                    <div ng-hide="vm.questionIndex < vm.questions">Final score: {{vm.score}}/{{vm.maxScore}}</div>
                 </div>
             </div>
 
