@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Arknights Guesser</title>
+    <title>Arknights Skill Guesser</title>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-NFH81TE3QE"></script>
     <script>
@@ -20,15 +20,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.min.js" integrity="sha512-ykZ1QQr0Jy/4ZkvKuqWn4iF3lqPZyij9iRv6sGqLRdTPkY69YX6+7wvVGmsdBbiIfN/8OdsI7HABjvEok6ZopQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-animate/1.8.3/angular-animate.min.js" integrity="sha512-Vhup4/4s+jnmiFsp1Sg1/6jXncRbIBc+fKemYjq1n+nEXthmeASyaWnClWsAV5Sas7WbLMLNYYHw6TxwQE4oPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-touch/1.7.8/angular-touch.min.js" integrity="sha512-mUwY1j7oX/p8Tj8XuWKsXojSpjMV1DjkQQXNzDCUK2IsSwV/8JR+KOgxxY6EXPkgLN29gNPEuckLBz0J9EDUnQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="moment.min.js"></script>
-    <script src="moment-duration-format.js"></script>
-    <script src="ui-bootstrap-tpls-2.5.0.min.js"></script>
-    <script src="jquery.min.js"></script>
-    <script src="lodash.js"></script>
+    <script src="../moment.min.js"></script>
+    <script src="../moment-duration-format.js"></script>
+    <script src="../ui-bootstrap-tpls-2.5.0.min.js"></script>
+    <script src="../jquery.min.js"></script>
+    <script src="../lodash.js"></script>
     <script src="main.js"></script>
-    <link href="styles.css" rel="stylesheet"></link>
+    <link href="../styles.css" rel="stylesheet"></link>
     <base href="/ak-guesser">
-    <meta name="description" content="Try guessing the Arknights operator & skin from a zoomed in image.">
+    <meta name="description" content="Try guessing the Arknights Operator skill's name from its icon.">
     <link rel="shortcut icon" href="https://stripedypaper.github.io/ak-guesser/favicon.ico" />
 </head>
 <body ng-app="app" ng-controller="MyController as vm" id="" data-bs-theme="light">
@@ -36,7 +36,7 @@
         <div ng-if="vm.isLoading">Loading resources...</div>
         <div ng-if="!vm.isLoading" class="main">
             <div class="flexh">
-                <h1 class="display-4 block">Arknights Guesser (beta)</h1>
+                <h1 class="display-4 block">Arknights Skill Guesser (beta)</h1>
                 <div class="flex1"></div>
                 <div class="form-check form-switch mauto" style="margin-right: 16px">
                     <input class="form-check-input" type="checkbox" ng-click="vm.toggleDarkMode()" ng-checked="vm.options.darkMode">
@@ -52,56 +52,51 @@
             </div>
 
             <div class="flexh block">
-                <div ng-if="vm.skin">
-                    <div class="skin-container">
-                        <img draggable="false" ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" ng-on-load="vm.testOnLoad($event)" class="skin-image" ng-style="vm.viewPortInfo.style">
+                <div ng-if="vm.questionIndex >= 0">
+                    <div class="skin-container flexv">
+                        <img draggable="false" ng-show="vm.showSkin && vm.questionIndex < vm.questions" ng-src="{{vm.assets[vm.questionIndex + vm.errorOffset].url}}" ng-on-load="vm.testOnLoad($event)" ng-on-error="vm.onError($event)" class="enemy-image">
                         <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png">
                     </div>
                 </div>
                 <div class="flex1 flexv">
-                    <div ng-show="vm.skin" class="block show-mobile">
-                        <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="Guess the operator & skin" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
-                    </div>
                     <div class="flexh">
-                        <div ng-if="vm.skin" class="form-group flex1 hide-mobile">
-                            <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="Guess the operator & skin" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
+                        <div ng-if="vm.questionIndex >= 0" class="form-group flex1">
+                            <input type="text" ng-model="vm.skinInput"  ng-disabled="vm.questionIndex >= vm.questions" placeholder="Guess the skill" uib-typeahead="asset.searchableName for asset in vm.assets | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:10" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                         </div>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin" ng-disabled="vm.viewPortInfo.zoomStep == 4">Show more</button>
+                        <!-- <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin" ng-disabled="vm.viewPortInfo.zoomStep == 4">Show more</button> -->
                         <button type="button" class="btn btn-primary" ng-click="vm.test(true)">{{vm.getNextImageText()}}</button>
                     </div>
                     <div class="flex1"></div>
                     <div>
-                        <div ng-if="vm.previousSkin">
+                        <div ng-if="vm.previousAsset">
                             <div class="block align-right">
                                 <div>Previous image</div>
-                                <div>{{vm.previousSkin.searchableName}}</div>
+                                <div>{{vm.previousAsset.searchableName}}</div>
                                 <div>{{vm.previousScore}}</div>
                             </div>
                             <div class="flexh">
                                 <div class="flex1"></div>
-                                <div class="skin-container-small" ng-if="vm.previousViewPortInfo">
-                                    <img ng-src="{{vm.previousSkin.url}}" class="skin-image" ng-style="vm.previousViewPortInfo.style">
-                                </div>
                                 <div class="skin-container-small">
-                                    <img ng-src="{{vm.previousSkin.url}}" class="skin-image-small">
+                                    <img ng-src="{{vm.previousAsset.url}}" class="skin-image-small">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div ng-if="vm.skin">
+            <div ng-if="vm.questionIndex >= 0">
                 <div class="block">
-                    <div ng-hide="vm.timeLeftSeconds < 0">Score increase if guessed: {{vm.scoreIfGuessed}}</div>
-                    <div>Current score: {{vm.score}}</div>
-                    <div ng-hide="vm.options.endless">Time remaining: {{vm.getTimeText()}}</div>
+                    <div ng-hide="vm.questionIndex >= vm.questions">Score increase if guessed: {{vm.scoreIfGuessed}}</div>
+                    <div ng-hide="vm.questionIndex >= vm.questions">Current score: {{vm.score}}</div>
+                    <div ng-hide="vm.options.endless || vm.questionIndex >= vm.questions">Questions remaining: {{vm.questions - vm.questionIndex}}</div>
+                    <div ng-hide="vm.questionIndex < vm.questions">Final score: {{vm.score}}/{{vm.maxScore}}</div>
                 </div>
             </div>
 
 
             <!--<div ng-repeat="(key, val) in vm.stats">{{key}} {{val}}</div>-->
             <!-- Button trigger modal -->
-            <button type="button" ng-show="vm.timeLeftSeconds < 0" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">Options</button>
+            <!-- <button type="button" ng-show="vm.timeLeftSeconds < 0" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">Options</button> -->
 
             <!-- Modal -->
             <div class="modal fade" id="advanced" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -131,15 +126,15 @@
                 <div class="small">Thanks to Aceship and Kengxxiao for game resources</a></div>
                 <div class="small">Created by <a target="blank" href="https://twitter.com/boardwalkhotel_">@boardwalkhotel_</a></div>
             </div>
-            <!-- <a href="ak-guesser/" target="_self">
+            <a href="ak-guesser/" target="_self">
                 <img src="https://stripedypaper.github.io/ak-guesser/image/sticker2.png" style="height:64px">
-            </a> -->
+            </a>
             <a href="ak-guesser/enemy" target="_self">
                 <img src="https://stripedypaper.github.io/ak-guesser/image/sticker1.png" style="height:64px">
             </a>
-            <a href="ak-guesser/skill" target="_self">
+            <!-- <a href="ak-guesser/skill" target="_self">
                 <img src="ak-guesser/image/sticker4.png" style="height:64px">
-            </a>
+            </a> -->
         </div>
     </div>
 </div>

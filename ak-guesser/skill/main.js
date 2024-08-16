@@ -8,9 +8,25 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.isLoading = true;
     vm.theme = 'dark'
 
-    enemy = null;
+    var assets = null
+    var characters = null
 
     allowed_languages = {'en_US':true, 'ja_JP':true, 'ko_KR':true, 'zh_CN':false};
+
+    allowedProfessions = {
+        CASTER: true,
+        MEDIC: true,
+        PIONEER: true,
+        SNIPER: true,
+        SPECIAL: true,
+        SUPPORT: true,
+        TANK: true,
+        WARRIOR: true,
+    }
+    disallowedProfessions = {
+        TOKEN: true,
+        TRAP: true,
+    }
 
     vm.showOptions = false;
     vm.lang = 'en_US';
@@ -45,9 +61,23 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
     function init() {
         applyTheme()
-        return $.getJSON(`https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/${vm.lang}/gamedata/levels/enemydata/enemy_database.json`, function(json) {
-            enemy = json;
-            log(enemy);
+        return $.getJSON(`https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/${vm.lang}/gamedata/excel/skill_table.json`, function(json) {
+            skills = json;
+            log(skills);
+        })
+        .then(function() {
+            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
+                characters = json;
+                log(characters);
+            })
+        })
+        .then(function() {
+            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/char_patch_table.json`, function(json) {
+                characters = _.merge(characters, json.patchChars)
+                log(characters);
+                // console.log(_.groupBy(characters, 'profession'))
+                // console.log(_.groupBy(characters, 'subProfessionId'))
+            })
         })
         .then(function() {
             vm.isLoading = false;
@@ -73,20 +103,62 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         applyTheme()
     }
 
+    const processSearchableName = function() {
+        const skillIdToChars = {}
+        const skillIconIdsToSkills = {}
+
+        vm.assets = []
+        _.each(characters, (value, key) => {
+            const charId = key
+            _.each(value.skills, skill => {
+                const skillId = skill.skillId
+                if (skillIdToChars[skillId]) {
+                    skillIdToChars[skillId].push(value)
+                } else {
+                    skillIdToChars[skillId] = [value]
+                }
+            })
+        })
+        _.each(skills, (value, key) => {
+            if (value.levels.length > 0) {
+                const iconIdOrSkillId = value.iconId || value.skillId
+                if (skillIconIdsToSkills[iconIdOrSkillId]) {
+                    skillIconIdsToSkills[iconIdOrSkillId].push(value)
+                } else {
+                    skillIconIdsToSkills[iconIdOrSkillId] = [value]
+                }
+            }
+        })
+        _.each(skillIconIdsToSkills, (value, key) => {
+            var charName = null
+            var skillName = null
+            if (disallowedProfessions[skillIdToChars[value[0].skillId][0].profession]) {
+                // skip trap, token
+                return
+            }
+            if (value.length == 1) {
+                const skillId = value[0].skillId
+                if (!skillIdToChars[skillId]) {
+                    
+                }
+                if (skillIdToChars[skillId].length == 1) {
+                    charName = skillIdToChars[skillId][0].name
+                }
+            }
+            skillName = value[0].levels[0].name
+            vm.assets.push({
+                skillIconId: key,
+                searchableName: skillName + (charName ? ` (${charName})` : ""),
+                url: encodeURI(`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${key}.png`),
+            })
+        })
+        console.log(_.sortBy(vm.assets, 'searchableName'))
+    }
+
     init()
     .then(function() {
         vm.isLoading = false;
-
-        vm.enemies = []
-        _.each(enemy.enemies, enemy => {
-            if (!enemy.Value[0].enemyData.description.m_value) {
-                return
-            }
-            enemy.searchableName = enemy.Value[0].enemyData.name.m_value
-            enemy.url = 'https://raw.githubusercontent.com/Aceship/Arknight-Images/main/enemy/' + enemy.Key + '.png'
-            vm.enemies.push(enemy)
-        })
-        vm.enemies = _.uniqBy(vm.enemies, 'searchableName')
+        processSearchableName()
 
         $scope.$digest();
     });
@@ -98,15 +170,15 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             vm.questionIndex = -1
             vm.score = 0
             vm.errorOffset = 0
-            vm.previousEnemy = null
+            vm.previousAsset = null
         }
         if (vm.questionIndex < 0) {
-            vm.enemies = _.shuffle(vm.enemies)
-            log(vm.enemies)
+            vm.assets = _.shuffle(vm.assets)
+            log(vm.assets)
         }
         if (vm.questionIndex >= 0) {
-            const currentEnemy = vm.enemies[vm.questionIndex + vm.errorOffset]
-            vm.previousEnemy = currentEnemy
+            const currentAsset = vm.assets[vm.questionIndex + vm.errorOffset]
+            vm.previousAsset = currentAsset
         }
         vm.questionIndex += 1
 
@@ -150,13 +222,13 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             return
         }
         
-        const currentEnemy = vm.enemies[vm.questionIndex + vm.errorOffset]
-        if (item.Key == currentEnemy.Key) {
+        const currentAsset = vm.assets[vm.questionIndex + vm.errorOffset]
+        if (item.skillIconId == currentAsset.skillIconId) {
             vm.score += vm.scoreIfGuessed
             vm.test()
         } else {
             vm.viewPortInfo.guesses = vm.viewPortInfo.guesses + 1
-            alreadyGuessed[item.Key] = true
+            alreadyGuessed[item.skillIconId] = true
             updateScoreIfGuessed()
         }
     }
@@ -166,26 +238,26 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     vm.typeAheadFilter = function(viewValue) {
-        return function(enemy) {
+        return function(asset) {
             if (!viewValue) {
                 return false
             }
-            if (alreadyGuessed[enemy.Key]) {
+            if (alreadyGuessed[asset.skillIconId]) {
                 return false
             }
-            return normalizeString(enemy.searchableName).toLowerCase().includes(normalizeString(viewValue).toLowerCase())
+            return normalizeString(asset.searchableName).toLowerCase().includes(normalizeString(viewValue).toLowerCase())
         }
     }
 
     vm.typeAheadOrderBy = function(viewValue) {
-        return function(enemy) {
+        return function(asset) {
             if (!viewValue) {
                 return -1
             }
-            if (_.startsWith(normalizeString(enemy.searchableName).toLowerCase(), normalizeString(viewValue).toLowerCase())) {
-                return enemy.searchableName.length
+            if (_.startsWith(normalizeString(asset.searchableName).toLowerCase(), normalizeString(viewValue).toLowerCase())) {
+                return asset.searchableName.length
             } else {
-                return enemy.searchableName.length + 1000
+                return asset.searchableName.length + 1000
             }
         }
     }
