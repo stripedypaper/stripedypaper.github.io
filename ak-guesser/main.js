@@ -208,6 +208,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
         if (vm.timeLeftSeconds < 0) {
             vm.timeLeftSeconds = 300
+            vm.score = 0
+            vm.previousSkin = null
             if (vm.options.endless) {
                 return
             }
@@ -220,8 +222,6 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                     vm.timeLeftSeconds = vm.timeLeftSeconds - 0.25
                 }
             }, 250)
-            vm.previousSkin = null
-            vm.score = 0
         }
     }
 
