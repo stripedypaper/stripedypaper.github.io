@@ -210,11 +210,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             vm.timeLeftSeconds = 300
             vm.score = 0
             vm.previousSkin = null
-            if (vm.options.endless) {
-                return
-            }
             if (timer) {
                 $interval.cancel(timer)
+            }
+            if (vm.options.endless) {
+                return
             }
             timer = $interval(() => {
                 // pause timer when loading
