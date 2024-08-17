@@ -301,3 +301,8 @@ body {
         display: block;
     }
 }
+
+.hint {
+    padding: 8px;
+    font-size: small;
+}

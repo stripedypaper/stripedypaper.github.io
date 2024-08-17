@@ -34,6 +34,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.maxScore = 1000
     vm.scoreIfGuessed = 0
     vm.timeLeftSeconds = -1
+    vm.showHint = false
 
     vm.questionIndex = -1
     vm.questions = 20
@@ -103,6 +104,42 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         applyTheme()
     }
 
+    const processSkillDesc = function(skillLevel, charName) {
+        var desc = skillLevel.description
+        if (!desc) {
+            console.log(skillLevel)
+        }
+        while (desc.search(/<.*?>(.*?)<\/>/g) >= 0) {
+            //console.log(desc.search(/<.+?>(.+?)<\/>/g))
+            desc = desc.replace(/<.*?>(.*?)<\/>/g, '$1')
+        }
+        return desc.replace(". \n", ". ").replace(".\n", ". ").replace("\n", ". ").replace(charName, '?').replace(/\{(-?)(.+?)(:.+?)?\}/g, (match, negative, keyName, colonPart) => {
+            // if (skillLevel.name == 'Waterless Dance of the Shattered Maelstrom') {
+                // console.log(match, negative, keyName, colonPart)
+            // }
+            //console.log(match, capture1, capture2)
+            var replacement = '?'
+            _.each(skillLevel.blackboard, (blackboardEntry) => {
+                if (blackboardEntry.key.toLowerCase() == keyName.toLowerCase()) {
+                    const mult = negative ? -1 : 1
+                    if (colonPart == ':0%') {
+                        replacement = Math.round(mult * blackboardEntry.value * 100) + '%'
+                    } else if (colonPart == ':0.0%') {
+                        replacement = Math.round(mult * blackboardEntry.value * 1000) / 10 + '%'
+                    } else {
+                        replacement = negative ? (blackboardEntry.value * -1) : blackboardEntry.value
+                    }
+                }
+            })
+            if (replacement == '?') {
+                if (skillLevel[keyName]) {
+                    return skillLevel[keyName]
+                }
+            }
+            return replacement
+        })
+    }
+
     const processSearchableName = function() {
         const skillIdToChars = {}
         const skillIconIdsToSkills = {}
@@ -120,7 +157,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             })
         })
         _.each(skills, (value, key) => {
-            if (value.levels.length > 0) {
+            if (value.levels.length > 0 && value.levels[0].description) {
                 const iconIdOrSkillId = value.iconId || value.skillId
                 if (skillIconIdsToSkills[iconIdOrSkillId]) {
                     skillIconIdsToSkills[iconIdOrSkillId].push(value)
@@ -129,15 +166,24 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 }
             }
         })
+        const disallowedSkills = {
+            skchr_baslin_1: true,
+            skchr_demkni_1: true,
+        }
         _.each(skillIconIdsToSkills, (value, key) => {
             var charName = null
-            var skillName = null
-            if (disallowedProfessions[skillIdToChars[value[0].skillId][0].profession]) {
+            const skill = value[0]
+            const skillName = skill.levels[0].name
+            if (disallowedProfessions[skillIdToChars[skill.skillId][0].profession]) {
                 // skip trap, token
                 return
             }
+            if (disallowedSkills[skill.skillId]) {
+                // skip duplicate first aid
+                return
+            }
             if (value.length == 1) {
-                const skillId = value[0].skillId
+                const skillId = skill.skillId
                 if (!skillIdToChars[skillId]) {
                     
                 }
@@ -145,10 +191,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                     charName = skillIdToChars[skillId][0].name
                 }
             }
-            skillName = value[0].levels[0].name
             vm.assets.push({
                 skillIconId: key,
                 searchableName: skillName + (charName ? ` (${charName})` : ""),
+                description: processSkillDesc(_.last(skill.levels), charName),
                 url: encodeURI(`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${key}.png`),
             })
         })
@@ -185,10 +231,16 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         if (isSkip) {
             vm.previousScore = 'Skipped'
         } else {
-            vm.previousScore = `${vm.viewPortInfo.guesses + 1}x guess = ${vm.scoreIfGuessed} points`
+            var string = `${vm.viewPortInfo.guesses + 1}x guess`
+            if (vm.showHint) {
+                string += ' + hint'
+            }
+            string += ` = ${vm.scoreIfGuessed} points`
+            vm.previousScore = string
         }
         vm.showSkin = false
         vm.skinInput = null
+        vm.showHint = false
         alreadyGuessed = {}
     }
 
@@ -265,12 +317,13 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     const updateScoreIfGuessed = () => {
         const guesses = vm.viewPortInfo.guesses
         var guessMultiplier = 1
+        var hintMultiplier = vm.showHint ? 0.5 : 1
         if (guesses == 1) {
             guessMultiplier = 0.9
         } else if (guesses > 1) {
             guessMultiplier = Math.max(0.5, 1 - guesses * 0.1)
         }
-        vm.scoreIfGuessed = Math.ceil(50 * guessMultiplier)
+        vm.scoreIfGuessed = Math.ceil(50 * guessMultiplier * hintMultiplier)
     }
 
 
@@ -285,6 +338,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.selectlanguage = function() {
         log(vm.lang);
         $window.location.href = $location.path() + '?lang=' + vm.lang;
+    }
+
+    vm.toggleHint = function() {
+        vm.showHint = true
+        updateScoreIfGuessed()
     }
 });
 
