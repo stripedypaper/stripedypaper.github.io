@@ -169,6 +169,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         const disallowedSkills = {
             skchr_baslin_1: true,
             skchr_demkni_1: true,
+            skchr_aprot_1: true,
         }
         _.each(skillIconIdsToSkills, (value, key) => {
             var charName = null

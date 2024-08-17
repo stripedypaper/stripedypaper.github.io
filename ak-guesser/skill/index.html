@@ -64,7 +64,7 @@
                         <div ng-if="vm.questionIndex >= 0" class="form-group flex1">
                             <input type="text" ng-model="vm.skinInput"  ng-disabled="vm.questionIndex >= vm.questions" placeholder="Guess the skill" uib-typeahead="asset.searchableName for asset in vm.assets | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:10" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                         </div>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.toggleHint()" ng-if="vm.questionIndex >= 0" ng-disabled="vm.showHint || vm.questionIndex >= vm.questions">Hint</button>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.toggleHint()" ng-if="vm.questionIndex >= 0" ng-disabled="vm.showHint || vm.questionIndex >= vm.questions || !vm.assets[vm.questionIndex + vm.errorOffset].description">Hint</button>
                         <button type="button" class="btn btn-primary" ng-click="vm.test(true)">{{vm.getNextImageText()}}</button>
                     </div>
                     <div class="flex1"></div>

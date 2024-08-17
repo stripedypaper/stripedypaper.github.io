@@ -56,6 +56,7 @@
                     <div class="skin-container flexv">
                         <img draggable="false" ng-show="vm.showSkin && vm.questionIndex < vm.questions" ng-src="{{vm.enemies[vm.questionIndex + vm.errorOffset].url}}" ng-on-load="vm.testOnLoad($event)" ng-on-error="vm.onError($event)" class="enemy-image">
                         <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png">
+                        <div class="hint" ng-if="vm.showHint && vm.questionIndex < vm.questions">{{vm.enemies[vm.questionIndex + vm.errorOffset].description}}</div>
                     </div>
                 </div>
                 <div class="flex1 flexv">
@@ -63,7 +64,7 @@
                         <div ng-if="vm.questionIndex >= 0" class="form-group flex1">
                             <input type="text" ng-model="vm.skinInput"  ng-disabled="vm.questionIndex >= vm.questions" placeholder="Guess the enemy" uib-typeahead="enemy.searchableName for enemy in vm.enemies | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:10" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                         </div>
-                        <!-- <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin" ng-disabled="vm.viewPortInfo.zoomStep == 4">Show more</button> -->
+                        <button type="button" class="btn btn-secondary" ng-click="vm.toggleHint()" ng-if="vm.questionIndex >= 0" ng-disabled="vm.showHint || vm.questionIndex >= vm.questions">Hint</button>
                         <button type="button" class="btn btn-primary" ng-click="vm.test(true)">{{vm.getNextImageText()}}</button>
                     </div>
                     <div class="flex1"></div>
