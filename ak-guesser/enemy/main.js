@@ -97,7 +97,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             if (!enemy.Value[0].enemyData.description.m_value) {
                 return
             }
-            if (enemy.Key[disallowed]) {
+            if (disallowed[enemy.Key]) {
                 return
             }
             enemy.searchableName = enemy.Value[0].enemyData.name.m_value
