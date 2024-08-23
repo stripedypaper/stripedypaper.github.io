@@ -54,7 +54,7 @@
             <div class="flexh block">
                 <div ng-if="vm.skin">
                     <div class="skin-container">
-                        <img draggable="false" ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" ng-on-load="vm.testOnLoad($event)" class="skin-image" ng-style="vm.viewPortInfo.style">
+                        <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" ng-on-load="vm.testOnLoad($event)" class="skin-image" ng-style="vm.viewPortInfo.style">
                         <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png">
                     </div>
                 </div>
@@ -121,11 +121,19 @@
                                 <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE0" ng-checked="vm.options.enableE0">
                                 <label class="form-check-label" for="flexSwitchCheckDefault">Enable operator E0 art</label>
                             </div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableBadZoomCheck" ng-checked="vm.options.enableBadZoomCheck">
+                                <label class="form-check-label" for="flexSwitchCheckDefault">Enable retry on bad zoom (experimental)</label>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+            
+        <canvas id="canvas" width="32" height="32" style="width: 128px; height: 128px; border:1px solid; display:none"></canvas>
+        <canvas id="canvas2" width="32" height="32" style="width: 128px; height: 128px; border:1px solid; display:none"></canvas>
         <div class="flexh">
             <div class="flex1" style="margin-top:auto">
                 <div class="small">Thanks to Aceship and Kengxxiao for game resources</a></div>

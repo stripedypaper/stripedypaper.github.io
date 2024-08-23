@@ -53,6 +53,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         endless: false,
         enableE0: true,
         darkMode: storage.getItem("theme") == 'dark',
+        enableBadZoomCheck: false,
     }
 
     const skinGroupIdFriendlyName = {
@@ -240,11 +241,50 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         const skinWidth = $event.target.width
         vm.showSkin = true
 
-        const centerPointX = _.random(0.4, 0.6)
-        const centerPointY = _.random(0.20, 0.75)
-        // const centerPointX = 0.5
-        // const centerPointY = 0.5
         const zoomStep = 0
+        // var centerPointX = _.random(0.4, 0.6)
+        // var centerPointY = _.random(0.20, 0.75)
+        var centerPointX = _.random(0.20, 0.80)
+        var centerPointY = _.random(0.10, 0.90)
+        if (vm.options.enableBadZoomCheck) {
+            centerPointX = _.random(0.20, 0.80)
+            centerPointY = _.random(0.10, 0.90)
+
+            // try to find a zoom that isn't mostly blank pixels
+            var acceptableZoom = false
+            var retries = 0
+            const maxRetries = 10
+            while (!acceptableZoom && retries < maxRetries) {
+                const canvas = document.getElementById('canvas')
+                const ctx = canvas.getContext('2d', { willReadFrequently: true })
+                const viewPortSize = maxDimensionAtZoom[4] / maxDimensionAtZoom[0] * Math.max(skinHeight, skinWidth)
+                ctx.clearRect(0, 0, canvas.width, canvas.height)
+                ctx.drawImage($event.target, centerPointX * skinWidth - viewPortSize / 2, centerPointY * skinHeight - viewPortSize / 2, viewPortSize, viewPortSize, 0, 0, 32, 32)
+                const totalPixels = 32 * 32
+                var blankPixels = 0
+                for (var i = 0; i < 32; i++) {
+                    for (var j = 0; j < 32; j++) {
+                        const data = ctx.getImageData(i, j, 1, 1).data
+                        if (data[0] == 0 && data[1] == 0 && data[2] == 0 & data[3] == 0) {
+                            blankPixels += 1
+                        }
+                    }
+                }
+                if (blankPixels / totalPixels > 0.5) {
+                    console.log('Image was too many blank pixels, picking another zoom', blankPixels, totalPixels)
+                    const canvas2 = document.getElementById('canvas2')
+                    const ctx2 = canvas2.getContext('2d', { willReadFrequently: true })
+                    ctx2.clearRect(0, 0, canvas2.width, canvas2.height)
+                    ctx2.drawImage($event.target, centerPointX * skinWidth - viewPortSize / 2, centerPointY * skinHeight - viewPortSize / 2, viewPortSize, viewPortSize, 0, 0, 32, 32)
+                    centerPointX = _.random(0.20, 0.80)
+                    centerPointY = _.random(0.20, 0.80)
+                    retries += 1
+                } else {
+                    acceptableZoom = true
+                }
+
+            } 
+        }
 
         // make the image's largest dimension = 12800
 
@@ -269,6 +309,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             'right': rightOffset + 'px',
             'bottom': bottomOffset + 'px'
         }
+
         updateScoreIfGuessed()
     }
 
