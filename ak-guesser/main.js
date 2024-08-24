@@ -242,10 +242,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         vm.showSkin = true
 
         const zoomStep = 0
-        // var centerPointX = _.random(0.4, 0.6)
-        // var centerPointY = _.random(0.20, 0.75)
-        var centerPointX = _.random(0.20, 0.80)
-        var centerPointY = _.random(0.10, 0.90)
+        var centerPointX = _.random(0.4, 0.6)
+        var centerPointY = _.random(0.20, 0.75)
+        // var centerPointX = _.random(0.20, 0.80)
+        // var centerPointY = _.random(0.10, 0.90)
         if (vm.options.enableBadZoomCheck) {
             centerPointX = _.random(0.20, 0.80)
             centerPointY = _.random(0.10, 0.90)
