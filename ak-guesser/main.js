@@ -52,6 +52,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.options = {
         endless: false,
         enableE0: true,
+        enableE2: true,
+        enableSkin: true,
         darkMode: storage.getItem("theme") == 'dark',
         enableBadZoomCheck: false,
     }
@@ -134,6 +136,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             }
             if (skinGroupId == 'ILLUST_0' && vm.options.enableE0 == false) {
                 // no elite0 art
+                return
+            }
+            if (skinGroupId == 'ILLUST_2' && vm.options.enableE2 == false) {
+                // no elite2 art
+                return
+            }
+            if (!skinGroupIdFriendlyName[skinGroupId] && vm.options.enableSkin == false) {
+                // no skin art
                 return
             }
 
@@ -410,6 +420,17 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.selectlanguage = function() {
         log(vm.lang);
         $window.location.href = $location.path() + '?lang=' + vm.lang;
+    }
+
+    vm.toggleArt = function(n) {
+        $timeout(() => {
+            const allDisabled = !vm.options.enableE0 && !vm.options.enableE2 && !vm.options.enableSkin
+            if (n == 1 && allDisabled) {
+                vm.options.enableE0 = true
+            } else if (allDisabled) {
+                vm.options.enableE2 = true
+            }
+        }, 0)
     }
 });
 
