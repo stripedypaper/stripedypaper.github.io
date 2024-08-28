@@ -65,10 +65,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     };
 
     function setImageDimension() {
-        // big image should be 600px at window.innerHeight 870px or larger, shrinking by 1px per window pixel smaller
+        // big image should be 600px at window.innerHeight 875px or larger, shrinking by 1px per window pixel smaller
         // small image should be 300px at window.innerWidth 1255px or larger, shrinking by 0.5px per window pixel smaller
         // small image should be 300px at window.innerHeight 700px or larger, shrinking by 1px per window pixel smaller
-        vm.bigImageDimension = Math.max(Math.min(600, window.innerHeight - 270), 300)
+        vm.bigImageDimension = Math.max(Math.min(600, window.innerHeight - 275), 300)
         vm.smallImageDimension = Math.max(Math.min(300, window.innerWidth / 2 - 327, window.innerHeight - 400), 150)
         vm.bigImageContainerStyle = {
             'height': vm.bigImageDimension + 'px',
