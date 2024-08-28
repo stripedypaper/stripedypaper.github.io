@@ -64,6 +64,24 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         'ILLUST_2': 'E2',
     };
 
+    function setImageDimension() {
+        // big image should be 600px at window.innerHeight 870px or larger, shrinking by 1px per window pixel smaller
+        // small image should be 300px at window.innerWidth 1255px or larger, shrinking by 0.5px per window pixel smaller
+        // small image should be 300px at window.innerHeight 700px or larger, shrinking by 1px per window pixel smaller
+        vm.bigImageDimension = Math.max(Math.min(600, window.innerHeight - 270), 300)
+        vm.smallImageDimension = Math.max(Math.min(300, window.innerWidth / 2 - 327, window.innerHeight - 400), 150)
+        vm.bigImageContainerStyle = {
+            'height': vm.bigImageDimension + 'px',
+            'width': vm.bigImageDimension + 'px'
+        }
+        vm.smallImageContainerStyle = {
+            'height': vm.smallImageDimension + 'px',
+            'width': vm.smallImageDimension + 'px'
+        }
+        log('window', window.innerHeight, window.innerWidth)
+        log('dimension', vm.bigImageDimension, vm.smallImageDimension)
+    }
+
     function log(message) {
         if ($location.search().debug) {
             console.log(message);
@@ -71,6 +89,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     function init() {
+        setImageDimension()
+        window.addEventListener('resize', function(event) {
+            setImageDimension()
+        }, true)
         applyTheme()
         return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
             characters = json;
@@ -197,14 +219,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             
             vm.previousViewPortInfo = _.clone(vm.viewPortInfo)
             const isLast = vm.viewPortInfo.zoomStep >= 4
-            vm.previousViewPortInfo.maxDimension = maxDimensionAtZoom[vm.viewPortInfo.zoomStep] / 2 // half size
+            vm.previousViewPortInfo.maxDimension = vm.previousViewPortInfo.maxDimension * vm.smallImageDimension / vm.bigImageDimension
             const centerPointX = isLast ? 0.5 : vm.viewPortInfo.centerPointX
             const centerPointY = isLast ? 0.5 : vm.viewPortInfo.centerPointY
             const scale = vm.previousViewPortInfo.maxDimension / Math.max(vm.viewPortInfo.originalHeight, vm.viewPortInfo.originalWidth)
             const scaledHeight = scale * vm.viewPortInfo.originalHeight
             const scaledWidth = scale * vm.viewPortInfo.originalWidth
-            const rightOffset = centerPointX * scaledWidth - 150
-            const bottomOffset = centerPointY * scaledHeight - 150
+            const rightOffset = centerPointX * scaledWidth - 0.5 * vm.smallImageDimension
+            const bottomOffset = centerPointY * scaledHeight - 0.5 * vm.smallImageDimension
             vm.previousViewPortInfo.style = {
                 'height': scaledHeight + 'px',
                 'width': scaledWidth + 'px',
@@ -301,7 +323,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         vm.viewPortInfo = {
             originalHeight: skinHeight,
             originalWidth: skinWidth,
-            maxDimension: maxDimensionAtZoom[0],
+            maxDimension: maxDimensionAtZoom[0] * vm.bigImageDimension / 600,
             centerPointX,
             centerPointY,
             zoomStep,
@@ -311,8 +333,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         const scale = vm.viewPortInfo.maxDimension / Math.max(vm.viewPortInfo.originalHeight, vm.viewPortInfo.originalWidth)
         const scaledHeight = scale * vm.viewPortInfo.originalHeight
         const scaledWidth = scale * vm.viewPortInfo.originalWidth
-        const rightOffset = centerPointX * scaledWidth - 300
-        const bottomOffset = centerPointY * scaledHeight - 300
+        const rightOffset = centerPointX * scaledWidth - 0.5 * vm.bigImageDimension
+        const bottomOffset = centerPointY * scaledHeight - 0.5 * vm.bigImageDimension
         vm.viewPortInfo.style = {
             'height': scaledHeight + 'px',
             'width': scaledWidth + 'px',
@@ -378,14 +400,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             }
 
             const isLast = vm.viewPortInfo.zoomStep >= 4
-            vm.viewPortInfo.maxDimension = maxDimensionAtZoom[vm.viewPortInfo.zoomStep]
+            vm.viewPortInfo.maxDimension = maxDimensionAtZoom[vm.viewPortInfo.zoomStep] * vm.bigImageDimension / 600
             const centerPointX = isLast ? 0.5 : vm.viewPortInfo.centerPointX
             const centerPointY = isLast ? 0.5 : vm.viewPortInfo.centerPointY
             const scale = vm.viewPortInfo.maxDimension / Math.max(vm.viewPortInfo.originalHeight, vm.viewPortInfo.originalWidth)
             const scaledHeight = scale * vm.viewPortInfo.originalHeight
             const scaledWidth = scale * vm.viewPortInfo.originalWidth
-            const rightOffset = centerPointX * scaledWidth - 300
-            const bottomOffset = centerPointY * scaledHeight - 300
+            const rightOffset = centerPointX * scaledWidth - 0.5 * vm.bigImageDimension
+            const bottomOffset = centerPointY * scaledHeight - 0.5 * vm.bigImageDimension
             vm.viewPortInfo.style = {
                 'height': scaledHeight + 'px',
                 'width': scaledWidth + 'px',

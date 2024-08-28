@@ -53,9 +53,9 @@
 
             <div class="flexh block">
                 <div ng-if="vm.skin">
-                    <div class="skin-container">
+                    <div class="skin-container" ng-style="vm.bigImageContainerStyle">
                         <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" ng-on-load="vm.testOnLoad($event)" class="skin-image" ng-style="vm.viewPortInfo.style">
-                        <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png">
+                        <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png" style="height: 100%">
                     </div>
                 </div>
                 <div class="flex1 flexv">
@@ -79,10 +79,10 @@
                             </div>
                             <div class="flexh">
                                 <div class="flex1"></div>
-                                <div class="skin-container-small" ng-if="vm.previousViewPortInfo">
+                                <div class="skin-container-small" ng-if="vm.previousViewPortInfo" ng-style="vm.smallImageContainerStyle">
                                     <img ng-src="{{vm.previousSkin.url}}" class="skin-image" ng-style="vm.previousViewPortInfo.style">
                                 </div>
-                                <div class="skin-container-small">
+                                <div class="skin-container-small" ng-style="vm.smallImageContainerStyle">
                                     <img ng-src="{{vm.previousSkin.url}}" class="skin-image-small">
                                 </div>
                             </div>
