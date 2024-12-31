@@ -13,7 +13,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     zones = null;
     skins = null;
 
-    allowed_languages = {'en_US':true, 'ja_JP':true, 'ko_KR':true, 'zh_CN':false};
+    allowed_languages = {'en_US':true, 'ja_JP':true, 'ko_KR':true, 'zh_CN':true};
 
     vm.characters = {}
     vm.rarities = [6, 5, 4, 3, 2, 1];
@@ -55,7 +55,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         enableE2: true,
         enableSkin: true,
         darkMode: storage.getItem("theme") == 'dark',
-        enableBadZoomCheck: false,
+        enableBadZoomCheck: true,
     }
 
     const skinGroupIdFriendlyName = {
@@ -89,17 +89,19 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     function init() {
+        const repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
+        const branch = vm.lang == 'zh_CN' ? 'master' : 'main'
         setImageDimension()
         window.addEventListener('resize', function(event) {
             setImageDimension()
         }, true)
         applyTheme()
-        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
+        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
             characters = json;
             log(characters);
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/skin_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/skin_table.json`, function(json) {
                 skins = json;
                 log(skins);
             })
@@ -174,16 +176,27 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 return
             }
 
-            var portraitIdFixed = skin.portraitId.replace('#', '%23')
-            if (portraitIdFixed == 'char_298_susuro_summer%236') {
-                portraitIdFixed = 'char_298_susuro_summer%236unsus'
+            if (skin.charId.includes('amiya')) {
+                // console.log(skin)
+            } else {
+                // console.log(skin)
             }
-            if (portraitIdFixed == 'char_1001_amiya2_2') {
-                skin.searchableName = `${characterName}* (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
+
+            var portraitIdFixed = skin.portraitId.replace('#', '%23')
+            // if (portraitIdFixed == 'char_298_susuro_summer%236') {
+            //     portraitIdFixed = 'char_298_susuro_summer%236unsus'
+            // }
+            // if (portraitIdFixed == 'char_1001_amiya2_2') {
+            //     skin.searchableName = `${characterName}* (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
+            // } else {
+            //     skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
+            // }
+            if (skin.tmplId && skin.tmplId != 'char_002_amiya') {
+                skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName}) {${skin.tmplId}}`
             } else {
                 skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             }
-            skin.url = 'https://raw.githubusercontent.com/Aceship/Arknight-Images/main/characters/' + portraitIdFixed + '.png';
+            skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
             vm.skins.push(skin)
         })
     }
