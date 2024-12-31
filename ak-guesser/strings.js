@@ -4,11 +4,13 @@ angular.module('app')
         loadingResources: 'Loading resources...',
         arknightsGuesserTitle: 'Arknights Guesser (beta)',
         darkMode: 'Dark mode',
+        guessTheOperator: 'Guess the operator & skin',
         showMore: 'Show more',
         previousImage: 'Previous image',
         scoreIncreaseIfGuessed: 'Score increase if guessed',
         currentScore: 'Current score',
         timeRemaining: 'Time remaining',
+        options: 'Options',
         enableOperatorE0Art: 'Enable operator E0 art',
         enableOperatorE2Art: 'Enable operator E2 art',
         enableOperatorSkinArt: 'Enable operator skin art',
@@ -30,11 +32,13 @@ angular.module('app')
         loadingResources: '正在加载资源...',
         arknightsGuesserTitle: '明日方舟干员猜图 (测试版)',
         darkMode: '暗黑模式',
+        guessTheOperator: 'Guess the operator & skin', // todo
         showMore: '显示更多',
         previousImage: '上一张图片',
         scoreIncreaseIfGuessed: '猜中时得分增加',
         currentScore: '当前得分',
         timeRemaining: '剩余时间',
+        options: '选项',
         enableOperatorE0Art: '启用干员未精英化立绘',
         enableOperatorE2Art: '启用干员精英化二立绘',
         enableOperatorSkinArt: '启用干员皮肤立绘',
@@ -51,5 +55,14 @@ angular.module('app')
         zoomOuts: '次缩小',
         points: '分数',
         timesUp: '时间到！',
+    }
+})
+.service('translate', function(strings) {
+    var lang = 'en_US'
+    this.setLang = function(newLang) {
+        lang = newLang
+    }
+    this.translate = function(stringKey, defaultString = 'stringnotfound') {
+        return (strings[lang] || strings['en_US'])[stringKey] || defaultString
     }
 })

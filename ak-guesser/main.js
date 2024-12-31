@@ -2,10 +2,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 .config(function($locationProvider) {
     $locationProvider.html5Mode(true);
 })
-.controller('MyController', function($scope, $timeout, $interval, $location, $window, strings) {
+.controller('MyController', function($scope, $timeout, $interval, $location, $window, strings, translate) {
     var vm = this;
-
-    console.log(strings)
 
     vm.isLoading = true;
     vm.theme = 'dark'
@@ -91,6 +89,9 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     function init() {
+        translate.setLang(vm.lang)
+        vm.translate = translate.translate
+
         const repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
         const branch = vm.lang == 'zh_CN' ? 'master' : 'main'
         setImageDimension()
@@ -132,9 +133,9 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
     vm.getNextImageText = function() {
         if (!vm.skin || vm.timeLeftSeconds < 0) {
-            return 'New game'
+            return vm.translate('newGame')
         } else {
-            return 'Skip'
+            return vm.translate('skip')
         }
     }
 
@@ -226,10 +227,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             vm.previousSkin = vm.skin
         }
         if (isSkip) {
-            vm.previousScore = 'Skipped'
+            vm.previousScore = vm.translate('skipped')
             vm.previousViewPortInfo = null
         } else {
-            vm.previousScore = `${vm.viewPortInfo.guesses + 1}x guess + ${vm.viewPortInfo.zoomStep}x zoom out = ${vm.scoreIfGuessed} points`
+            vm.previousScore = `${vm.viewPortInfo.guesses + 1}x ${vm.translate('guesses')} + ${vm.viewPortInfo.zoomStep}x ${vm.translate('zoomOuts')} = ${vm.scoreIfGuessed} ${vm.translate('points')}`
             // calculate zoom for smaller viewport
             
             vm.previousViewPortInfo = _.clone(vm.viewPortInfo)
@@ -275,7 +276,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
     vm.getTimeText = function() {
         if (vm.timeLeftSeconds < 0) {
-            return 'Time\'s up!'
+            return vm.translate('timesUp')
         } else {
             return moment.duration(vm.timeLeftSeconds * 1000).format('mm:ss', {
                 trim: false

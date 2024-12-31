@@ -34,14 +34,14 @@
 </head>
 <body ng-app="app" ng-controller="MyController as vm" id="" data-bs-theme="light">
     <div class="flexv maxh">
-        <div ng-if="vm.isLoading">Loading resources...</div>
+        <div ng-if="vm.isLoading">{{vm.translate('loadingResources')}}</div>
         <div ng-if="!vm.isLoading" class="main">
             <div class="flexh">
-                <h1 class="display-4 block">Arknights Guesser (beta)</h1>
+                <h1 class="display-4 block">{{vm.translate('arknightsGuesserTitle')}}</h1>
                 <div class="flex1"></div>
                 <div class="form-check form-switch mauto" style="margin-right: 16px">
                     <input class="form-check-input" type="checkbox" ng-click="vm.toggleDarkMode()" ng-checked="vm.options.darkMode">
-                    <label class="form-check-label" for="flexSwitchCheckDefault">Dark mode</label>
+                    <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('darkMode')}}</label>
                 </div>
                 <div class="flexv">
                     <select class="form-select mauto" ng-change="vm.selectlanguage()" ng-model="vm.lang">
@@ -62,20 +62,20 @@
                 </div>
                 <div class="flex1 flexv">
                     <div ng-show="vm.skin" class="block show-mobile">
-                        <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="Guess the operator & skin" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
+                        <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                     </div>
                     <div class="flexh">
                         <div ng-if="vm.skin" class="form-group flex1 hide-mobile">
-                            <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="Guess the operator & skin" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
+                            <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                         </div>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin" ng-disabled="vm.viewPortInfo.zoomStep == 4">Show more</button>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin" ng-disabled="vm.viewPortInfo.zoomStep == 4">{{vm.translate('showMore')}}</button>
                         <button type="button" class="btn btn-primary" ng-click="vm.test(true)">{{vm.getNextImageText()}}</button>
                     </div>
                     <div class="flex1"></div>
                     <div>
                         <div ng-if="vm.previousSkin">
                             <div class="block align-right">
-                                <div>Previous image</div>
+                                <div>{{vm.translate('previousImage')}}</div>
                                 <div>{{vm.previousSkin.searchableName}}</div>
                                 <div>{{vm.previousScore}}</div>
                             </div>
@@ -94,49 +94,49 @@
             </div>
             <div ng-if="vm.skin">
                 <div class="block">
-                    <div ng-hide="vm.timeLeftSeconds < 0">Score increase if guessed: {{vm.scoreIfGuessed}}</div>
-                    <div>Current score: {{vm.score}}</div>
-                    <div ng-hide="vm.options.endless">Time remaining: {{vm.getTimeText()}}</div>
+                    <div ng-hide="vm.timeLeftSeconds < 0">{{vm.translate('scoreIncreaseIfGuessed')}}: {{vm.scoreIfGuessed}}</div>
+                    <div>{{vm.translate('currentScore')}}: {{vm.score}}</div>
+                    <div ng-hide="vm.options.endless">{{vm.translate('timeRemaining')}}: {{vm.getTimeText()}}</div>
                 </div>
             </div>
 
 
             <!--<div ng-repeat="(key, val) in vm.stats">{{key}} {{val}}</div>-->
             <!-- Button trigger modal -->
-            <button type="button" ng-show="vm.timeLeftSeconds < 0" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">Options</button>
+            <button type="button" ng-show="vm.timeLeftSeconds < 0" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">{{vm.translate('options')}}</button>
 
             <!-- Modal -->
             <div class="modal fade" id="advanced" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-xs">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Options</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">{{vm.translate('options')}}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE0" ng-checked="vm.options.enableE0" ng-click="vm.toggleArt(0)">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">Enable operator E0 art</label>
+                                <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('enableOperatorE0Art')}}</label>
                             </div>
 
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE2" ng-checked="vm.options.enableE2" ng-click="vm.toggleArt(1)">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">Enable operator E2 art</label>
+                                <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('enableOperatorE2Art')}}</label>
                             </div>
 
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" ng-model="vm.options.enableSkin" ng-checked="vm.options.enableSkin" ng-click="vm.toggleArt(2)">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">Enable operator skin art</label>
+                                <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('enableOperatorSkinArt')}}</label>
                             </div>
 
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" ng-model="vm.options.endless" ng-checked="vm.options.endless">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">Endless mode</label>
+                                <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('endlessMode')}}</label>
                             </div>
 
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" ng-model="vm.options.enableBadZoomCheck" ng-checked="vm.options.enableBadZoomCheck">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">Try to avoid zooming in on blank area (experimental)</label>
+                                <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('avoidBadZoomOption')}}</label>
                             </div>
                         </div>
                     </div>
@@ -148,7 +148,8 @@
         <canvas id="canvas2" width="32" height="32" style="width: 128px; height: 128px; border:1px solid; display:none"></canvas>
         <div class="flexh">
             <div class="flex1" style="margin-top:auto">
-                <div class="small">Thanks to <a href="https://github.com/Kengxxiao/ArknightsGameData">ArknightsGameData</a> and <a href="https://github.com/ArknightsAssets/ArknightsAssets">ArknightsAssets</a> for game resources</a></div>
+                <div class="small">Thanks to <a target="blank" href="https://github.com/Kengxxiao/ArknightsGameData">ArknightsGameData</a> and <a target="blank" href="https://github.com/ArknightsAssets/ArknightsAssets">ArknightsAssets</a> for game resources</a></div>
+                <div class="small">Contribute translations <a target="blank" href="https://github.com/stripedypaper/stripedypaper.github.io/blob/master/ak-guesser/README.md">here</a></div>
                 <div class="small">Created by <a target="blank" href="https://twitter.com/boardwalkhotel_">@boardwalkhotel_</a></div>
             </div>
             <!-- <a href="ak-guesser/" target="_self">
