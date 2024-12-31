@@ -20,6 +20,7 @@ angular.module('app')
         e0: 'E0',
         e1: 'E1',
         e2: 'E2',
+        // below 3 strings are used like this: `#x guess + #x zoom out = # points`
         guesses: 'guess',
         zoomOuts: 'zoom out',
         points: 'points',
