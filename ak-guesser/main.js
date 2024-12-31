@@ -2,8 +2,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 .config(function($locationProvider) {
     $locationProvider.html5Mode(true);
 })
-.controller('MyController', function($scope, $timeout, $interval, $location, $window) {
+.controller('MyController', function($scope, $timeout, $interval, $location, $window, strings) {
     var vm = this;
+
+    console.log(strings)
 
     vm.isLoading = true;
     vm.theme = 'dark'
