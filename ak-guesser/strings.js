@@ -27,6 +27,17 @@ angular.module('app')
         zoomOuts: 'zoom out',
         points: 'points',
         timesUp: 'Time\'s up!',
+        dailyChallenge: 'Daily challenge',
+        newChallenge: 'New challenge',
+        optionsDesc1: 'These options don\'t affect the daily challenge.',
+        guessesLeft: 'Guesses left',
+        giveUp: 'Give up',
+        challengeFailed: 'You didn\'t guess the operator and skin. 🥺',
+        challengeWon1: 'You won in 1 guess!',
+        challengeWon: 'You won in {} guesses!',
+        dailyShareTitle: 'Arknights Guesser Daily Challenge {}',
+        dailyShareOneGuess: 'Won on the first guess!',
+        dailyShareMultipleGuesses:  'Won in {} guesses',
     },
     'zh_CN': {
         loadingResources: '正在加载资源...',
@@ -62,7 +73,11 @@ angular.module('app')
     this.setLang = function(newLang) {
         lang = newLang
     }
-    this.translate = function(stringKey, defaultString = 'stringnotfound') {
-        return (strings[lang] || strings['en_US'])[stringKey] || defaultString
+    this.translate = function(stringKey, args = []) {
+        var string = (strings[lang] || strings['en_US'])[stringKey] || strings['en_US'][stringKey] || stringKey
+        for (var arg of args) {
+            string = string.replace('{}', arg)
+        }
+        return string
     }
 })

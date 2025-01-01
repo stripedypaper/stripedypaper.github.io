@@ -66,6 +66,10 @@ body {
     margin-left: 8px;
 }
 
+.flexh2>* {
+    margin-left: 16px
+}
+
 .flexh>*:nth-child(1) {
     margin-left: 0;
 }
@@ -146,6 +150,21 @@ body {
     border: 1px solid black;
     overflow: hidden;
     display: flex
+}
+
+.skin-container-xsmall {
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+    overflow: hidden;
+    flex: 1;
+}
+
+.skin-container-xsmall:nth-child(1) {
+    border-left: 1px solid black;
+}
+
+.grid-row:nth-child(1)>.skin-container-xsmall {
+    border-top: 1px solid black;
 }
 
 .skin-image {
@@ -306,4 +325,19 @@ body {
 .hint {
     padding: 8px;
     font-size: small;
+}
+
+.grid {
+    flex-direction: column;
+    display: flex;
+}
+
+.grid-row {
+    flex-direction: row;
+    display: flex;
+    flex: 1;
+}
+
+.unrevealed {
+    opacity: 50%
 }

@@ -2,7 +2,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 .config(function($locationProvider) {
     $locationProvider.html5Mode(true);
 })
-.controller('MyController', function($scope, $timeout, $interval, $location, $window, strings, translate) {
+.controller('MyController', function($scope, $timeout, $interval, $location, $window, strings, translate, dailySequence) {
     var vm = this;
 
     vm.isLoading = true;
@@ -25,6 +25,19 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.score = 0
     vm.scoreIfGuessed = 0
     vm.timeLeftSeconds = -1
+    vm.challengeStep = 0
+    vm.gameType = 0
+    vm.isDailyChallenge = false
+
+    challengeZoomArray = []
+
+    const currentDay = new Date()
+    currentDay.setHours(0, 0, 0, 0)
+    const baseDay = new Date('12/31/2024')
+    const diffDays = Math.round((currentDay - baseDay) / 86400000) // this probably handles daylight savings
+    const dailySkinId = dailySequence[diffDays]
+    const seededRng = new Chance(currentDay)
+    // console.log(seededRng)
 
     const scoreAtZoom = {
         0: 50,
@@ -77,6 +90,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         vm.smallImageContainerStyle = {
             'height': vm.smallImageDimension + 'px',
             'width': vm.smallImageDimension + 'px'
+        }
+        vm.extraSmallImageContainerStyle = {
+            'height': vm.bigImageDimension/3 + 'px',
+            'width': vm.bigImageDimension/3 + 'px',
         }
         log('window', window.innerHeight, window.innerWidth)
         log('dimension', vm.bigImageDimension, vm.smallImageDimension)
@@ -139,6 +156,13 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         }
     }
 
+    vm.getDailyButtonText = function() {
+        if (vm.isDailyChallenge)
+            return vm.translate('dailyChallenge')
+        else
+            return vm.translate('newChallenge')
+    }
+
     const applyTheme = function() {
         const theme = vm.options.darkMode ? 'dark' : 'light'
         storage.setItem('theme', theme)
@@ -161,17 +185,19 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 // skip traps, devices
                 return
             }
-            if (skinGroupId == 'ILLUST_0' && vm.options.enableE0 == false) {
-                // no elite0 art
-                return
-            }
-            if (skinGroupId == 'ILLUST_2' && vm.options.enableE2 == false) {
-                // no elite2 art
-                return
-            }
-            if (!skinGroupIdFriendlyName[skinGroupId] && vm.options.enableSkin == false) {
-                // no skin art
-                return
+            if (vm.gameType == 0 || !vm.isDailyChallenge) {
+                if (skinGroupId == 'ILLUST_0' && vm.options.enableE0 == false) {
+                    // no elite0 art
+                    return
+                }
+                if (skinGroupId == 'ILLUST_2' && vm.options.enableE2 == false) {
+                    // no elite2 art
+                    return
+                }
+                if (!skinGroupIdFriendlyName[skinGroupId] && vm.options.enableSkin == false) {
+                    // no skin art
+                    return
+                }
             }
 
             if (skin.skinId == 'char_512_aprot#1') {
@@ -200,28 +226,40 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             }
             skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
+            skin.charInfo = characters[skin.charId]
+            // console.log(skin)
             vm.skins.push(skin)
         })
+
+        // console.log(_.shuffle(_.map(vm.skins, 'skinId')))
     }
 
     init()
     .then(function() {
         vm.isLoading = false;
 
+        const lastDailyCompleted = storage.getItem('dailyChallengeCompleted')
+        if (lastDailyCompleted != currentDay) {
+            vm.isDailyChallenge = true
+        }
+
         $scope.$digest();
-    });
+    })
 
     var timer = null
-    vm.test = function(isSkip) {
+    vm.test = function(isSkip, setGameType) {
+        if (setGameType != undefined) {
+            vm.gameType = setGameType
+        }
         if (vm.timeLeftSeconds < 0) {
             setSkins()
         }
 
         const skinsArray = _.values(vm.skins)
-        const i = _.random(0, skinsArray.length - 1)
-        if (skinsArray[i] == vm.skin) {
-            vm.test(isSkip)
-            return
+        // console.log(skinsArray)
+        var i = _.random(0, skinsArray.length - 1)
+        while (skinsArray[i] == vm.skin) {
+            i = _.random(0, skinsArray.length - 1)
         }
         if (vm.skin) {
             vm.previousSkin = vm.skin
@@ -250,7 +288,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 'bottom': bottomOffset + 'px'
             }
         }
-        vm.skin = skinsArray[i]
+        if (vm.isDailyChallenge) {
+            vm.skin = _.filter(skinsArray, skin => skin.skinId == dailySkinId)[0]
+        } else {
+            vm.skin = skinsArray[i]
+        }
         vm.showSkin = false
         vm.skinInput = null
         alreadyGuessed = {}
@@ -259,10 +301,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             vm.timeLeftSeconds = 300
             vm.score = 0
             vm.previousSkin = null
+            vm.challengeStep = 0
             if (timer) {
                 $interval.cancel(timer)
             }
-            if (vm.options.endless) {
+            if (vm.options.endless || vm.gameType == 1) {
                 return
             }
             timer = $interval(() => {
@@ -284,6 +327,32 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         }
     }
 
+    function zoomBlankPixelRatio(
+        $event,
+        centerPointX,
+        centerPointY
+    ) {
+        const skinHeight = $event.target.height
+        const skinWidth = $event.target.width
+        const canvas = document.getElementById('canvas')
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })
+        const viewPortSize = maxDimensionAtZoom[4] / maxDimensionAtZoom[0] * Math.max(skinHeight, skinWidth)
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage($event.target, centerPointX * skinWidth - viewPortSize / 2, centerPointY * skinHeight - viewPortSize / 2, viewPortSize, viewPortSize, 0, 0, 32, 32)
+        const totalPixels = 32 * 32
+        var blankPixels = 0
+        for (var i = 0; i < 32; i++) {
+            for (var j = 0; j < 32; j++) {
+                const data = ctx.getImageData(i, j, 1, 1).data
+                if (data[0] == 0 && data[1] == 0 && data[2] == 0 & data[3] == 0) {
+                    blankPixels += 1
+                }
+            }
+        }
+        // console.log(blankPixels, totalPixels, centerPointX, centerPointY, blankPixels / totalPixels < 0.5)
+        return blankPixels / totalPixels
+    }
+
     vm.testOnLoad = function($event) {
         const skinHeight = $event.target.height
         const skinWidth = $event.target.width
@@ -301,40 +370,112 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             // try to find a zoom that isn't mostly blank pixels
             var acceptableZoom = false
             var retries = 0
-            const maxRetries = 10
+            const maxRetries = 20
+            const viewPortSize = maxDimensionAtZoom[4] / maxDimensionAtZoom[0] * Math.max(skinHeight, skinWidth)
             while (!acceptableZoom && retries < maxRetries) {
-                const canvas = document.getElementById('canvas')
-                const ctx = canvas.getContext('2d', { willReadFrequently: true })
-                const viewPortSize = maxDimensionAtZoom[4] / maxDimensionAtZoom[0] * Math.max(skinHeight, skinWidth)
-                ctx.clearRect(0, 0, canvas.width, canvas.height)
-                ctx.drawImage($event.target, centerPointX * skinWidth - viewPortSize / 2, centerPointY * skinHeight - viewPortSize / 2, viewPortSize, viewPortSize, 0, 0, 32, 32)
-                const totalPixels = 32 * 32
-                var blankPixels = 0
-                for (var i = 0; i < 32; i++) {
-                    for (var j = 0; j < 32; j++) {
-                        const data = ctx.getImageData(i, j, 1, 1).data
-                        if (data[0] == 0 && data[1] == 0 && data[2] == 0 & data[3] == 0) {
-                            blankPixels += 1
-                        }
-                    }
-                }
-                if (blankPixels / totalPixels > 0.5) {
-                    console.log('Image was too many blank pixels, picking another zoom', blankPixels, totalPixels)
-                    const canvas2 = document.getElementById('canvas2')
-                    const ctx2 = canvas2.getContext('2d', { willReadFrequently: true })
-                    ctx2.clearRect(0, 0, canvas2.width, canvas2.height)
-                    ctx2.drawImage($event.target, centerPointX * skinWidth - viewPortSize / 2, centerPointY * skinHeight - viewPortSize / 2, viewPortSize, viewPortSize, 0, 0, 32, 32)
+                if (zoomBlankPixelRatio($event, centerPointX, centerPointY) > 0.5) {
+                    console.log('Image was too many blank pixels, picking another zoom', centerPointX, centerPointY)
                     centerPointX = _.random(0.20, 0.80)
                     centerPointY = _.random(0.20, 0.80)
                     retries += 1
                 } else {
                     acceptableZoom = true
                 }
-
             } 
         }
 
-        // make the image's largest dimension = 12800
+        if (vm.gameType == 1) {
+            // challenge mode
+            // create a grid of possible zooms
+            // discard zooms which are unacceptable (too many blank pixels)
+            // create a random sequence to proceed through the zooms
+            // for the daily, this randomness should be seeded by the browser's current date
+
+            /**
+             * maybe restrict the zooms by step?
+             * 5 4 3 2 2 3 4 5
+             * 5 4 3 2 2 3 4 5
+             * 5 4 3 1 1 3 4 5
+             * 5 4 3 1 1 3 4 5
+             * 5 4 3 2 2 3 4 5
+             * 5 4 3 3 3 3 4 5
+             * 5 4 4 4 4 4 4 5
+             * 5 5 5 5 5 5 5 5
+             */
+
+            const minX = 0.3
+            const maxX = 0.7
+            const minY = 0.1
+            const maxY = 0.9
+            var pairs = []
+            for (var i = 0; i <= 7; i++) {
+                for(var j = 0; j <= 7; j++) {
+                    pairs.push([minX + i/7 * (maxX - minX), minY + j/7 * (maxY - minY), i, j])
+                }
+            }
+            const totalPairs = pairs.length
+            if (vm.isDailyChallenge) {
+                // use seeded shuffle
+                pairs = seededRng.shuffle(pairs)
+            } else {
+                pairs = _.shuffle(pairs)
+            }
+            pairs = _.filter(pairs, ([x, y]) => {
+                const ratio = zoomBlankPixelRatio($event, x, y)
+                return ratio < 0.5
+            })
+            const goodPairs = pairs.length
+            console.log(`discarded ${totalPairs - goodPairs} bad zooms`)
+            challengeZoomArray = pairs
+            centerPointX = challengeZoomArray[0][0]
+            centerPointY = challengeZoomArray[0][1]
+
+            vm.challengeViewPortInfos = _.map(pairs, ([centerPointX, centerPointY], i) => {
+                var maxDimensionBase = 12000
+                if (i == 0) {
+                    maxDimensionBase = 12000
+                } else if (i < 3) {
+                    maxDimensionBase = 12000
+                } else if (i < 5) {
+                    maxDimensionBase = 6000
+                } else if (i < 8) {
+                    maxDimensionBase = 4000
+                } else {
+                    maxDimensionBase = 1200
+                }
+                // last 2 images will always be fixed centerpoints to show mostly relevant area
+                // if (i == 7) {
+                //     centerPointX = 0.5
+                //     centerPointY = 0.33
+                // }
+                if (i == 8) {
+                    centerPointX = 0.5
+                    centerPointY = 0.4
+                }
+                const maxDimension = maxDimensionBase * vm.bigImageDimension / 600 / 3
+                const scale = maxDimension / Math.max(skinHeight, skinWidth)
+                const scaledHeight = scale * skinHeight
+                const scaledWidth = scale * skinWidth
+                const rightOffset = centerPointX * scaledWidth - 0.5 * vm.bigImageDimension / 3
+                const bottomOffset = centerPointY * scaledHeight - 0.5 * vm.bigImageDimension / 3
+                const style = {
+                    'height': scaledHeight + 'px',
+                    'width': scaledWidth + 'px',
+                    'right': rightOffset + 'px',
+                    'bottom': bottomOffset + 'px'
+                }
+                return {
+                    originalHeight: skinHeight,
+                    originalWidth: skinWidth,
+                    maxDimension: maxDimensionAtZoom[1] * vm.bigImageDimension / 600 / 3,
+                    centerPointX,
+                    centerPointY,
+                    zoomStep,
+                    guesses: 0,
+                    style,
+                }
+            })
+        }
 
         vm.viewPortInfo = {
             originalHeight: skinHeight,
@@ -345,6 +486,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             zoomStep,
             guesses: 0,
         }
+
+        console.log(centerPointX, centerPointY)
 
         const scale = vm.viewPortInfo.maxDimension / Math.max(vm.viewPortInfo.originalHeight, vm.viewPortInfo.originalWidth)
         const scaledHeight = scale * vm.viewPortInfo.originalHeight
@@ -369,12 +512,21 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         }
         
         if (item.portraitId == vm.skin.portraitId) {
-            vm.score += vm.scoreIfGuessed
-            vm.test()
+            if (vm.gameType == 1) {
+                vm.challengeStop()
+            } else {
+                vm.score += vm.scoreIfGuessed
+                vm.test()
+            }
         } else {
             vm.viewPortInfo.guesses = vm.viewPortInfo.guesses + 1
             alreadyGuessed[item.portraitId] = true
             updateScoreIfGuessed()
+            if (vm.gameType == 1) {
+                vm.challengeStep += 1
+                if (vm.challengeStep > 4)
+                    vm.challengeStop()
+            }
         }
     }
 
@@ -435,6 +587,41 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         }
     }
 
+    vm.showMoreChallenge = function() {
+        vm.challengeStep += 1
+    }
+
+    vm.challengeStop = function(giveUp) {
+        vm.challengeWonAt = giveUp ? 6 : (vm.challengeStep + 1)
+        if (giveUp) {
+            vm.challengeStep = 5
+        }
+        if (vm.isDailyChallenge) {
+            storage.setItem('dailyChallengeCompleted', currentDay)
+            vm.dailyShareText = getDailyShareText()
+        } else {
+            vm.dailyShareText = null
+        }
+        if (vm.challengeWonAt == 1) {
+            vm.previousScore = vm.translate('challengeWon1')
+        } else if (vm.challengeWonAt < 6) {
+            vm.previousScore = vm.translate('challengeWon', [vm.challengeWonAt])
+        } else {
+            vm.previousScore = vm.translate('challengeFailed')
+        }
+        console.log(vm.previousScore)
+        vm.isDailyChallenge = false
+        vm.previousSkin = vm.skin
+        vm.previousViewPortInfo = null
+        if (vm.options.endless) {
+            vm.test()
+            vm.challengeStep = 0
+            vm.previousViewPortInfo = null
+        } else {
+            vm.timeLeftSeconds = -1
+        }
+    }
+
     const updateScoreIfGuessed = () => {
         const guesses = vm.viewPortInfo.guesses
         var guessMultiplier = 1
@@ -469,6 +656,60 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 vm.options.enableE2 = true
             }
         }, 0)
+    }
+
+    vm.getStatus = function() {
+        if (vm.timeLeftSeconds < 0) {
+            return 0 // no game in progress
+        }
+        return 1
+    }
+
+    const getDailyShareText = function() {
+        /*
+        Arknights Guesser Daily Challenge 12/31/2024
+        ⬜⬜⬜
+        ⬛⬛⬛
+        ⬛⬛⬛
+        ⬜⬜⬜
+        ⬜⬜⬜
+        ⬜⬜⬛
+        Won on the first guess!
+        Won in # guesses
+        https://stripedypaper.github.io/ak-guesser/
+        */
+        var dateString = currentDay.toLocaleString().split(',')[0]
+        // console.log(dateString)
+        var stringLines = [vm.translate('dailyShareTitle', [dateString])]
+
+        if (vm.challengeWonAt == 1) {
+            stringLines.push('⬜⬛⬛')
+            stringLines.push('⬛⬛⬛')
+            stringLines.push('⬛⬛⬛')
+            stringLines.push(vm.translate('dailyShareOneGuess'))
+        } else if (vm.challengeWonAt == 2) {
+            stringLines.push('⬜⬜⬜')
+            stringLines.push('⬛⬛⬛')
+            stringLines.push('⬛⬛⬛')
+            stringLines.push(vm.translate('dailyShareMultipleGuesses', [vm.challengeWonAt]))
+        } else if (vm.challengeWonAt == 3) {
+            stringLines.push('⬜⬜⬜')
+            stringLines.push('⬜⬜⬛')
+            stringLines.push('⬛⬛⬛')
+            stringLines.push(vm.translate('dailyShareMultipleGuesses', [vm.challengeWonAt]))
+        } else if (vm.challengeWonAt == 4) {
+            stringLines.push('⬜⬜⬜')
+            stringLines.push('⬜⬜⬜')
+            stringLines.push('⬜⬜⬛')
+            stringLines.push(vm.translate('dailyShareMultipleGuesses', [vm.challengeWonAt]))
+        } else if (vm.challengeWonAt == 5) {
+            stringLines.push('⬜⬜⬜')
+            stringLines.push('⬜⬜⬜')
+            stringLines.push('⬜⬜⬜')
+            stringLines.push(vm.translate('dailyShareMultipleGuesses', [vm.challengeWonAt]))
+        }
+        stringLines.push('https://stripedypaper.github.io/ak-guesser/')
+        return stringLines.join('\n')
     }
 });
 

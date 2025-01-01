@@ -23,10 +23,13 @@
     <script src="moment.min.js"></script>
     <script src="moment-duration-format.js"></script>
     <script src="ui-bootstrap-tpls-2.5.0.min.js"></script>
+    <script src="chance.min.js"></script>
     <script src="jquery.min.js"></script>
+    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script> -->
     <script src="lodash.js"></script>
     <script src="main.js"></script>
     <script src="strings.js"></script>
+    <script src="daily.js"></script>
     <link href="styles.css" rel="stylesheet"></link>
     <base href="/ak-guesser">
     <meta name="description" content="Try guessing the Arknights operator & skin from a zoomed in image.">
@@ -36,10 +39,10 @@
     <div class="flexv maxh">
         <div ng-if="vm.isLoading">{{vm.translate('loadingResources')}}</div>
         <div ng-if="!vm.isLoading" class="main">
-            <div class="flexh">
+            <div class="flexh flexh2">
                 <h1 class="display-4 block">{{vm.translate('arknightsGuesserTitle')}}</h1>
                 <div class="flex1"></div>
-                <div class="form-check form-switch mauto" style="margin-right: 16px">
+                <div class="form-check form-switch mauto">
                     <input class="form-check-input" type="checkbox" ng-click="vm.toggleDarkMode()" ng-checked="vm.options.darkMode">
                     <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('darkMode')}}</label>
                 </div>
@@ -51,31 +54,80 @@
                         <option value="zh_CN">中文</option>
                     </select>
                 </div>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-secondary mauto" data-bs-toggle="modal" data-bs-target="#advanced">{{vm.translate('options')}}</button>
             </div>
 
             <div class="flexh block">
                 <div ng-if="vm.skin">
-                    <div class="skin-container" ng-style="vm.bigImageContainerStyle">
+                    <div class="skin-container" ng-style="vm.bigImageContainerStyle" ng-show="vm.gameType == 0">
                         <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" ng-on-load="vm.testOnLoad($event)" class="skin-image" ng-style="vm.viewPortInfo.style">
                         <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png" style="height: 100%">
+                    </div>
+                    <div class="grid" ng-style="vm.bigImageContainerStyle" ng-show="vm.gameType == 1">
+                        <div class="grid-row" ng-show="vm.showSkin">
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[0].style">
+                            </div>
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 1" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[1].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 1" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed1.png" style="height: 100%">
+                            </div>
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 1" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[2].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 1" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed3.png" style="height: 100%">
+                            </div>
+                        </div>
+                        <div class="grid-row" ng-show="vm.showSkin">
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 2" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[3].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 2" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed4.png" style="height: 100%">
+                            </div>
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 2" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[4].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 2" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed2.png" style="height: 100%">
+                            </div>
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 3" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[5].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 2" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed5.png" style="height: 100%">
+                            </div>
+                        </div>
+                        <div class="grid-row" ng-show="vm.showSkin">
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 3" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[6].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 3" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed6.png" style="height: 100%">
+                            </div>
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 3" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[7].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 3" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed7.png" style="height: 100%">
+                            </div>
+                            <div class="skin-container-xsmall" ng-style="vm.extraSmallImageContainerStyle">
+                                <img draggable="false" crossorigin="anonymous" ng-show="vm.showSkin && vm.challengeStep >= 4" ng-src="{{vm.skin.url}}" class="skin-image" ng-style="vm.challengeViewPortInfos[8].style">
+                                <img class="unrevealed" ng-show="vm.challengeStep <= 4" ng-src="https://stripedypaper.github.io/ak-guesser/image/unrevealed8.png" style="height: 100%">
+                            </div>
+                        </div>
+                        <img ng-show="!vm.showSkin" ng-src="https://stripedypaper.github.io/ak-guesser/loading.png" style="height: 100%; border: 1px solid black;">
                     </div>
                 </div>
                 <div class="flex1 flexv">
                     <div ng-show="vm.skin" class="block show-mobile">
-                        <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
+                        <input type="text" ng-disabled="vm.getStatus() == 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                     </div>
                     <div class="flexh">
                         <div ng-if="vm.skin" class="form-group flex1 hide-mobile">
-                            <input type="text" ng-disabled="vm.timeLeftSeconds < 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
+                            <input type="text" ng-disabled="vm.getStatus() == 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                         </div>
-                        <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin" ng-disabled="vm.viewPortInfo.zoomStep == 4">{{vm.translate('showMore')}}</button>
-                        <button type="button" class="btn btn-primary" ng-click="vm.test(true)">{{vm.getNextImageText()}}</button>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin && vm.gameType == 0" ng-disabled="vm.viewPortInfo.zoomStep == 4 || !vm.showSkin">{{vm.translate('showMore')}}</button>
+                        <button type="button" class="btn btn-secondary" ng-click="vm.showMoreChallenge()" ng-if="vm.skin && vm.gameType == 1" ng-disabled="vm.challengeStep >= 4 || vm.getStatus() == 0 || !vm.showSkin">{{vm.translate('showMore')}}</button>
+                        <button type="button" class="btn btn-success" ng-if="vm.getStatus() == 0" ng-click="vm.test(true, 1)">{{vm.getDailyButtonText()}}</button>
+                        <button type="button" class="btn btn-primary" ng-if="vm.getStatus() == 0 || vm.gameType == 0" ng-click="vm.test(true, 0)">{{vm.getNextImageText()}}</button>
+                        <button type="button" class="btn btn-primary" ng-if="vm.getStatus() == 1 && vm.gameType == 1" ng-click="vm.challengeStop(true)">{{vm.translate('giveUp')}}</button>
                     </div>
                     <div class="flex1"></div>
                     <div>
                         <div ng-if="vm.previousSkin">
                             <div class="block align-right">
-                                <div>{{vm.translate('previousImage')}}</div>
+                                <div ng-if="vm.gameType == 0">{{vm.translate('previousImage')}}</div>
                                 <div>{{vm.previousSkin.searchableName}}</div>
                                 <div>{{vm.previousScore}}</div>
                             </div>
@@ -93,17 +145,18 @@
                 </div>
             </div>
             <div ng-if="vm.skin">
-                <div class="block">
-                    <div ng-hide="vm.timeLeftSeconds < 0">{{vm.translate('scoreIncreaseIfGuessed')}}: {{vm.scoreIfGuessed}}</div>
+                <div class="block" ng-if="vm.gameType == 0">
+                    <div ng-hide="vm.getStatus() == 0">{{vm.translate('scoreIncreaseIfGuessed')}}: {{vm.scoreIfGuessed}}</div>
                     <div>{{vm.translate('currentScore')}}: {{vm.score}}</div>
                     <div ng-hide="vm.options.endless">{{vm.translate('timeRemaining')}}: {{vm.getTimeText()}}</div>
                 </div>
+                <div class="block" ng-if="vm.gameType == 1 && vm.getStatus() == 1">
+                    <div>{{vm.translate('guessesLeft')}}: {{5-vm.challengeStep}}</div>
+                </div>
+                <div ng-if="vm.gameType == 1 && vm.getStatus() == 0">
+                    <div ng-if="vm.dailyShareText" class="block"><pre><samp>{{vm.dailyShareText}}</samp></pre></div>
+                </div>
             </div>
-
-
-            <!--<div ng-repeat="(key, val) in vm.stats">{{key}} {{val}}</div>-->
-            <!-- Button trigger modal -->
-            <button type="button" ng-show="vm.timeLeftSeconds < 0" class="btn btn-secondary mb" data-bs-toggle="modal" data-bs-target="#advanced">{{vm.translate('options')}}</button>
 
             <!-- Modal -->
             <div class="modal fade" id="advanced" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -114,23 +167,24 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
+                            <div class="block">{{vm.translate('optionsDesc1')}}</div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE0" ng-checked="vm.options.enableE0" ng-click="vm.toggleArt(0)">
+                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE0" ng-disabled="vm.getStatus() != 0" ng-checked="vm.options.enableE0" ng-click="vm.toggleArt(0)">
                                 <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('enableOperatorE0Art')}}</label>
                             </div>
 
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE2" ng-checked="vm.options.enableE2" ng-click="vm.toggleArt(1)">
+                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE2" ng-disabled="vm.getStatus() != 0" ng-checked="vm.options.enableE2" ng-click="vm.toggleArt(1)">
                                 <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('enableOperatorE2Art')}}</label>
                             </div>
 
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableSkin" ng-checked="vm.options.enableSkin" ng-click="vm.toggleArt(2)">
+                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableSkin" ng-disabled="vm.getStatus() != 0" ng-checked="vm.options.enableSkin" ng-click="vm.toggleArt(2)">
                                 <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('enableOperatorSkinArt')}}</label>
                             </div>
 
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" ng-model="vm.options.endless" ng-checked="vm.options.endless">
+                                <input class="form-check-input" type="checkbox" ng-model="vm.options.endless" ng-disabled="vm.getStatus() != 0" ng-checked="vm.options.endless">
                                 <label class="form-check-label" for="flexSwitchCheckDefault">{{vm.translate('endlessMode')}}</label>
                             </div>
 
