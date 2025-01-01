@@ -450,7 +450,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 // }
                 if (i == 8) {
                     centerPointX = 0.5
-                    centerPointY = 0.4
+                    centerPointY = 0.3
                 }
                 const maxDimension = maxDimensionBase * vm.bigImageDimension / 600 / 3
                 const scale = maxDimension / Math.max(skinHeight, skinWidth)
@@ -609,7 +609,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         } else {
             vm.previousScore = vm.translate('challengeFailed')
         }
-        console.log(vm.previousScore)
+        // console.log(vm.previousScore)
         vm.isDailyChallenge = false
         vm.previousSkin = vm.skin
         vm.previousViewPortInfo = null
