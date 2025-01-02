@@ -426,7 +426,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 3: 6000,
                 4: 6000,
                 5: 6000,
-                6: 6000,
+                6: 4000,
                 7: 4000,
                 8: 1200
             }
@@ -708,14 +708,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             stringLines.push('⬛⬛⬛')
             stringLines.push(vm.translate('dailyShareOneGuess'))
         } else if (vm.challengeWonAt == 2) {
-            stringLines.push('⬜⬜⬜')
-            stringLines.push('⬛⬛⬛')
+            stringLines.push('⬜⬜⬛')
+            stringLines.push('⬜⬛⬛')
             stringLines.push('⬛⬛⬛')
             stringLines.push(vm.translate('dailyShareMultipleGuesses', [vm.challengeWonAt]))
         } else if (vm.challengeWonAt == 3) {
             stringLines.push('⬜⬜⬜')
             stringLines.push('⬜⬜⬛')
-            stringLines.push('⬛⬛⬛')
+            stringLines.push('⬜⬛⬛')
             stringLines.push(vm.translate('dailyShareMultipleGuesses', [vm.challengeWonAt]))
         } else if (vm.challengeWonAt == 4) {
             stringLines.push('⬜⬜⬜')
