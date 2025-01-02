@@ -29,8 +29,6 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.gameType = 0
     vm.isDailyChallenge = false
 
-    challengeZoomArray = []
-
     const currentDay = new Date()
     currentDay.setHours(0, 0, 0, 0)
     const baseDay = new Date('12/31/2024')
@@ -292,6 +290,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             vm.skin = _.filter(skinsArray, skin => skin.skinId == dailySkinId)[0]
         } else {
             vm.skin = skinsArray[i]
+            // vm.skin = _.filter(skinsArray, skin => skin.skinId == 'char_106_franka#2')[0] // todo remove
         }
         vm.showSkin = false
         vm.skinInput = null
@@ -391,26 +390,19 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             // create a random sequence to proceed through the zooms
             // for the daily, this randomness should be seeded by the browser's current date
 
-            /**
-             * maybe restrict the zooms by step?
-             * 5 4 3 2 2 3 4 5
-             * 5 4 3 2 2 3 4 5
-             * 5 4 3 1 1 3 4 5
-             * 5 4 3 1 1 3 4 5
-             * 5 4 3 2 2 3 4 5
-             * 5 4 3 3 3 3 4 5
-             * 5 4 4 4 4 4 4 5
-             * 5 5 5 5 5 5 5 5
-             */
-
             const minX = 0.3
             const maxX = 0.7
             const minY = 0.1
             const maxY = 0.9
             var pairs = []
-            for (var i = 0; i <= 7; i++) {
-                for(var j = 0; j <= 7; j++) {
-                    pairs.push([minX + i/7 * (maxX - minX), minY + j/7 * (maxY - minY), i, j])
+            const gridLength = 12
+            for (var i = 0; i <= gridLength; i++) {
+                for(var j = 0; j <= gridLength; j++) {
+                    // const jitterX = vm.isDailyChallenge ? seededRng.floating({min: -1, max: 1}) : _.random(-1, 1, true)
+                    // const jitterY = vm.isDailyChallenge ? seededRng.floating({min: -1, max: 1}) : _.random(-1, 1, true)
+                    const x = minX + i/gridLength * (maxX - minX)
+                    const y = minY + j/gridLength * (maxY - minY)
+                    pairs.push([x, y])
                 }
             }
             const totalPairs = pairs.length
@@ -425,33 +417,61 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 return ratio < 0.5
             })
             const goodPairs = pairs.length
-            console.log(`discarded ${totalPairs - goodPairs} bad zooms`)
-            challengeZoomArray = pairs
-            centerPointX = challengeZoomArray[0][0]
-            centerPointY = challengeZoomArray[0][1]
+            console.log(`discarded ${totalPairs - goodPairs}/${totalPairs} bad zooms`)
+            var finalPairs = []
+            const maxDimensionAtImage = {
+                0: 12000,
+                1: 12000,
+                2: 12000,
+                3: 6000,
+                4: 6000,
+                5: 6000,
+                6: 6000,
+                7: 4000,
+                8: 1200
+            }
 
-            vm.challengeViewPortInfos = _.map(pairs, ([centerPointX, centerPointY], i) => {
-                var maxDimensionBase = 12000
-                if (i == 0) {
-                    maxDimensionBase = 12000
-                } else if (i < 3) {
-                    maxDimensionBase = 12000
-                } else if (i < 5) {
-                    maxDimensionBase = 6000
-                } else if (i < 8) {
-                    maxDimensionBase = 4000
-                } else {
-                    maxDimensionBase = 1200
+            for (var i = 0; i < pairs.length; i++) {
+                const [x, y] = pairs[i]
+                var overlaps = false
+                if (finalPairs.length == 0) {
+                    finalPairs.push([x, y])
+                    continue
                 }
-                // last 2 images will always be fixed centerpoints to show mostly relevant area
-                // if (i == 7) {
-                //     centerPointX = 0.5
-                //     centerPointY = 0.33
-                // }
-                if (i == 8) {
-                    centerPointX = 0.5
-                    centerPointY = 0.3
+                for (var j = 0; j < finalPairs.length; j++) {
+                    const [fx, fy] = finalPairs[j]
+                    const boxLength = 600 / maxDimensionAtImage[j] + 600 / maxDimensionAtImage[finalPairs.length]
+                    // console.log(boxLength)
+                    const boxLeft = fx -  boxLength / 2
+                    const boxRight = fx + boxLength / 2
+                    const boxTop = fy - boxLength / 2
+                    const boxBottom = fy + boxLength / 2
+                    if (x > boxLeft && x < boxRight && y > boxTop && y < boxBottom) {
+                        // console.log(x, y, 'is overlapping', fx, fy)
+                        overlaps = true
+                        break
+                    }
                 }
+                if (overlaps) {
+                    continue
+                }
+                finalPairs.push([x, y])
+                if (finalPairs.length == 8) {
+                    console.log(`found 8 non-overlapping zooms in ${i + 1} out of ${pairs.length} zooms`)
+                    break
+                }
+            }
+
+            if (finalPairs.length < 8) {
+                console.log('unable to find 8 non-overlapping zooms')
+                finalPairs = pairs
+            }
+
+            // last image is fixed
+            finalPairs.push([0.5, 0.33])
+
+            vm.challengeViewPortInfos = _.map(finalPairs, ([centerPointX, centerPointY], i) => {
+                var maxDimensionBase = maxDimensionAtImage[i]
                 const maxDimension = maxDimensionBase * vm.bigImageDimension / 600 / 3
                 const scale = maxDimension / Math.max(skinHeight, skinWidth)
                 const scaledHeight = scale * skinHeight
@@ -487,7 +507,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             guesses: 0,
         }
 
-        console.log(centerPointX, centerPointY)
+        // console.log(centerPointX, centerPointY)
 
         const scale = vm.viewPortInfo.maxDimension / Math.max(vm.viewPortInfo.originalHeight, vm.viewPortInfo.originalWidth)
         const scaledHeight = scale * vm.viewPortInfo.originalHeight
