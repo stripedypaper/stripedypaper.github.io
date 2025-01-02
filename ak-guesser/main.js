@@ -288,7 +288,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 'bottom': bottomOffset + 'px'
             }
         }
-        if (vm.isDailyChallenge) {
+        if (vm.isDailyChallenge && vm.gameType == 1) {
             vm.skin = _.filter(skinsArray, skin => skin.skinId == dailySkinId)[0]
         } else {
             vm.skin = skinsArray[i]
