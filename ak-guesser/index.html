@@ -27,8 +27,8 @@
     <script src="jquery.min.js"></script>
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script> -->
     <script src="lodash.js"></script>
-    <script src="main.js?v=1.1.25v2"></script>
-    <script src="strings.js?v=1.1.25"></script>
+    <script src="main.js?v=1.1.25v3"></script>
+    <script src="strings.js?v=1.1.25v2"></script>
     <script src="daily.js?v=1.1.25"></script>
     <link href="styles.css?v=1.1.25" rel="stylesheet"></link>
     <base href="/ak-guesser">
@@ -155,7 +155,8 @@
                     <div>{{vm.translate('guessesLeft')}}: {{5-vm.challengeStep}}</div>
                 </div>
                 <div ng-if="vm.gameType == 1 && vm.getStatus() == 0">
-                    <div ng-if="vm.dailyShareText" class="block"><pre><samp>{{vm.dailyShareText}}</samp></pre></div>
+                    <div ng-if="vm.dailyShareText"><pre><samp>{{vm.dailyShareText}}</samp></pre></div>
+                    <button type="button" class="btn btn-outline-primary" ng-click="vm.clickShareButton()">{{vm.translate('copy')}}</button>
                 </div>
             </div>
 

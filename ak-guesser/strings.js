@@ -38,6 +38,7 @@ angular.module('app')
         dailyShareTitle: 'Arknights Guesser Daily Challenge {}',
         dailyShareOneGuess: 'Won on the first guess!',
         dailyShareMultipleGuesses:  'Won in {} guesses',
+        copy: 'Copy',
     },
     'zh_CN': {
         loadingResources: '正在加载资源...',

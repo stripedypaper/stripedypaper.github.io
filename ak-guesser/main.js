@@ -711,5 +711,9 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         stringLines.push('https://stripedypaper.github.io/ak-guesser/')
         return stringLines.join('\n')
     }
+
+    vm.clickShareButton = function() {
+        navigator.clipboard.writeText(getDailyShareText())
+    }
 });
 
