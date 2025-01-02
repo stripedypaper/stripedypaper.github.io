@@ -156,7 +156,7 @@
                 </div>
                 <div ng-if="vm.gameType == 1 && vm.getStatus() == 0">
                     <div ng-if="vm.dailyShareText"><pre><samp>{{vm.dailyShareText}}</samp></pre></div>
-                    <button type="button" class="btn btn-outline-primary" ng-click="vm.clickShareButton()">{{vm.translate('copy')}}</button>
+                    <button ng-if="vm.dailyShareText" type="button" class="btn btn-outline-primary" ng-click="vm.clickShareButton()">{{vm.translate('copy')}}</button>
                 </div>
             </div>
 
