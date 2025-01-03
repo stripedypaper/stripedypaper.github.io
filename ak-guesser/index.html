@@ -27,7 +27,7 @@
     <script src="jquery.min.js"></script>
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script> -->
     <script src="lodash.js"></script>
-    <script src="main.js?v=1.3.25"></script>
+    <script src="main.js?v=1.3.25."></script>
     <script src="strings.js?v=1.1.25v3"></script>
     <script src="daily.js?v=1.1.25"></script>
     <link href="styles.css?v=1.1.25" rel="stylesheet"></link>
@@ -154,7 +154,7 @@
                 <div class="block" ng-if="vm.gameType == 1 && vm.getStatus() == 1">
                     <div>{{vm.translate('guessesLeft')}}: {{5-vm.challengeStep}}</div>
                 </div>
-                <div ng-if="vm.gameType == 1 && vm.getStatus() == 0">
+                <div ng-if="vm.gameType == 1 && vm.getStatus() == 0 && vm.challengeWonAt < 6">
                     <div ng-if="vm.dailyShareText"><pre><samp>{{vm.dailyShareText}}</samp></pre></div>
                     <button ng-if="vm.dailyShareText" type="button" class="btn btn-outline-primary" ng-click="vm.clickShareButton()">{{vm.translate('copy')}}</button>
                 </div>

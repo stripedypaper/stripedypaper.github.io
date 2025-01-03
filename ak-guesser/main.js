@@ -30,12 +30,13 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.isDailyChallenge = false
 
     const currentDay = new Date()
+    const seed = `${currentDay.getMonth() + 1}/${currentDay.getDate()}/${currentDay.getFullYear()}`
     currentDay.setHours(0, 0, 0, 0)
     const baseDay = new Date('12/31/2024')
     const diffDays = Math.round((currentDay - baseDay) / 86400000) // this probably handles daylight savings
     const dailySkinId = dailySequence[diffDays]
-    const seededRng = new Chance(currentDay.toLocaleString().split(',')[0])
-    console.log(seededRng)
+    const seededRng = new Chance(seed)
+    console.log('seed', seed, seededRng)
 
     const scoreAtZoom = {
         0: 50,
@@ -398,8 +399,6 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             const gridLength = 12
             for (var i = 0; i <= gridLength; i++) {
                 for(var j = 0; j <= gridLength; j++) {
-                    // const jitterX = vm.isDailyChallenge ? seededRng.floating({min: -1, max: 1}) : _.random(-1, 1, true)
-                    // const jitterY = vm.isDailyChallenge ? seededRng.floating({min: -1, max: 1}) : _.random(-1, 1, true)
                     const x = minX + i/gridLength * (maxX - minX)
                     const y = minY + j/gridLength * (maxY - minY)
                     pairs.push([x, y])
