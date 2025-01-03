@@ -34,8 +34,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     const baseDay = new Date('12/31/2024')
     const diffDays = Math.round((currentDay - baseDay) / 86400000) // this probably handles daylight savings
     const dailySkinId = dailySequence[diffDays]
-    const seededRng = new Chance(currentDay)
-    // console.log(seededRng)
+    const seededRng = new Chance(currentDay.toLocaleString().split(',')[0])
+    console.log(seededRng)
 
     const scoreAtZoom = {
         0: 50,
@@ -441,7 +441,6 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 for (var j = 0; j < finalPairs.length; j++) {
                     const [fx, fy] = finalPairs[j]
                     const boxLength = 600 / maxDimensionAtImage[j] + 600 / maxDimensionAtImage[finalPairs.length]
-                    // console.log(boxLength)
                     const boxLeft = fx -  boxLength / 2
                     const boxRight = fx + boxLength / 2
                     const boxTop = fy - boxLength / 2
