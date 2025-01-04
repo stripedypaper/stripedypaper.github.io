@@ -414,13 +414,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 return ratio < 0.5
             })
             const goodPairs = pairs.length
+            const isE0 = vm.skin.displaySkin.skinGroupId == 'ILLUST_0'
             console.log(`discarded ${totalPairs - goodPairs}/${totalPairs} bad zooms`)
             var finalPairs = []
             var finalPairIdxs = []
             const maxDimensionAtImage = {
                 0: 12000,
-                1: 12000,
-                2: 12000,
+                1: isE0 ? 12000 : 6000,
+                2: isE0 ? 12000 : 6000,
                 3: 6000,
                 4: 6000,
                 5: 6000,
@@ -437,7 +438,6 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 yStretchFactor = skinWidth / skinHeight
             }
 
-            const isE0 = vm.skin.displaySkin.skinGroupId == 'ILLUST_0'
             var hasEasyZoom = true
             if (!isE0) {
                 // for e2/skin, enforce that at least one zoom is around the below-face area
