@@ -219,8 +219,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             // } else {
             //     skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             // }
-            if (skin.tmplId && skin.tmplId != 'char_002_amiya') {
-                skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName}) {${skin.tmplId}}`
+            if (skin.tmplId && skin.tmplId.includes('amiya2')) {
+                skin.searchableName = `${characterName}-${vm.translate('guard')} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
+            } else if (skin.tmplId && skin.tmplId.includes('amiya3')) {
+                skin.searchableName = `${characterName}-${vm.translate('medic')} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             } else {
                 skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             }

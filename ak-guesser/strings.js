@@ -39,6 +39,16 @@ angular.module('app')
         dailyShareOneGuess: 'Won on the first guess!',
         dailyShareMultipleGuesses:  'Won in {} guesses',
         copy: 'Copy',
+        guard: 'Guard',
+        medic: 'Medic',
+    },
+    'ja_JP': {
+        guard: '前衛',
+        medic: '医療',
+    },
+    'ko_KR': {
+        guard: '가드',
+        medic: '메딕',
     },
     'zh_CN': {
         loadingResources: '正在加载资源...',
@@ -67,6 +77,20 @@ angular.module('app')
         zoomOuts: '次缩小',
         points: '分数',
         timesUp: '时间到！',
+        dailyChallenge: 'Daily challenge', // todo
+        newChallenge: 'New challenge', // todo
+        optionsDesc1: 'These options don\'t affect the daily challenge.', // todo
+        guessesLeft: 'Guesses left', // todo
+        giveUp: 'Give up', // todo
+        challengeFailed: 'You didn\'t guess the operator and skin. 🥺', // todo
+        challengeWon1: 'You won in 1 guess!', // todo
+        challengeWon: 'You won in {} guesses!', // todo
+        dailyShareTitle: 'Arknights Guesser Daily Challenge {}', // todo
+        dailyShareOneGuess: 'Won on the first guess!', // todo
+        dailyShareMultipleGuesses:  'Won in {} guesses', // todo
+        copy: 'Copy', // todo
+        guard: '近卫',
+        medic: '医疗',
     }
 })
 .service('translate', function(strings) {
