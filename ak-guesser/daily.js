@@ -1,12 +1,102 @@
 angular.module('app')
 /**
- * I couldn't think of a better way than this to handle the seeded daily skin given the following restrictions
- * 1. skins should not repeat more than once in some long period (maybe 1 year?)
- * 2. somehow handle new characters and skins being added without messing up the sequence and possibly breaking (1)
+ * DO NOT LOOK AT THIS FILE UNLESS YOU WANT THE DAILY SKIN SEQUENCE TO BE SPOILED!!!
  * 
- * Unfortunately by generating the list right now, skins that come out in the next 3 years won't appear in the daily
- * until this list is exhausted, but I can also randomly insert new skins into the list after the current date's
- * index.
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
+ * 
  */
 .constant('dailySequence', [
     "char_102_texas@winter#1",
