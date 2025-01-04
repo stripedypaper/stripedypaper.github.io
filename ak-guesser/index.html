@@ -27,9 +27,10 @@
     <script src="jquery.min.js"></script>
     <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script> -->
     <script src="lodash.js"></script>
-    <script src="main.js?v=1.3.25."></script>
+    <script src="main.js?v=1.3.25.."></script>
     <script src="strings.js?v=1.1.25v3"></script>
     <script src="daily.js?v=1.1.25"></script>
+    <script src="face.js?v=1.3.25"></script>
     <link href="styles.css?v=1.1.25" rel="stylesheet"></link>
     <base href="/ak-guesser">
     <meta name="description" content="Try guessing the Arknights operator & skin from a zoomed in image.">
@@ -112,11 +113,11 @@
                 </div>
                 <div class="flex1 flexv">
                     <div ng-show="vm.skin" class="block show-mobile">
-                        <input type="text" ng-disabled="vm.getStatus() == 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
+                        <input type="text" ng-disabled="vm.getStatus() == 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:12" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                     </div>
                     <div class="flexh">
                         <div ng-if="vm.skin" class="form-group flex1 hide-mobile">
-                            <input type="text" ng-disabled="vm.getStatus() == 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:8" typeahead-on-select="vm.selectSkin($item)" class="form-control">
+                            <input type="text" ng-disabled="vm.getStatus() == 0" ng-model="vm.skinInput" placeholder="{{vm.translate('guessTheOperator')}}" uib-typeahead="skin.searchableName for skin in vm.skins | filter:vm.typeAheadFilter($viewValue) | orderBy:vm.typeAheadOrderBy($viewValue) | limitTo:12" typeahead-on-select="vm.selectSkin($item)" class="form-control">
                         </div>
                         <button type="button" class="btn btn-secondary" ng-click="vm.showMore()" ng-if="vm.skin && vm.gameType == 0" ng-disabled="vm.viewPortInfo.zoomStep == 4 || !vm.showSkin">{{vm.translate('showMore')}}</button>
                         <button type="button" class="btn btn-secondary" ng-click="vm.showMoreChallenge()" ng-if="vm.skin && vm.gameType == 1" ng-disabled="vm.challengeStep >= 4 || vm.getStatus() == 0 || !vm.showSkin">{{vm.translate('showMore')}}</button>

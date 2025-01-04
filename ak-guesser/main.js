@@ -2,7 +2,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 .config(function($locationProvider) {
     $locationProvider.html5Mode(true);
 })
-.controller('MyController', function($scope, $timeout, $interval, $location, $window, strings, translate, dailySequence) {
+.controller('MyController', function($scope, $timeout, $interval, $location, $window, strings, translate, dailySequence, faceLocations) {
     var vm = this;
 
     vm.isLoading = true;
@@ -291,7 +291,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             vm.skin = _.filter(skinsArray, skin => skin.skinId == dailySkinId)[0]
         } else {
             vm.skin = skinsArray[i]
-            // vm.skin = _.filter(skinsArray, skin => skin.skinId == 'char_106_franka#2')[0] // todo remove
+            // vm.skin = _.filter(skinsArray, skin => skin.skinId == 'char_102_texas#1')[0] // todo remove
         }
         vm.showSkin = false
         vm.skinInput = null
@@ -371,10 +371,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             var acceptableZoom = false
             var retries = 0
             const maxRetries = 20
-            const viewPortSize = maxDimensionAtZoom[4] / maxDimensionAtZoom[0] * Math.max(skinHeight, skinWidth)
             while (!acceptableZoom && retries < maxRetries) {
                 if (zoomBlankPixelRatio($event, centerPointX, centerPointY) > 0.5) {
-                    console.log('Image was too many blank pixels, picking another zoom', centerPointX, centerPointY)
                     centerPointX = _.random(0.20, 0.80)
                     centerPointY = _.random(0.20, 0.80)
                     retries += 1
@@ -393,10 +391,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
             const minX = 0.3
             const maxX = 0.7
-            const minY = 0.1
-            const maxY = 0.9
+            const minY = 0
+            const maxY = 1
             var pairs = []
-            const gridLength = 12
+            const gridLength = 16
             for (var i = 0; i <= gridLength; i++) {
                 for(var j = 0; j <= gridLength; j++) {
                     const x = minX + i/gridLength * (maxX - minX)
@@ -418,6 +416,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             const goodPairs = pairs.length
             console.log(`discarded ${totalPairs - goodPairs}/${totalPairs} bad zooms`)
             var finalPairs = []
+            var finalPairIdxs = []
             const maxDimensionAtImage = {
                 0: 12000,
                 1: 12000,
@@ -427,23 +426,61 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 5: 6000,
                 6: 4000,
                 7: 4000,
-                8: 1200
+                8: 4000
+            }
+            const faceBoxes = faceLocations[vm.skin.skinId] || []
+            var xStretchFactor = 1
+            var yStretchFactor = 1
+            if (skinHeight > skinWidth) {
+                xStretchFactor = skinHeight / skinWidth
+            } else if (skinWidth > skinHeight) {
+                yStretchFactor = skinWidth / skinHeight
+            }
+
+            const isE0 = vm.skin.displaySkin.skinGroupId == 'ILLUST_0'
+            var hasEasyZoom = true
+            if (!isE0) {
+                // for e2/skin, enforce that at least one zoom is around the below-face area
+                hasEasyZoom = false
             }
 
             for (var i = 0; i < pairs.length; i++) {
                 const [x, y] = pairs[i]
                 var overlaps = false
+                // facebox overlap check
+                for (var k = 0; k < faceBoxes.length; k++) {
+                    const faceBox = faceBoxes[k]
+                    const boxWidth = (600 / maxDimensionAtImage[finalPairs.length] + faceBox.width) * xStretchFactor
+                    const boxHeight = (600 / maxDimensionAtImage[finalPairs.length] + faceBox.height) * yStretchFactor
+                    const boxLeft = faceBox.x - boxWidth / 2
+                    const boxRight = faceBox.x + boxWidth / 2
+                    const boxTop = faceBox.y - boxHeight / 2
+                    const boxBottom = faceBox.y + boxHeight / 2
+                    if (x > boxLeft && x < boxRight && y > boxTop && y < boxBottom) {
+                        // console.log(x, y, 'overlapping face box', faceBox, boxWidth, boxHeight)
+                        overlaps = true
+                        break
+                    }
+                }
+                if (overlaps) {
+                    continue
+                }
                 if (finalPairs.length == 0) {
                     finalPairs.push([x, y])
                     continue
                 }
+                // already picked zooms overlap check
                 for (var j = 0; j < finalPairs.length; j++) {
                     const [fx, fy] = finalPairs[j]
-                    const boxLength = 600 / maxDimensionAtImage[j] + 600 / maxDimensionAtImage[finalPairs.length]
-                    const boxLeft = fx -  boxLength / 2
-                    const boxRight = fx + boxLength / 2
-                    const boxTop = fy - boxLength / 2
-                    const boxBottom = fy + boxLength / 2
+                    // if we are running out of zooms, gradually allow more overlap
+                    const boxLengthModifier = (pairs.length - i) / pairs.length
+                    const boxLength = (600 / maxDimensionAtImage[j] + 600 / maxDimensionAtImage[finalPairs.length]) * boxLengthModifier
+                    const boxWidth = boxLength * xStretchFactor
+                    const boxHeight = boxLength * yStretchFactor
+                    const boxLeft = fx -  boxWidth / 2
+                    const boxRight = fx + boxWidth / 2
+                    const boxTop = fy - boxHeight / 2
+                    const boxBottom = fy + boxHeight / 2
                     if (x > boxLeft && x < boxRight && y > boxTop && y < boxBottom) {
                         // console.log(x, y, 'is overlapping', fx, fy)
                         overlaps = true
@@ -453,9 +490,29 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 if (overlaps) {
                     continue
                 }
+                // easy zoom check
+                const easyX = faceBoxes[0].x
+                const easyY = faceBoxes[0].y
+                const boxWidth = 0.07 * xStretchFactor + 600 / maxDimensionAtImage[finalPairs.length]
+                const boxHeight = 0.07 * yStretchFactor + 600 / maxDimensionAtImage[finalPairs.length]
+                const boxLeft = easyX -  boxWidth / 2
+                const boxRight = easyX + boxWidth / 2
+                const boxTop = easyY - boxHeight / 2
+                const boxBottom = easyY + boxHeight / 2 + 0.2
+                if (x > boxLeft && x < boxRight && y > boxTop && y < boxBottom) {
+                    console.log('found easy zoom on zoom #', finalPairs.length + 1)
+                    hasEasyZoom = true
+                }
+
+                if (finalPairs.length == 7 && hasEasyZoom == false && i < pairs.length - 1) {
+                    console.log('trying to find an easy zoom for zoom #8...')
+                    continue
+                }
+
                 finalPairs.push([x, y])
+                finalPairIdxs.push(i)
                 if (finalPairs.length == 8) {
-                    console.log(`found 8 non-overlapping zooms in ${i + 1} out of ${pairs.length} zooms`)
+                    console.log(`found 8 non-overlapping zooms in ${i + 1} out of ${pairs.length} zooms`, finalPairIdxs)
                     break
                 }
             }
@@ -466,7 +523,15 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             }
 
             // last image is fixed
-            finalPairs.push([0.5, 0.33])
+            var giveawayX = 0.5
+            var giveawayY = 0.33
+            if (faceBoxes.length) {
+                giveawayX = faceBoxes[0].x
+                giveawayY = faceBoxes[0].y
+            }
+            finalPairs.push([giveawayX, giveawayY])
+
+            // console.log(finalPairs)
 
             vm.challengeViewPortInfos = _.map(finalPairs, ([centerPointX, centerPointY], i) => {
                 var maxDimensionBase = maxDimensionAtImage[i]
