@@ -493,8 +493,8 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 // easy zoom check
                 const easyX = faceBoxes[0].x
                 const easyY = faceBoxes[0].y
-                const boxWidth = 0.07 * xStretchFactor + 600 / maxDimensionAtImage[finalPairs.length]
-                const boxHeight = 0.07 * yStretchFactor + 600 / maxDimensionAtImage[finalPairs.length]
+                const boxWidth = 0.06 * xStretchFactor + 600 / maxDimensionAtImage[finalPairs.length]
+                const boxHeight = 0.06 * yStretchFactor + 600 / maxDimensionAtImage[finalPairs.length]
                 const boxLeft = easyX -  boxWidth / 2
                 const boxRight = easyX + boxWidth / 2
                 const boxTop = easyY - boxHeight / 2
