@@ -179,6 +179,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             const characterName = _.get(characters, `${skin.charId}.name`)
             const skinGroupId = _.get(skin, 'displaySkin.skinGroupId')
             const skinName = _.get(skin, 'displaySkin.skinName')
+            const isSkin = !skinGroupIdFriendlyName[skinGroupId]
 
             if (!_.get(skin, 'displaySkin.modelName')) {
                 // skip traps, devices
@@ -219,20 +220,21 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             // } else {
             //     skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             // }
+            var characterNameFixed = characterName
             if (skin.tmplId && skin.tmplId.includes('amiya2')) {
-                skin.searchableName = `${characterName}-${vm.translate('guard')} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
+                characterNameFixed = `${characterName}-${vm.translate('guard')}`
             } else if (skin.tmplId && skin.tmplId.includes('amiya3')) {
-                skin.searchableName = `${characterName}-${vm.translate('medic')} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
-            } else {
-                skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
+                characterNameFixed = `${characterName}-${vm.translate('medic')}`
             }
+            skin.searchableName = `${characterNameFixed} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
+            skin.searchIndex = `${characterNameFixed}_${isSkin ? 'ZZ' : 'AA'}_${skinGroupIdFriendlyName[skinGroupId] || skinName}`
             skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
             skin.charInfo = characters[skin.charId]
             // console.log(skin)
             vm.skins.push(skin)
         })
 
-        // console.log(_.shuffle(_.map(vm.skins, 'skinId')))
+        // console.log(_.map(vm.skins, 'searchIndex').sort())
     }
 
     init()
@@ -637,11 +639,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 return -1
             }
             if (_.startsWith(normalizeString(skin.searchableName).toLowerCase(), normalizeString(viewValue).toLowerCase())) {
-                return skin.searchableName
+                return skin.searchIndex
             } else if (normalizeString(skin.charInfo.name).toLowerCase().includes(normalizeString(viewValue).toLowerCase())) {
-                return "Z" + skin.searchableName
+                return "Z" + skin.searchIndex
             } else {
-                return "ZZ" + skin.searchableName
+                return "ZZ" + skin.searchIndex
             }
         }
     }
