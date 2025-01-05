@@ -227,7 +227,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 characterNameFixed = `${characterName}-${vm.translate('medic')}`
             }
             skin.searchableName = `${characterNameFixed} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
-            skin.searchIndex = `${characterNameFixed}_${isSkin ? 'ZZ' : 'AA'}_${skinGroupIdFriendlyName[skinGroupId] || skinName}`
+            skin.searchIndex = `${characterNameFixed.replace(/ /g, '_')} ${isSkin ? 'ZZ' : 'AA'} ${skinGroupIdFriendlyName[skinGroupId] || skinName}`
             skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
             skin.charInfo = characters[skin.charId]
             // console.log(skin)
