@@ -637,9 +637,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 return -1
             }
             if (_.startsWith(normalizeString(skin.searchableName).toLowerCase(), normalizeString(viewValue).toLowerCase())) {
-                return skin.searchableName.length
+                return skin.searchableName
+            } else if (normalizeString(skin.charInfo.name).toLowerCase().includes(normalizeString(viewValue).toLowerCase())) {
+                return "Z" + skin.searchableName
             } else {
-                return skin.searchableName.length + 1000
+                return "ZZ" + skin.searchableName
             }
         }
     }
