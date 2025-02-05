@@ -29,14 +29,19 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     vm.gameType = 0
     vm.isDailyChallenge = false
 
-    const currentDay = new Date()
-    const seed = `${currentDay.getMonth() + 1}/${currentDay.getDate()}/${currentDay.getFullYear()}`
-    currentDay.setHours(0, 0, 0, 0)
-    const baseDay = new Date('12/31/2024')
-    const diffDays = Math.round((currentDay - baseDay) / 86400000) // this probably handles daylight savings
+    const baseDay = new Date(Date.UTC(2024, 11, 31, 11, 0, 0))
+    const diffDays = Math.trunc((new Date() - baseDay) / 86400000)
     const dailySkinId = dailySequence[diffDays]
+    const currentDay = new Date(baseDay.getTime() + 86400000 * diffDays)
+    const seed = `${currentDay.getUTCMonth() + 1}/${currentDay.getUTCDate()}/${currentDay.getUTCFullYear()}`
     const seededRng = new Chance(seed)
-    console.log('seed', seed, seededRng)
+    console.log({
+        baseDay,
+        diffDays,
+        currentDay,
+        seed,
+        seededRng
+    })
 
     const scoreAtZoom = {
         0: 50,
@@ -245,6 +250,11 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         if (lastDailyCompleted != currentDay) {
             vm.isDailyChallenge = true
         }
+
+        // force screen draw at least once per second
+        $interval(() => {
+            vm.aaa = new Date()
+        }, 1000)
 
         $scope.$digest();
     })
@@ -803,6 +813,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
     vm.clickShareButton = function() {
         navigator.clipboard.writeText(getDailyShareText())
+    }
+
+    vm.getDateText = function() {
+        const millisUntilReset = 86400000 - (new Date() - baseDay) % 86400000
+        const formattedMillisUntilReset =  moment.duration(millisUntilReset).format('h:mm:ss', {
+            trim: false
+        })
+        return `Current date for daily challenge: ${seed} (resets at 11:00 UTC, next reset in ${formattedMillisUntilReset})`
     }
 });
 
