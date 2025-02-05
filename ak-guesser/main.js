@@ -820,7 +820,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         const formattedMillisUntilReset =  moment.duration(millisUntilReset).format('h:mm:ss', {
             trim: false
         })
-        return `Current date for daily challenge: ${seed} (resets at 11:00 UTC, next reset in ${formattedMillisUntilReset})`
+        return vm.translate('dateText', [seed, formattedMillisUntilReset])
     }
 });
 

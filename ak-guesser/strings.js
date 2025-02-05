@@ -41,6 +41,7 @@ angular.module('app')
         copy: 'Copy',
         guard: 'Guard',
         medic: 'Medic',
+        dateText: 'Current date for daily challenge: {} (resets at 11:00 UTC, next reset in {})',
     },
     'ja_JP': {
         guard: '前衛',
