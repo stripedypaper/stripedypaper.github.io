@@ -2,7 +2,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 .config(function($locationProvider) {
     $locationProvider.html5Mode(true);
 })
-.controller('MyController', function($scope, $timeout, $interval, $location, $window) {
+.controller('MyController', function($scope, $timeout, $interval, $location, $window, translate) {
     var vm = this;
 
     vm.isLoading = true;
@@ -52,6 +52,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         endless: false,
         enableE0: true,
         darkMode: storage.getItem("theme") == 'dark',
+        hardMode: false,
     }
 
     function log(message) {
@@ -86,27 +87,29 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     function init() {
+        const repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
+        const branch = vm.lang == 'zh_CN' ? 'master' : 'main'
         setImageDimension()
         window.addEventListener('resize', function(event) {
             setImageDimension()
         }, true)
         applyTheme()
-        return $.getJSON(`https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/${vm.lang}/gamedata/excel/skill_table.json`, function(json) {
+        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/skill_table.json`, function(json) {
             skills = json;
             log(skills);
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
                 characters = json;
                 log(characters);
             })
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/ArknightsGameData_YoStar/main/${vm.lang}/gamedata/excel/char_patch_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/char_patch_table.json`, function(json) {
                 characters = _.merge(characters, json.patchChars)
                 log(characters);
-                // console.log(_.groupBy(characters, 'profession'))
-                // console.log(_.groupBy(characters, 'subProfessionId'))
+                log(_.groupBy(characters, 'profession'))
+                log(_.groupBy(characters, 'subProfessionId'))
             })
         })
         .then(function() {
@@ -142,7 +145,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             //console.log(desc.search(/<.+?>(.+?)<\/>/g))
             desc = desc.replace(/<.*?>(.*?)<\/>/g, '$1')
         }
-        return desc.replace(". \n", ". ").replace(".\n", ". ").replace("\n", ". ").replace(charName, '?').replace(/\{(-?)(.+?)(:.+?)?\}/g, (match, negative, keyName, colonPart) => {
+        while (desc.search(charName) >= 0) {
+            desc = desc.replace(charName, '?')
+        }
+        return desc.replace(". \n", ". ").replace(".\n", ". ").replace("\n", ". ").replace(/\{(-?)(.+?)(:.+?)?\}/g, (match, negative, keyName, colonPart) => {
             // if (skillLevel.name == 'Waterless Dance of the Shattered Maelstrom') {
                 // console.log(match, negative, keyName, colonPart)
             // }
@@ -202,6 +208,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         }
         _.each(skillIconIdsToSkills, (value, key) => {
             var charName = null
+            var skillIndex = null
             const skill = value[0]
             const skillName = skill.levels[0].name
             if (disallowedProfessions[skillIdToChars[skill.skillId][0].profession]) {
@@ -218,14 +225,34 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                     
                 }
                 if (skillIdToChars[skillId].length == 1) {
+                    const char = skillIdToChars[skillId][0]
                     charName = skillIdToChars[skillId][0].name
+                    if (char.potentialItemId == 'p_char_002_amiya' && char.subProfessionId == 'incantationmedic') {
+                        charName = `${charName}-${vm.translate('medic')}`
+                    } else if (char.potentialItemId == 'p_char_002_amiya' && char.subProfessionId == 'artsfghter') {
+                        charName = `${charName}-${vm.translate('guard')}`
+                    }
+                    // find which skill number this is
+                    _.each(char.skills, (skill, i) => {
+                        if (skill.skillId == skillId) {
+                            skillIndex = i + 1
+                        }
+                    })
                 }
+            }
+            var searchableName = skillName + (charName ? ` (${charName}` : ' (Various') + (skillIndex ? ` S${skillIndex})` : ')')
+            if (vm.options.hardMode) {
+                searchableName = skillName
+            }
+            var filename = `skill_icon_${key}.png`
+            if (filename.includes('[')) {
+                filename = `skill_icon_${key}/skill_icon_${key}.png/skill_icon_${key}.png`
             }
             vm.assets.push({
                 skillIconId: key,
-                searchableName: skillName + (charName ? ` (${charName})` : ""),
+                searchableName,
                 description: processSkillDesc(_.last(skill.levels), charName),
-                url: encodeURI(`https://raw.githubusercontent.com/Aceship/Arknight-Images/main/skills/skill_icon_${key}.png`),
+                url: encodeURI(`https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/skills/${filename}`),
             })
         })
         console.log(_.sortBy(vm.assets, 'searchableName'))
@@ -233,8 +260,10 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
 
     init()
     .then(function() {
+        translate.setLang(vm.lang)
+        vm.translate = translate.translate
+
         vm.isLoading = false;
-        processSearchableName()
 
         $scope.$digest();
     });
@@ -249,6 +278,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             vm.previousAsset = null
         }
         if (vm.questionIndex < 0) {
+            processSearchableName()
             vm.assets = _.shuffle(vm.assets)
             log(vm.assets)
         }
@@ -348,12 +378,13 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         const guesses = vm.viewPortInfo.guesses
         var guessMultiplier = 1
         var hintMultiplier = vm.showHint ? 0.5 : 1
+        var hardMultiplier = vm.options.hardMode ? 2 : 1
         if (guesses == 1) {
             guessMultiplier = 0.9
         } else if (guesses > 1) {
             guessMultiplier = Math.max(0.5, 1 - guesses * 0.1)
         }
-        vm.scoreIfGuessed = Math.ceil(50 * guessMultiplier * hintMultiplier)
+        vm.scoreIfGuessed = Math.ceil(50 * guessMultiplier * hintMultiplier * hardMultiplier)
     }
 
 

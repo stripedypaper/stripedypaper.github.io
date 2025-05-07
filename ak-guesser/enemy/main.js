@@ -70,12 +70,14 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     function init() {
+        const repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
+        const branch = vm.lang == 'zh_CN' ? 'master' : 'main'
         setImageDimension()
         window.addEventListener('resize', function(event) {
             setImageDimension()
         }, true)
         applyTheme()
-        return $.getJSON(`https://raw.githubusercontent.com/Aceship/AN-EN-Tags/master/json/gamedata/${vm.lang}/gamedata/levels/enemydata/enemy_database.json`, function(json) {
+        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/levels/enemydata/enemy_database.json`, function(json) {
             enemy = json;
             log(enemy);
         })
@@ -131,7 +133,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             }
             enemy.searchableName = enemy.Value[0].enemyData.name.m_value
             enemy.description = processDesc(enemy.Value[0].enemyData.description.m_value)
-            enemy.url = 'https://raw.githubusercontent.com/Aceship/Arknight-Images/main/enemy/' + enemy.Key + '.png'
+            enemy.url = 'https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/enemies/' + enemy.Key + '.png'
             vm.enemies.push(enemy)
         })
         vm.enemies = _.uniqBy(vm.enemies, 'searchableName')

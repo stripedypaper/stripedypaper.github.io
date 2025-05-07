@@ -25,7 +25,8 @@
     <script src="../ui-bootstrap-tpls-2.5.0.min.js"></script>
     <script src="../jquery.min.js"></script>
     <script src="../lodash.js"></script>
-    <script src="main.js"></script>
+    <script src="main.js?v=5.6.25"></script>
+    <script src="../strings.js?v=5.6.25"></script>
     <link href="../styles.css" rel="stylesheet"></link>
     <base href="/ak-guesser">
     <meta name="description" content="Try guessing the Arknights Operator skill's name from its icon.">
@@ -49,6 +50,8 @@
                         <option value="ko_KR">한국어</option>
                     </select>
                 </div>
+                <!-- Button trigger modal -->
+                <button type="button" class="btn btn-secondary mauto" data-bs-toggle="modal" data-bs-target="#advanced">{{vm.translate('options')}}</button>
             </div>
 
             <div class="flexh block">
@@ -109,13 +112,8 @@
                         </div>
                         <div class="modal-body">
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" ng-model="vm.options.endless" ng-checked="vm.options.endless">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">Endless mode</label>
-                            </div>
-
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" ng-model="vm.options.enableE0" ng-checked="vm.options.enableE0">
-                                <label class="form-check-label" for="flexSwitchCheckDefault">Enable operator E0 art</label>
+                                <input class="form-check-input" type="checkbox" ng-model="vm.options.hardMode" ng-checked="vm.options.endless" ng-disabled="vm.questionIndex >= 0">
+                                <label class="form-check-label" for="flexSwitchCheckDefault">Hard mode (skill names only, double score)</label>
                             </div>
                         </div>
                     </div>
@@ -124,7 +122,7 @@
         </div>
         <div class="flexh">
             <div class="flex1" style="margin-top:auto">
-                <div class="small">Thanks to Aceship and Kengxxiao for game resources</a></div>
+                <div class="small">Thanks to <a target="blank" href="https://github.com/Kengxxiao/ArknightsGameData">ArknightsGameData</a> and <a target="blank" href="https://github.com/ArknightsAssets/ArknightsAssets">ArknightsAssets</a> for game resources</a></div>
                 <div class="small">Created by <a target="blank" href="https://twitter.com/boardwalkhotel_">@boardwalkhotel_</a></div>
             </div>
             <a href="ak-guesser/" target="_self">
