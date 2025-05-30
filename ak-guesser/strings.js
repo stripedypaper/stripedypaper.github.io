@@ -78,18 +78,18 @@ angular.module('app')
         zoomOuts: '次缩小',
         points: '分数',
         timesUp: '时间到！',
-        dailyChallenge: 'Daily challenge', // todo
-        newChallenge: 'New challenge', // todo
-        optionsDesc1: 'These options don\'t affect the daily challenge.', // todo
-        guessesLeft: 'Guesses left', // todo
-        giveUp: 'Give up', // todo
-        challengeFailed: 'You didn\'t guess the operator and skin. 🥺', // todo
-        challengeWon1: 'You won in 1 guess!', // todo
-        challengeWon: 'You won in {} guesses!', // todo
-        dailyShareTitle: 'Arknights Guesser Daily Challenge {}', // todo
-        dailyShareOneGuess: 'Won on the first guess!', // todo
-        dailyShareMultipleGuesses:  'Won in {} guesses', // todo
-        copy: 'Copy', // todo
+        dailyChallenge: '每日挑战', 
+        newChallenge: '新挑战',
+        optionsDesc1: '这些选项将不在每日挑战中生效', 
+        guessesLeft: '剩余猜测次数', 
+        giveUp: '放弃', 
+        challengeFailed: '你没有猜中干员或皮肤哦🥺', 
+        challengeWon1: '一发入魂！', 
+        challengeWon: '你在第{}次猜测中猜中啦！', 
+        dailyShareTitle: '明日方舟每日干员猜图挑战{}', 
+        dailyShareOneGuess: '一发入魂！', 
+        dailyShareMultipleGuesses:  '在第{}次猜测中猜中！', 
+        copy: '复制到剪贴板', 
         guard: '近卫',
         medic: '医疗',
     }
