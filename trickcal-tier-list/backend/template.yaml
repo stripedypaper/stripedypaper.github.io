@@ -1,0 +1,94 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Discord OAuth backend for the Trickcal Tier List GitHub Pages app.
+
+Parameters:
+  DiscordClientId:
+    Type: String
+  DiscordClientSecret:
+    Type: String
+    NoEcho: true
+  FrontendUrl:
+    Type: String
+    Description: Full GitHub Pages URL, for example https://stripedypaper.github.io/trickcal-tier-list/
+  FrontendOrigin:
+    Type: String
+    Description: GitHub Pages origin only, for example https://stripedypaper.github.io
+  LocalFrontendOrigin:
+    Type: String
+    Default: http://localhost:8000
+    Description: Local development origin allowed for OAuth testing.
+  CookieSecret:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+    Description: Random signing secret for session cookies.
+
+Globals:
+  Function:
+    Runtime: nodejs24.x
+    Timeout: 10
+    MemorySize: 128
+
+Resources:
+  AuthApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref FrontendOrigin
+          - !Ref LocalFrontendOrigin
+        AllowHeaders:
+          - content-type
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
+        AllowCredentials: true
+
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: oauth.handler
+      Environment:
+        Variables:
+          DISCORD_CLIENT_ID: !Ref DiscordClientId
+          DISCORD_CLIENT_SECRET: !Ref DiscordClientSecret
+          FRONTEND_URL: !Ref FrontendUrl
+          FRONTEND_ORIGIN: !Ref FrontendOrigin
+          LOCAL_FRONTEND_ORIGIN: !Ref LocalFrontendOrigin
+          COOKIE_SECRET: !Ref CookieSecret
+      Events:
+        Start:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /auth/start
+            Method: GET
+        Callback:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /auth/callback
+            Method: GET
+        Me:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /auth/me
+            Method: GET
+        Logout:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /auth/logout
+            Method: POST
+
+Outputs:
+  ApiBaseUrl:
+    Description: Use this value as window.TRICKCAL_CONFIG.apiBaseUrl.
+    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com"
+  DiscordRedirectUri:
+    Description: Add this exact URL to the Discord application OAuth2 redirect URLs.
+    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/auth/callback"

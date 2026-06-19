@@ -1,0 +1,3 @@
+window.TRICKCAL_CONFIG = {
+  apiBaseUrl: "https://4v40gewhy4.execute-api.us-east-1.amazonaws.com"
+};
