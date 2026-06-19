@@ -1,0 +1,146 @@
+:root {
+  color-scheme: dark;
+  --page-bg: #0a0d12;
+  --surface: rgba(12, 16, 24, 0.82);
+  --surface-strong: rgba(16, 21, 31, 0.95);
+  --border: rgba(255, 255, 255, 0.08);
+  --text-dim: #9aa6b2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(
+      circle at 12% 16%,
+      rgba(255, 183, 77, 0.16),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 88% 14%,
+      rgba(73, 168, 255, 0.14),
+      transparent 24%
+    ),
+    linear-gradient(180deg, #090c11 0%, #0a0d12 48%, #07090d 100%);
+  color: #f3f6fa;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.85), transparent 92%);
+}
+
+#root {
+  isolation: isolate;
+}
+
+.page-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.page-glow {
+  position: absolute;
+  width: 34rem;
+  height: 34rem;
+  border-radius: 999px;
+  filter: blur(32px);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.page-glow-left {
+  top: -8rem;
+  left: -10rem;
+  background: rgba(255, 178, 71, 0.7);
+}
+
+.page-glow-right {
+  right: -12rem;
+  bottom: -12rem;
+  background: rgba(78, 172, 255, 0.56);
+}
+
+.page-container {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(2rem, 7vw, 6rem);
+  padding-bottom: clamp(2rem, 7vw, 6rem);
+}
+
+.hero-copy {
+  justify-content: center;
+}
+
+.hero-title {
+  font-size: clamp(2.7rem, 6vw, 4.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  max-width: 10ch;
+}
+
+.feature-card,
+.auth-card {
+  background: var(--surface);
+  border-color: var(--border);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+}
+
+.auth-card {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 23, 34, 0.92),
+    rgba(12, 16, 24, 0.86)
+  );
+}
+
+.session-row {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.session-copy {
+  min-width: 0;
+}
+
+.user-id {
+  word-break: break-all;
+}
+
+.status-icon {
+  color: #4ade80;
+}
+
+.mantine-Button-root[disabled] {
+  cursor: not-allowed;
+}
+
+@media (max-width: 48em) {
+  .page-container {
+    padding-top: 1.25rem;
+  }
+
+  .hero-title {
+    max-width: 100%;
+  }
+}

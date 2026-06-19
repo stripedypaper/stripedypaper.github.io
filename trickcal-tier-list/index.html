@@ -1,44 +1,17 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trickcal Tier List</title>
-  <link rel="stylesheet" href="./styles.css">
-</head>
-<body>
-  <main class="app-shell">
-    <section class="auth-panel" aria-labelledby="page-title">
-      <div>
-        <p class="eyebrow">Trickcal Tier List</p>
-        <h1 id="page-title">Discord login test</h1>
-        <p class="muted">This page only verifies Discord authentication and displays the logged-in user.</p>
-      </div>
-
-      <div id="signed-out" class="state-card" hidden>
-        <p class="status">Not signed in</p>
-        <a id="login-link" class="button primary" href="#">Log in with Discord</a>
-      </div>
-
-      <div id="signed-in" class="state-card" hidden>
-        <img id="user-avatar" class="avatar" alt="">
-        <div class="user-copy">
-          <p class="status">Signed in as</p>
-          <p id="user-name" class="user-name"></p>
-          <p id="user-id" class="muted"></p>
-        </div>
-        <button id="logout-button" class="button secondary" type="button">Log out</button>
-      </div>
-
-      <div id="loading" class="state-card">
-        <p class="status">Checking session...</p>
-      </div>
-
-      <p id="message" class="message" role="status"></p>
-    </section>
-  </main>
-
-  <script src="./config.js"></script>
-  <script src="./app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Trickcal Tier List Discord authentication test built with Vite, React, and Mantine."
+    />
+    <meta name="theme-color" content="#0b0f14" />
+    <title>Trickcal Tier List</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

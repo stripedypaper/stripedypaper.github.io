@@ -1,30 +1,50 @@
 # Trickcal Tier List
 
-Static GitHub Pages frontend plus an AWS Lambda/API Gateway backend for Discord OAuth.
+Vite + React + Mantine frontend for the Trickcal Discord auth flow, plus the existing AWS Lambda/API Gateway backend.
 
-## Current behavior
+## Frontend
 
-- Shows a blank login test page.
-- Sends users to Discord OAuth.
-- Displays the logged-in Discord user after the backend session is present.
-- Logs out by clearing the backend session cookie.
+- `npm install`
+- `npm run dev`
+- Open the local Vite URL shown in the terminal.
 
-## Values needed
+## Config
 
-To finish wiring this up, provide:
+The app reads the API base URL from either:
 
-- Discord application client ID.
-- Discord application client secret.
-- AWS region to deploy into.
-- Final GitHub Pages URL, likely `https://stripedypaper.github.io/trickcal-tier-list/`.
+- `public/config.json` at runtime
+- `VITE_API_BASE_URL` at build time
 
-The backend deployment will output a Discord redirect URL. Add that exact URL to the Discord application's OAuth2 redirect URLs, then set `apiBaseUrl` in `config.js` to the backend API URL.
+The checked-in runtime config currently points at the deployed API URL. Update that file after redeploying the backend, or bake the value into your build environment.
 
-## Backend deployment sketch
-
-From `trickcal-tier-list/backend`:
+## Build
 
 ```powershell
+npm run build
+```
+
+The Vite base path is set to `/trickcal-tier-list/` for GitHub Pages deployment.
+
+## Format Check
+
+```powershell
+npm run lint
+```
+
+This runs Prettier against the HTML, JavaScript, and CSS files.
+
+To auto-fix formatting:
+
+```powershell
+npm run format
+```
+
+## Backend
+
+The backend lives in `backend/` and still uses AWS SAM.
+
+```powershell
+cd backend
 sam build
 sam deploy --guided `
   --parameter-overrides `
@@ -32,28 +52,12 @@ sam deploy --guided `
     DiscordClientSecret=YOUR_CLIENT_SECRET `
     FrontendUrl=https://stripedypaper.github.io/trickcal-tier-list/ `
     FrontendOrigin=https://stripedypaper.github.io `
-    LocalFrontendOrigin=http://localhost:8000 `
+    LocalFrontendOrigin=http://localhost:5173 `
     CookieSecret=GENERATE_A_LONG_RANDOM_SECRET
 ```
 
 After deployment:
 
 1. Copy the `DiscordRedirectUri` output into the Discord developer portal.
-2. Copy the `ApiBaseUrl` output into `trickcal-tier-list/config.js`.
-3. Commit and push this folder to GitHub Pages.
-
-## Local testing
-
-From the repo root:
-
-```powershell
-python3 -m http.server 8000
-```
-
-Open:
-
-```text
-http://localhost:8000/trickcal-tier-list/
-```
-
-The frontend sends the current page URL to `/auth/start` as `return_to`, so Discord login returns to localhost when you start from localhost and returns to GitHub Pages when you start from GitHub Pages.
+2. Copy the `ApiBaseUrl` output into `public/config.json` or set `VITE_API_BASE_URL`.
+3. Rebuild and publish the `dist/` output to GitHub Pages.

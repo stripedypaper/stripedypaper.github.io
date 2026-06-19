@@ -1,8 +1,8 @@
-import crypto from "node:crypto";
+import crypto from 'node:crypto';
 
-const DISCORD_API = "https://discord.com/api/v10";
-const SESSION_COOKIE = "trickcal_session";
-const STATE_COOKIE = "trickcal_oauth_state";
+const DISCORD_API = 'https://discord.com/api/v10';
+const SESSION_COOKIE = 'trickcal_session';
+const STATE_COOKIE = 'trickcal_oauth_state';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 const STATE_MAX_AGE = 60 * 10;
 
@@ -23,33 +23,33 @@ export async function handler(event) {
     const method = event.requestContext.http.method;
     const path = event.rawPath;
 
-    if (method === "GET" && path === "/auth/start") {
+    if (method === 'GET' && path === '/auth/start') {
       return startAuth(event);
     }
 
-    if (method === "GET" && path === "/auth/callback") {
+    if (method === 'GET' && path === '/auth/callback') {
       return callback(event);
     }
 
-    if (method === "GET" && path === "/auth/me") {
+    if (method === 'GET' && path === '/auth/me') {
       return me(event);
     }
 
-    if (method === "POST" && path === "/auth/logout") {
+    if (method === 'POST' && path === '/auth/logout') {
       return logout();
     }
 
-    return json(404, { error: "Not found" });
+    return json(404, { error: 'Not found' });
   } catch (error) {
     console.error(error);
-    return json(500, { error: "Internal server error" });
+    return json(500, { error: 'Internal server error' });
   }
 }
 
 function startAuth(event) {
   assertConfigured();
 
-  const state = crypto.randomBytes(24).toString("base64url");
+  const state = crypto.randomBytes(24).toString('base64url');
   const returnTo = getAllowedReturnTo(event.queryStringParameters?.return_to);
   const statePayload = signPayload({
     state,
@@ -60,14 +60,17 @@ function startAuth(event) {
   const params = new URLSearchParams({
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: redirectUri,
-    response_type: "code",
-    scope: "identify",
+    response_type: 'code',
+    scope: 'identify',
     state,
-    prompt: "none"
+    prompt: 'none'
   });
 
   return redirect(`${DISCORD_API}/oauth2/authorize?${params}`, [
-    cookie(STATE_COOKIE, statePayload, { maxAge: STATE_MAX_AGE, httpOnly: true })
+    cookie(STATE_COOKIE, statePayload, {
+      maxAge: STATE_MAX_AGE,
+      httpOnly: true
+    })
   ]);
 }
 
@@ -75,12 +78,15 @@ async function callback(event) {
   assertConfigured();
 
   const { code, state } = event.queryStringParameters || {};
-  const statePayload = verifyPayload(getCookie(event, STATE_COOKIE) || "");
+  const statePayload = verifyPayload(getCookie(event, STATE_COOKIE) || '');
 
-  if (!code || !state || !statePayload?.state || !safeEqual(state, statePayload.state)) {
-    return redirect(`${FRONTEND_URL}?auth=failed`, [
-      clearCookie(STATE_COOKIE)
-    ]);
+  if (
+    !code ||
+    !state ||
+    !statePayload?.state ||
+    !safeEqual(state, statePayload.state)
+  ) {
+    return redirect(`${FRONTEND_URL}?auth=failed`, [clearCookie(STATE_COOKIE)]);
   }
 
   const token = await exchangeCode(code);
@@ -96,7 +102,10 @@ async function callback(event) {
   });
 
   return redirect(statePayload.returnTo || FRONTEND_URL, [
-    cookie(SESSION_COOKIE, session, { maxAge: SESSION_MAX_AGE, httpOnly: true }),
+    cookie(SESSION_COOKIE, session, {
+      maxAge: SESSION_MAX_AGE,
+      httpOnly: true
+    }),
     clearCookie(STATE_COOKIE)
   ]);
 }
@@ -113,14 +122,14 @@ function logout() {
 
 async function exchangeCode(code) {
   const response = await fetch(`${DISCORD_API}/oauth2/token`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "content-type": "application/x-www-form-urlencoded"
+      'content-type': 'application/x-www-form-urlencoded'
     },
     body: new URLSearchParams({
       client_id: DISCORD_CLIENT_ID,
       client_secret: DISCORD_CLIENT_SECRET,
-      grant_type: "authorization_code",
+      grant_type: 'authorization_code',
       code,
       redirect_uri: getRedirectUri()
     })
@@ -156,18 +165,18 @@ function verifySession(value) {
 }
 
 function signPayload(payload) {
-  const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signature = hmac(body);
   return `${body}.${signature}`;
 }
 
 function verifyPayload(value) {
-  const [body, signature] = value.split(".");
+  const [body, signature] = value.split('.');
   if (!body || !signature || !safeEqual(signature, hmac(body))) {
     return null;
   }
 
-  const session = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+  const session = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
   if (!session.exp || session.exp < Math.floor(Date.now() / 1000)) {
     return null;
   }
@@ -199,7 +208,10 @@ function getCorsOrigin(event) {
 }
 
 function hmac(value) {
-  return crypto.createHmac("sha256", COOKIE_SECRET).update(value).digest("base64url");
+  return crypto
+    .createHmac('sha256', COOKIE_SECRET)
+    .update(value)
+    .digest('base64url');
 }
 
 function getRedirectUri() {
@@ -209,7 +221,7 @@ function getRedirectUri() {
 function getApiBaseUrl() {
   const { domainName } = globalThis.__lastRequestContext || {};
   if (!domainName) {
-    throw new Error("Missing API Gateway domain name");
+    throw new Error('Missing API Gateway domain name');
   }
 
   return `https://${domainName}`;
@@ -229,10 +241,12 @@ function json(statusCode, body, cookies = []) {
   return {
     statusCode,
     headers: {
-      "content-type": "application/json",
-      "access-control-allow-origin": getCorsOrigin(globalThis.__lastRequest || {}),
-      "access-control-allow-credentials": "true",
-      "vary": "origin"
+      'content-type': 'application/json',
+      'access-control-allow-origin': getCorsOrigin(
+        globalThis.__lastRequest || {}
+      ),
+      'access-control-allow-credentials': 'true',
+      vary: 'origin'
     },
     cookies,
     body: JSON.stringify(body)
@@ -242,17 +256,17 @@ function json(statusCode, body, cookies = []) {
 function cookie(name, value, options = {}) {
   const parts = [
     `${name}=${encodeURIComponent(value)}`,
-    "Path=/",
-    "Secure",
-    "HttpOnly",
-    "SameSite=None"
+    'Path=/',
+    'Secure',
+    'HttpOnly',
+    'SameSite=None'
   ];
 
   if (options.maxAge) {
     parts.push(`Max-Age=${options.maxAge}`);
   }
 
-  return parts.join("; ");
+  return parts.join('; ');
 }
 
 function clearCookie(name) {
@@ -261,9 +275,9 @@ function clearCookie(name) {
 
 function getCookie(event, name) {
   for (const rawCookie of event.cookies || []) {
-    const [key, ...valueParts] = rawCookie.split("=");
+    const [key, ...valueParts] = rawCookie.split('=');
     if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
+      return decodeURIComponent(valueParts.join('='));
     }
   }
 
@@ -282,7 +296,13 @@ function safeEqual(left, right) {
 }
 
 function assertConfigured() {
-  for (const name of ["DISCORD_CLIENT_ID", "DISCORD_CLIENT_SECRET", "FRONTEND_URL", "FRONTEND_ORIGIN", "COOKIE_SECRET"]) {
+  for (const name of [
+    'DISCORD_CLIENT_ID',
+    'DISCORD_CLIENT_SECRET',
+    'FRONTEND_URL',
+    'FRONTEND_ORIGIN',
+    'COOKIE_SECRET'
+  ]) {
     if (!process.env[name]) {
       throw new Error(`Missing required environment variable: ${name}`);
     }
