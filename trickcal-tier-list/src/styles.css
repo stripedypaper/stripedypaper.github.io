@@ -137,16 +137,22 @@ body::before {
   letter-spacing: 0.08em;
 }
 
-.users-table :is(th, td) {
+.users-table :is(th, td),
+.characters-table :is(th, td) {
   color: var(--text);
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-.users-table thead th {
+.users-table thead th,
+.characters-table thead th {
   color: var(--text-dim);
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+.characters-table {
+  min-width: 1280px;
 }
 
 .mono-cell {

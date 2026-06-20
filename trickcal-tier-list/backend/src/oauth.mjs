@@ -1,6 +1,12 @@
 import crypto from 'node:crypto';
 import { getAuthContext, requireAdminUser, signSession } from './auth.mjs';
 import { ensureUserRecord, listUsersPage } from './users.mjs';
+import {
+  createCharacterImageUploadUrl,
+  createCharacterRecord,
+  listCharactersPage,
+  updateCharacterRecord
+} from './characters.mjs';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const STATE_COOKIE = 'trickcal_oauth_state';
@@ -38,6 +44,22 @@ export async function handler(event) {
 
     if (method === 'GET' && path === '/admin/users') {
       return listUsers(event);
+    }
+
+    if (method === 'GET' && path === '/admin/characters') {
+      return listCharacters(event);
+    }
+
+    if (method === 'POST' && path === '/admin/characters') {
+      return createCharacter(event);
+    }
+
+    if (path.startsWith('/admin/characters/') && method === 'PUT') {
+      return updateCharacter(event);
+    }
+
+    if (path.startsWith('/admin/characters/') && method === 'POST') {
+      return createCharacterImageUpload(event);
     }
 
     if (method === 'POST' && path === '/auth/logout') {
@@ -138,6 +160,87 @@ async function listUsers(event) {
   const result = await listUsersPage({ limit, cursor });
 
   return json(200, result);
+}
+
+async function listCharacters(event) {
+  const auth = await requireAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  const limit = parseLimit(event.queryStringParameters?.limit);
+  const cursor = event.queryStringParameters?.cursor || null;
+  const result = await listCharactersPage({ limit, cursor });
+
+  return json(200, result);
+}
+
+async function createCharacter(event) {
+  const auth = await requireAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const body = parseJsonBody(event);
+    const character = await createCharacterRecord(auth.user.id, body);
+
+    return json(201, character);
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
+}
+
+async function updateCharacter(event) {
+  const auth = await requireAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const id = getCharacterIdFromPath(event.rawPath);
+    const body = parseJsonBody(event);
+    const character = await updateCharacterRecord(auth.user.id, id, body);
+
+    if (!character) {
+      return json(404, { error: 'Not found' });
+    }
+
+    return json(200, character);
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
+}
+
+async function createCharacterImageUpload(event) {
+  const auth = await requireAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const id = getCharacterIdFromPath(event.rawPath);
+    const body = parseJsonBody(event);
+    const upload = await createCharacterImageUploadUrl(
+      auth.user.id,
+      id,
+      body.contentType
+    );
+
+    return json(200, upload);
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
 }
 
 function logout() {
@@ -300,6 +403,11 @@ function getCookie(event, name) {
   return null;
 }
 
+function getCharacterIdFromPath(path) {
+  const parts = path.split('/').filter(Boolean);
+  return parts[2] || '';
+}
+
 function parseLimit(value) {
   const parsed = Number.parseInt(value || '20', 10);
   if (Number.isNaN(parsed)) {
@@ -307,6 +415,22 @@ function parseLimit(value) {
   }
 
   return Math.min(Math.max(parsed, 1), 100);
+}
+
+function parseJsonBody(event) {
+  if (!event.body) {
+    return {};
+  }
+
+  const rawBody = event.isBase64Encoded
+    ? Buffer.from(event.body, 'base64').toString('utf8')
+    : event.body;
+
+  try {
+    return JSON.parse(rawBody);
+  } catch {
+    throw new Error('Invalid JSON body.');
+  }
 }
 
 function safeEqual(left, right) {

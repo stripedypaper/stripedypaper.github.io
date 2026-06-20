@@ -1,0 +1,447 @@
+import {
+  DynamoDBClient,
+  GetItemCommand,
+  PutItemCommand,
+  ScanCommand,
+  UpdateItemCommand
+} from '@aws-sdk/client-dynamodb';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import crypto from 'node:crypto';
+
+const CHARACTERS_TABLE_NAME = process.env.CHARACTERS_TABLE_NAME;
+const CHARACTERS_IMAGES_BUCKET_NAME = process.env.CHARACTERS_IMAGES_BUCKET_NAME;
+const CHARACTERS_CDN_BASE_URL = normalizeBaseUrl(
+  process.env.CHARACTERS_CDN_BASE_URL
+);
+
+const ddbClient = new DynamoDBClient({});
+const s3Client = new S3Client({});
+
+export const CHARACTER_POSITION_VALUES = ['front', 'middle', 'back'];
+export const CHARACTER_ROLE_VALUES = ['dps', 'tank', 'support'];
+export const CHARACTER_PERSONALITY_VALUES = [
+  'vivacious',
+  'depressed',
+  'innocent',
+  'composed',
+  'mad',
+  'resonance'
+];
+export const CHARACTER_RARITY_VALUES = [1, 2, 3];
+
+export async function getCharacterRecord(id) {
+  if (!CHARACTERS_TABLE_NAME || !id) {
+    return null;
+  }
+
+  const response = await ddbClient.send(
+    new GetItemCommand({
+      TableName: CHARACTERS_TABLE_NAME,
+      Key: {
+        id: {
+          S: id
+        }
+      }
+    })
+  );
+
+  return response.Item ? parseCharacterRecord(response.Item) : null;
+}
+
+export async function listCharactersPage({ limit = 20, cursor = null } = {}) {
+  if (!CHARACTERS_TABLE_NAME) {
+    return {
+      characters: [],
+      nextCursor: null
+    };
+  }
+
+  const scanInput = {
+    TableName: CHARACTERS_TABLE_NAME,
+    Limit: limit,
+    ProjectionExpression:
+      'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion',
+    ExpressionAttributeNames: {
+      '#position': 'position',
+      '#role': 'role'
+    }
+  };
+
+  const exclusiveStartKey = decodeCursor(cursor);
+  if (exclusiveStartKey) {
+    scanInput.ExclusiveStartKey = exclusiveStartKey;
+  }
+
+  const response = await ddbClient.send(new ScanCommand(scanInput));
+
+  return {
+    characters: (response.Items || []).map(parseCharacterRecord),
+    nextCursor: encodeCursor(response.LastEvaluatedKey || null)
+  };
+}
+
+export async function createCharacterRecord(actorId, input) {
+  assertCharacterTableConfigured();
+  const payload = validateCharacterInput(input);
+  const now = new Date().toISOString();
+  const id = crypto.randomUUID();
+  const item = buildCharacterItem({
+    id,
+    ...payload,
+    createdAt: now,
+    updatedAt: now,
+    updatedBy: actorId
+  });
+
+  await ddbClient.send(
+    new PutItemCommand({
+      TableName: CHARACTERS_TABLE_NAME,
+      Item: item,
+      ConditionExpression: 'attribute_not_exists(id)'
+    })
+  );
+
+  return getCharacterRecord(id);
+}
+
+export async function updateCharacterRecord(actorId, id, input) {
+  assertCharacterTableConfigured();
+  const payload = validateCharacterInput(input);
+  const now = new Date().toISOString();
+  const update = buildUpdateExpression({
+    ...payload,
+    updatedAt: now,
+    updatedBy: actorId
+  });
+
+  const response = await ddbClient.send(
+    new UpdateItemCommand({
+      TableName: CHARACTERS_TABLE_NAME,
+      Key: {
+        id: {
+          S: id
+        }
+      },
+      UpdateExpression: update.updateExpression,
+      ExpressionAttributeNames: update.expressionAttributeNames,
+      ExpressionAttributeValues: update.expressionAttributeValues,
+      ConditionExpression: 'attribute_exists(id)',
+      ReturnValues: 'ALL_NEW'
+    })
+  );
+
+  return response.Attributes ? parseCharacterRecord(response.Attributes) : null;
+}
+
+export async function createCharacterImageUploadUrl(actorId, id, contentType) {
+  assertCharacterUploadConfigured();
+  validateImageContentType(contentType);
+
+  const imageVersion = await touchCharacterImageVersion(actorId, id);
+  const key = getCharacterImageKey(id);
+  const command = new PutObjectCommand({
+    Bucket: CHARACTERS_IMAGES_BUCKET_NAME,
+    Key: key,
+    ContentType: contentType
+  });
+
+  const uploadUrl = await getSignedUrl(s3Client, command, {
+    expiresIn: 300
+  });
+
+  return {
+    uploadUrl,
+    imageUrl: makeCharacterImageUrl(id, imageVersion)
+  };
+}
+
+export function makeCharacterImageUrl(id, version) {
+  if (!CHARACTERS_CDN_BASE_URL) {
+    return null;
+  }
+
+  const url = `${CHARACTERS_CDN_BASE_URL}/characters/${encodeURIComponent(
+    id
+  )}/image`;
+  return version ? `${url}?v=${encodeURIComponent(version)}` : url;
+}
+
+function buildCharacterItem(character) {
+  const item = {
+    id: {
+      S: character.id
+    },
+    position: {
+      S: character.position
+    },
+    role: {
+      S: character.role
+    },
+    personality: {
+      S: character.personality
+    },
+    rarity: {
+      N: String(character.rarity)
+    },
+    createdAt: {
+      S: character.createdAt
+    },
+    updatedAt: {
+      S: character.updatedAt
+    },
+    updatedBy: {
+      S: character.updatedBy
+    }
+  };
+
+  addOptionalString(item, 'nameEn', character.nameEn);
+  addOptionalString(item, 'nameJa', character.nameJa);
+  addOptionalString(item, 'nameZh', character.nameZh);
+  addOptionalString(item, 'nameKo', character.nameKo);
+
+  return item;
+}
+
+function buildUpdateExpression(character) {
+  const expressionAttributeNames = {};
+  const expressionAttributeValues = {};
+  const setParts = [];
+  const removeParts = [];
+
+  for (const [field, value] of Object.entries(character)) {
+    if (value === undefined) {
+      continue;
+    }
+
+    const tokenName = `#${field}`;
+    expressionAttributeNames[tokenName] = field;
+
+    if (value === null) {
+      removeParts.push(tokenName);
+      continue;
+    }
+
+    const tokenValue = `:${field}`;
+    expressionAttributeValues[tokenValue] = toAttributeValue(value);
+    setParts.push(`${tokenName} = ${tokenValue}`);
+  }
+
+  const updateExpressionParts = [];
+  if (setParts.length) {
+    updateExpressionParts.push(`SET ${setParts.join(', ')}`);
+  }
+  if (removeParts.length) {
+    updateExpressionParts.push(`REMOVE ${removeParts.join(', ')}`);
+  }
+
+  return {
+    updateExpression: updateExpressionParts.join(' '),
+    expressionAttributeNames,
+    expressionAttributeValues
+  };
+}
+
+function parseCharacterRecord(item) {
+  return {
+    id: item.id?.S || '',
+    nameEn: item.nameEn?.S || '',
+    nameJa: item.nameJa?.S || '',
+    nameZh: item.nameZh?.S || '',
+    nameKo: item.nameKo?.S || '',
+    position: item.position?.S || '',
+    role: item.role?.S || '',
+    personality: item.personality?.S || '',
+    rarity: item.rarity?.N ? Number(item.rarity.N) : 0,
+    createdAt: item.createdAt?.S || '',
+    updatedAt: item.updatedAt?.S || '',
+    updatedBy: item.updatedBy?.S || '',
+    imageVersion: item.imageVersion?.S || '',
+    imageUrl: makeCharacterImageUrl(
+      item.id?.S || '',
+      item.imageVersion?.S || item.updatedAt?.S || ''
+    )
+  };
+}
+
+function validateCharacterInput(input) {
+  const nameEn = normalizeOptionalString(input?.nameEn);
+  const nameJa = normalizeOptionalString(input?.nameJa);
+  const nameZh = normalizeOptionalString(input?.nameZh);
+  const nameKo = normalizeOptionalString(input?.nameKo);
+  const position = normalizeRequiredChoice(
+    input?.position,
+    CHARACTER_POSITION_VALUES,
+    'position'
+  );
+  const role = normalizeRequiredChoice(
+    input?.role,
+    CHARACTER_ROLE_VALUES,
+    'role'
+  );
+  const personality = normalizeRequiredChoice(
+    input?.personality,
+    CHARACTER_PERSONALITY_VALUES,
+    'personality'
+  );
+  const rarity = normalizeRequiredInteger(
+    input?.rarity,
+    CHARACTER_RARITY_VALUES,
+    'rarity'
+  );
+
+  return {
+    nameEn,
+    nameJa,
+    nameZh,
+    nameKo,
+    position,
+    role,
+    personality,
+    rarity
+  };
+}
+
+function normalizeRequiredChoice(value, allowedValues, fieldName) {
+  const normalizedValue = normalizeRequiredString(value, fieldName);
+  if (!allowedValues.includes(normalizedValue)) {
+    throw new Error(`Invalid ${fieldName}.`);
+  }
+
+  return normalizedValue;
+}
+
+function normalizeRequiredInteger(value, allowedValues, fieldName) {
+  const parsed = Number.parseInt(String(value), 10);
+  if (!allowedValues.includes(parsed)) {
+    throw new Error(`Invalid ${fieldName}.`);
+  }
+
+  return parsed;
+}
+
+function normalizeOptionalString(value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const normalized = String(value).trim();
+  return normalized ? normalized : null;
+}
+
+function normalizeRequiredString(value, fieldName) {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) {
+    throw new Error(`Missing ${fieldName}.`);
+  }
+
+  return normalized;
+}
+
+function addOptionalString(item, fieldName, value) {
+  if (!value) {
+    return;
+  }
+
+  item[fieldName] = {
+    S: value
+  };
+}
+
+function toAttributeValue(value) {
+  if (typeof value === 'number') {
+    return {
+      N: String(value)
+    };
+  }
+
+  return {
+    S: String(value)
+  };
+}
+
+function validateImageContentType(contentType) {
+  const allowedContentTypes = new Set([
+    'image/png',
+    'image/jpeg',
+    'image/webp',
+    'image/gif'
+  ]);
+
+  if (!allowedContentTypes.has(contentType)) {
+    throw new Error('Invalid image type.');
+  }
+}
+
+function getCharacterImageKey(id) {
+  return `characters/${id}/image`;
+}
+
+function assertCharacterTableConfigured() {
+  if (!CHARACTERS_TABLE_NAME) {
+    throw new Error('Characters table is not configured.');
+  }
+}
+
+function assertCharacterUploadConfigured() {
+  assertCharacterTableConfigured();
+
+  if (!CHARACTERS_IMAGES_BUCKET_NAME) {
+    throw new Error('Characters image bucket is not configured.');
+  }
+}
+
+async function touchCharacterImageVersion(actorId, id) {
+  const now = new Date().toISOString();
+
+  await ddbClient.send(
+    new UpdateItemCommand({
+      TableName: CHARACTERS_TABLE_NAME,
+      Key: {
+        id: {
+          S: id
+        }
+      },
+      UpdateExpression:
+        'SET imageVersion = :imageVersion, updatedAt = :updatedAt, updatedBy = :updatedBy',
+      ExpressionAttributeValues: {
+        ':imageVersion': {
+          S: now
+        },
+        ':updatedAt': {
+          S: now
+        },
+        ':updatedBy': {
+          S: actorId
+        }
+      },
+      ConditionExpression: 'attribute_exists(id)'
+    })
+  );
+
+  return now;
+}
+
+function normalizeBaseUrl(value) {
+  return value ? String(value).trim().replace(/\/$/, '') : '';
+}
+
+function encodeCursor(key) {
+  if (!key) {
+    return null;
+  }
+
+  return Buffer.from(JSON.stringify(key)).toString('base64url');
+}
+
+function decodeCursor(cursor) {
+  if (!cursor) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));
+  } catch {
+    return undefined;
+  }
+}

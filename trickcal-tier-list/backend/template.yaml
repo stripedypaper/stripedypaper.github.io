@@ -42,6 +42,126 @@ Resources:
         - AttributeName: discordId
           KeyType: HASH
 
+  CharactersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  CharactersImagesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-characters-images-${AWS::AccountId}-${AWS::Region}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - !Ref FrontendOrigin
+              - !Ref LocalFrontendOrigin
+            AllowedMethods:
+              - GET
+              - HEAD
+              - PUT
+            AllowedHeaders:
+              - '*'
+            ExposedHeaders:
+              - ETag
+            MaxAge: 3600
+
+  CharactersImagesOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-characters-images-oac'
+        Description: Origin access control for character images
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  CharactersImagesCachePolicy:
+    Type: AWS::CloudFront::CachePolicy
+    Properties:
+      CachePolicyConfig:
+        Name: !Sub '${AWS::StackName}-characters-images-cache-policy'
+        DefaultTTL: 86400
+        MaxTTL: 31536000
+        MinTTL: 0
+        ParametersInCacheKeyAndForwardedToOrigin:
+          CookiesConfig:
+            CookieBehavior: none
+          HeadersConfig:
+            HeaderBehavior: none
+          QueryStringsConfig:
+            QueryStringBehavior: all
+          EnableAcceptEncodingBrotli: true
+          EnableAcceptEncodingGzip: true
+
+  CharactersImagesDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        PriceClass: PriceClass_100
+        DefaultRootObject: ''
+        Origins:
+          - Id: CharactersImagesOrigin
+            DomainName: !GetAtt CharactersImagesBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !Ref CharactersImagesOriginAccessControl
+        DefaultCacheBehavior:
+          TargetOriginId: CharactersImagesOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: !Ref CharactersImagesCachePolicy
+          Compress: true
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        HttpVersion: http2
+        Comment: Character image CDN
+        Restrictions:
+          GeoRestriction:
+            RestrictionType: none
+
+  CharactersImagesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CharactersImagesBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontRead
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action:
+              - s3:GetObject
+            Resource: !Sub '${CharactersImagesBucket.Arn}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${CharactersImagesDistribution}'
+
   AuthApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -65,6 +185,10 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CharactersTable
+        - S3CrudPolicy:
+            BucketName: !Ref CharactersImagesBucket
       Environment:
         Variables:
           DISCORD_CLIENT_ID: !Ref DiscordClientId
@@ -74,6 +198,9 @@ Resources:
           LOCAL_FRONTEND_ORIGIN: !Ref LocalFrontendOrigin
           COOKIE_SECRET: !Ref CookieSecret
           USERS_TABLE_NAME: !Ref UsersTable
+          CHARACTERS_TABLE_NAME: !Ref CharactersTable
+          CHARACTERS_IMAGES_BUCKET_NAME: !Ref CharactersImagesBucket
+          CHARACTERS_CDN_BASE_URL: !Sub 'https://${CharactersImagesDistribution.DomainName}'
       Events:
         Start:
           Type: HttpApi
@@ -105,6 +232,30 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /admin/users
             Method: GET
+        ListCharacters:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/characters
+            Method: GET
+        CreateCharacter:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/characters
+            Method: POST
+        UpdateCharacter:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/characters/{id}
+            Method: PUT
+        CharacterImageUpload:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/characters/{id}/image-upload
+            Method: POST
 
 Outputs:
   ApiBaseUrl:
@@ -116,3 +267,9 @@ Outputs:
   UsersTableName:
     Description: Store Discord user records here.
     Value: !Ref UsersTable
+  CharactersTableName:
+    Description: Store character records here.
+    Value: !Ref CharactersTable
+  CharactersCdnBaseUrl:
+    Description: Use this value as the base URL for character images.
+    Value: !Sub 'https://${CharactersImagesDistribution.DomainName}'

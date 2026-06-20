@@ -46,14 +46,14 @@ The backend lives in `backend/` and still uses AWS SAM.
 ```powershell
 cd backend
 sam build
-  sam deploy --guided `
+sam deploy --guided `
   --parameter-overrides `
-    DiscordClientId=YOUR_CLIENT_ID `
-    DiscordClientSecret=YOUR_CLIENT_SECRET `
-    FrontendUrl=https://stripedypaper.github.io/trickcal-tier-list/ `
-    FrontendOrigin=https://stripedypaper.github.io `
-    LocalFrontendOrigin=http://localhost:8000 `
-    CookieSecret=GENERATE_A_LONG_RANDOM_SECRET
+  DiscordClientId=YOUR_CLIENT_ID `
+  DiscordClientSecret=YOUR_CLIENT_SECRET `
+  FrontendUrl=https://stripedypaper.github.io/trickcal-tier-list/ `
+  FrontendOrigin=https://stripedypaper.github.io `
+  LocalFrontendOrigin=http://localhost:8000 `
+  CookieSecret=GENERATE_A_LONG_RANDOM_SECRET
 ```
 
 After deployment:
@@ -61,7 +61,8 @@ After deployment:
 1. Copy the `DiscordRedirectUri` output into the Discord developer portal.
 2. Copy the `ApiBaseUrl` output into `public/config.json` or set `VITE_API_BASE_URL`.
 3. Add Discord user records to the DynamoDB users table using the `UsersTableName` output. The table uses `discordId` as the string partition key.
-4. Rebuild and publish the `dist/` output to GitHub Pages.
+4. Use the `CharactersTableName` output for the characters table and `CharactersCdnBaseUrl` for image URLs.
+5. Rebuild and publish the `dist/` output to GitHub Pages.
 
 ## Authorization model
 
@@ -70,4 +71,5 @@ After deployment:
 - `/auth/me` returns the signed-in Discord user plus `role` and `isAdmin`.
 - The navbar only shows `Admin` for admin users.
 - `GET /admin/users` returns a paginated user list and is restricted to admin users.
+- `GET`, `POST`, and `PUT /admin/characters` manage the characters table and images.
 - `backend/src/auth.mjs` exports `requireAuthenticatedUser` and `requireAdminUser` for future API routes.
