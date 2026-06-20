@@ -1,0 +1,5 @@
+dist/
+node_modules/
+backend/.aws-sam/
+backend/src/node_modules/
+backend/samconfig.toml

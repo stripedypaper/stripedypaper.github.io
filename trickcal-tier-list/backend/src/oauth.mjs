@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
+import { getAuthContext, requireAdminUser, signSession } from './auth.mjs';
+import { ensureUserRecord, listUsersPage } from './users.mjs';
 
 const DISCORD_API = 'https://discord.com/api/v10';
-const SESSION_COOKIE = 'trickcal_session';
 const STATE_COOKIE = 'trickcal_oauth_state';
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 const STATE_MAX_AGE = 60 * 10;
@@ -33,6 +34,10 @@ export async function handler(event) {
 
     if (method === 'GET' && path === '/auth/me') {
       return me(event);
+    }
+
+    if (method === 'GET' && path === '/admin/users') {
+      return listUsers(event);
     }
 
     if (method === 'POST' && path === '/auth/logout') {
@@ -91,6 +96,12 @@ async function callback(event) {
 
   const token = await exchangeCode(code);
   const user = await fetchDiscordUser(token.access_token);
+  await ensureUserRecord({
+    id: user.id,
+    username: user.username,
+    global_name: user.global_name,
+    avatar: user.avatar
+  });
   const session = signSession({
     user: {
       id: user.id,
@@ -102,7 +113,7 @@ async function callback(event) {
   });
 
   return redirect(statePayload.returnTo || FRONTEND_URL, [
-    cookie(SESSION_COOKIE, session, {
+    cookie('trickcal_session', session, {
       maxAge: SESSION_MAX_AGE,
       httpOnly: true
     }),
@@ -110,14 +121,27 @@ async function callback(event) {
   ]);
 }
 
-function me(event) {
-  const value = getCookie(event, SESSION_COOKIE);
-  const session = value ? verifySession(value) : null;
-  return json(200, { user: session?.user || null });
+async function me(event) {
+  const context = await getAuthContext(event);
+  return json(200, { user: context.user });
+}
+
+async function listUsers(event) {
+  const auth = await requireAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  const limit = parseLimit(event.queryStringParameters?.limit);
+  const cursor = event.queryStringParameters?.cursor || null;
+  const result = await listUsersPage({ limit, cursor });
+
+  return json(200, result);
 }
 
 function logout() {
-  return json(200, { ok: true }, [clearCookie(SESSION_COOKIE)]);
+  return json(200, { ok: true }, [clearCookie('trickcal_session')]);
 }
 
 async function exchangeCode(code) {
@@ -156,14 +180,6 @@ async function fetchDiscordUser(accessToken) {
   return response.json();
 }
 
-function signSession(payload) {
-  return signPayload(payload);
-}
-
-function verifySession(value) {
-  return verifyPayload(value);
-}
-
 function signPayload(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const signature = hmac(body);
@@ -176,12 +192,12 @@ function verifyPayload(value) {
     return null;
   }
 
-  const session = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
-  if (!session.exp || session.exp < Math.floor(Date.now() / 1000)) {
+  const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+  if (!payload.exp || payload.exp < Math.floor(Date.now() / 1000)) {
     return null;
   }
 
-  return session;
+  return payload;
 }
 
 function getAllowedReturnTo(value) {
@@ -282,6 +298,15 @@ function getCookie(event, name) {
   }
 
   return null;
+}
+
+function parseLimit(value) {
+  const parsed = Number.parseInt(value || '20', 10);
+  if (Number.isNaN(parsed)) {
+    return 20;
+  }
+
+  return Math.min(Math.max(parsed, 1), 100);
 }
 
 function safeEqual(left, right) {

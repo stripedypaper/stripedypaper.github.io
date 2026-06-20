@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Discord OAuth backend for the Trickcal Tier List GitHub Pages app.
 
@@ -31,6 +31,17 @@ Globals:
     MemorySize: 128
 
 Resources:
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: discordId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: discordId
+          KeyType: HASH
+
   AuthApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -51,6 +62,9 @@ Resources:
     Properties:
       CodeUri: src/
       Handler: oauth.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
       Environment:
         Variables:
           DISCORD_CLIENT_ID: !Ref DiscordClientId
@@ -59,6 +73,7 @@ Resources:
           FRONTEND_ORIGIN: !Ref FrontendOrigin
           LOCAL_FRONTEND_ORIGIN: !Ref LocalFrontendOrigin
           COOKIE_SECRET: !Ref CookieSecret
+          USERS_TABLE_NAME: !Ref UsersTable
       Events:
         Start:
           Type: HttpApi
@@ -84,11 +99,20 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /auth/logout
             Method: POST
+        ListUsers:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/users
+            Method: GET
 
 Outputs:
   ApiBaseUrl:
     Description: Use this value as window.TRICKCAL_CONFIG.apiBaseUrl.
-    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Value: !Sub 'https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com'
   DiscordRedirectUri:
     Description: Add this exact URL to the Discord application OAuth2 redirect URLs.
-    Value: !Sub "https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/auth/callback"
+    Value: !Sub 'https://${AuthApi}.execute-api.${AWS::Region}.amazonaws.com/auth/callback'
+  UsersTableName:
+    Description: Store Discord user records here.
+    Value: !Ref UsersTable
