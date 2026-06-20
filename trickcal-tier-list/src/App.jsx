@@ -14,7 +14,7 @@ import {
 
 function PageForRoute({ route, apiBaseUrl, canViewCharacters, canViewUsers }) {
   if (route === 'contribute') {
-    return <ContributePage />;
+    return <ContributePage apiBaseUrl={apiBaseUrl} />;
   }
 
   if (route.startsWith('admin')) {

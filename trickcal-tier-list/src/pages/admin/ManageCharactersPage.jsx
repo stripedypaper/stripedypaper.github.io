@@ -49,13 +49,6 @@ export function ManageCharactersPage({ apiBaseUrl }) {
 
     async function loadCharacters() {
       if (!apiBaseUrl) {
-        if (active) {
-          setCharacters([]);
-          setNextCursor(null);
-          setError('Missing API base URL.');
-          setLoading(false);
-        }
-
         return;
       }
 

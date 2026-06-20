@@ -27,13 +27,6 @@ export function ManageUsersPage({ apiBaseUrl }) {
 
     async function loadUsers() {
       if (!apiBaseUrl) {
-        if (active) {
-          setUsers([]);
-          setNextCursor(null);
-          setError('Missing API base URL.');
-          setLoading(false);
-        }
-
         return;
       }
 
