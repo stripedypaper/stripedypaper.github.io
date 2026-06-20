@@ -126,6 +126,77 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  RankingSubmissionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+
+  UserCharacterScoresTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: characterId
+          AttributeType: S
+        - AttributeName: submittedAt
+          AttributeType: S
+        - AttributeName: favoriteCharacterId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: characterId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: ScoresByCharacterSubmittedAtIndex
+          KeySchema:
+            - AttributeName: characterId
+              KeyType: HASH
+            - AttributeName: submittedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: FavoritesByCharacterIndex
+          KeySchema:
+            - AttributeName: favoriteCharacterId
+              KeyType: HASH
+            - AttributeName: userId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+
+  CommunityCharacterStatsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: characterId
+          AttributeType: S
+        - AttributeName: statsType
+          AttributeType: S
+        - AttributeName: favoriteCount
+          AttributeType: N
+      KeySchema:
+        - AttributeName: characterId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: StatsByFavoriteCountIndex
+          KeySchema:
+            - AttributeName: statsType
+              KeyType: HASH
+            - AttributeName: favoriteCount
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
   CharactersImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -260,6 +331,12 @@ Resources:
             TableName: !Ref UsersTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CharactersTableV2
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RankingSubmissionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserCharacterScoresTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CommunityCharacterStatsTable
         - S3CrudPolicy:
             BucketName: !Ref CharactersImagesBucket
       Environment:
@@ -272,6 +349,9 @@ Resources:
           COOKIE_SECRET: !Ref CookieSecret
           USERS_TABLE_NAME: !Ref UsersTable
           CHARACTERS_TABLE_NAME: !Ref CharactersTableV2
+          RANKING_SUBMISSIONS_TABLE_NAME: !Ref RankingSubmissionsTable
+          USER_CHARACTER_SCORES_TABLE_NAME: !Ref UserCharacterScoresTable
+          COMMUNITY_CHARACTER_STATS_TABLE_NAME: !Ref CommunityCharacterStatsTable
           CHARACTERS_IMAGES_BUCKET_NAME: !Ref CharactersImagesBucket
           CHARACTERS_CDN_BASE_URL: !Sub 'https://${CharactersImagesDistribution.DomainName}'
       Events:
@@ -293,6 +373,42 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /auth/me
             Method: GET
+        GetMyRankings:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /rankings/me
+            Method: GET
+        PutMyRankings:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /rankings/me
+            Method: PUT
+        GetSharedRankings:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /rankings/{userId}
+            Method: GET
+        GetCommunityCharacters:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /community/characters
+            Method: GET
+        GetCommunityFavorites:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /community/favorites
+            Method: GET
+        TriggerCommunityRebuild:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /community/rebuild
+            Method: POST
         Logout:
           Type: HttpApi
           Properties:
@@ -305,6 +421,12 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /admin/users
             Method: GET
+        RebuildCommunity:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/community/rebuild
+            Method: POST
         ListCharacters:
           Type: HttpApi
           Properties:
@@ -343,6 +465,15 @@ Outputs:
   CharactersTableName:
     Description: Store character records here.
     Value: !Ref CharactersTableV2
+  RankingSubmissionsTableName:
+    Description: Store raw ranking submissions here.
+    Value: !Ref RankingSubmissionsTable
+  UserCharacterScoresTableName:
+    Description: Store per-user derived character scores here.
+    Value: !Ref UserCharacterScoresTable
+  CommunityCharacterStatsTableName:
+    Description: Store materialized community character statistics here.
+    Value: !Ref CommunityCharacterStatsTable
   CharactersCdnBaseUrl:
     Description: Use this value as the base URL for character images.
     Value: !Sub 'https://${CharactersImagesDistribution.DomainName}'

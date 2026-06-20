@@ -1,10 +1,18 @@
 import crypto from 'node:crypto';
 import {
+  listCommunityCharacterStats,
+  listCommunityFavorites,
+  rebuildCommunityCharacterStats,
+  triggerPublicCommunityRebuild
+} from './community-stats.mjs';
+import {
   getAuthContext,
+  requireAuthenticatedUser,
   requireAdminUser,
   requireManagerOrAdminUser,
   signSession
 } from './auth.mjs';
+import { getRankingSubmission, saveRankingSubmission } from './rankings.mjs';
 import { ensureUserRecord, listUsersPage } from './users.mjs';
 import {
   createCharacterImageUploadUrl,
@@ -47,8 +55,36 @@ export async function handler(event) {
       return me(event);
     }
 
+    if (method === 'GET' && path === '/rankings/me') {
+      return getMyRankings(event);
+    }
+
+    if (method === 'GET' && path === '/community/characters') {
+      return getCommunityCharacters();
+    }
+
+    if (method === 'GET' && path === '/community/favorites') {
+      return getCommunityFavorites(event);
+    }
+
+    if (method === 'POST' && path === '/community/rebuild') {
+      return triggerCommunityRebuild();
+    }
+
+    if (method === 'GET' && path.startsWith('/rankings/')) {
+      return getSharedRankings(event);
+    }
+
+    if (method === 'PUT' && path === '/rankings/me') {
+      return putMyRankings(event);
+    }
+
     if (method === 'GET' && path === '/admin/users') {
       return listUsers(event);
+    }
+
+    if (method === 'POST' && path === '/admin/community/rebuild') {
+      return rebuildCommunity(event);
     }
 
     if (method === 'GET' && path === '/admin/characters') {
@@ -164,6 +200,101 @@ async function listUsers(event) {
   const cursor = event.queryStringParameters?.cursor || null;
   const result = await listUsersPage({ limit, cursor });
 
+  return json(200, result);
+}
+
+async function getMyRankings(event) {
+  const auth = await requireAuthenticatedUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  const submission = await getRankingSubmission(auth.user.id);
+  return json(200, { submission });
+}
+
+async function putMyRankings(event) {
+  const auth = await requireAuthenticatedUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const body = parseJsonBody(event);
+    const result = await saveRankingSubmission(
+      auth.user.id,
+      body.answers || body.placementsByQuestion || {}
+    );
+
+    return json(200, { submission: result.submission });
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
+}
+
+async function getCommunityCharacters() {
+  const result = await listCommunityCharacterStats();
+  return json(200, result);
+}
+
+async function getCommunityFavorites(event) {
+  const limit = parseLimit(event.queryStringParameters?.limit);
+  const result = await listCommunityFavorites({ limit });
+  return json(200, result);
+}
+
+async function triggerCommunityRebuild() {
+  try {
+    const result = await triggerPublicCommunityRebuild();
+    return json(200, result);
+  } catch (error) {
+    if (error?.name === 'CommunityRebuildCooldownError') {
+      return json(429, {
+        error: 'Community rebuild is on cooldown.',
+        retryAfterSeconds: error.retryAfterSeconds,
+        lastRequestedAt: error.lastRequestedAt
+      });
+    }
+
+    throw error;
+  }
+}
+
+async function getSharedRankings(event) {
+  const userId = getRankingUserIdFromPath(event.rawPath);
+
+  if (!userId || userId === 'me') {
+    return json(404, { error: 'Not found' });
+  }
+
+  const submission = await getRankingSubmission(userId);
+
+  if (!submission) {
+    return json(404, { error: 'Not found' });
+  }
+
+  return json(200, {
+    submission: {
+      userId: submission.userId,
+      updatedAt: submission.updatedAt,
+      submittedAt: submission.submittedAt,
+      derivedScores: submission.derivedScores
+    }
+  });
+}
+
+async function rebuildCommunity(event) {
+  const auth = await requireAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  const result = await rebuildCommunityCharacterStats();
   return json(200, result);
 }
 
@@ -412,6 +543,11 @@ function getCookie(event, name) {
 function getCharacterIdFromPath(path) {
   const parts = path.split('/').filter(Boolean);
   return parts[2] || '';
+}
+
+function getRankingUserIdFromPath(path) {
+  const parts = path.split('/').filter(Boolean);
+  return parts[1] || '';
 }
 
 function parseLimit(value) {

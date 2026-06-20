@@ -95,6 +95,23 @@ export async function listCharactersPage({
   };
 }
 
+export async function listAllCharacters() {
+  const characters = [];
+  let cursor = null;
+
+  do {
+    const response = await listCharactersPage({
+      limit: 100,
+      cursor
+    });
+
+    characters.push(...response.characters);
+    cursor = response.nextCursor || null;
+  } while (cursor);
+
+  return characters;
+}
+
 function buildSingleFilterQueryInput({
   limit,
   cursor,

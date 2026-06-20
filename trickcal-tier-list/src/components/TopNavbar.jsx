@@ -50,7 +50,9 @@ export function TopNavbar({ route, user, loading, loginHref, onLogout }) {
                 active={
                   item.key === 'admin'
                     ? route.startsWith('admin')
-                    : route === item.key
+                    : item.key === 'contribute'
+                      ? route.startsWith('contribute')
+                      : route === item.key
                 }
               />
             ))}

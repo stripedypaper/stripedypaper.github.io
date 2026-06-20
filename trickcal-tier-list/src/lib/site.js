@@ -4,9 +4,25 @@ export const TOP_NAV = [
   { key: 'admin', label: 'Admin', hash: '#/admin/characters' }
 ];
 
+export const CONTRIBUTE_NAV = [
+  {
+    key: 'rankings',
+    label: 'My Rankings',
+    hash: '#/contribute',
+    route: 'contribute-rankings'
+  },
+  {
+    key: 'tier-list',
+    label: 'My Tier List',
+    hash: '#/contribute/tier-list',
+    route: 'contribute-tier-list'
+  }
+];
+
 export const ADMIN_NAV = [
   { key: 'users', label: 'Manage Users', hash: '#/admin/users' },
-  { key: 'characters', label: 'Manage Characters', hash: '#/admin/characters' }
+  { key: 'characters', label: 'Manage Characters', hash: '#/admin/characters' },
+  { key: 'community', label: 'Community Stats', hash: '#/admin/community' }
 ];
 
 export const PAGE_SIZE = 10;
@@ -62,15 +78,39 @@ export function getRouteFromHash(hash) {
     return 'admin-characters';
   }
 
+  if (normalizedHash.startsWith('#/admin/community')) {
+    return 'admin-community';
+  }
+
   if (normalizedHash.startsWith('#/admin')) {
     return 'admin-users';
   }
 
-  if (normalizedHash === '#/contribute') {
-    return 'contribute';
+  if (normalizedHash.startsWith('#/contribute/tier-list')) {
+    return 'contribute-tier-list';
+  }
+
+  if (normalizedHash.startsWith('#/contribute')) {
+    return 'contribute-rankings';
+  }
+
+  if (normalizedHash.startsWith('#/tier-list/')) {
+    return 'shared-tier-list';
   }
 
   return 'home';
+}
+
+export function getSharedTierListUserId(hash) {
+  const normalizedHash = hash || '';
+
+  if (!normalizedHash.startsWith('#/tier-list/')) {
+    return '';
+  }
+
+  return decodeURIComponent(
+    normalizedHash.slice('#/tier-list/'.length).split(/[/?#]/, 1)[0] || ''
+  );
 }
 
 export function formatDate(value) {

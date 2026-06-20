@@ -2,19 +2,42 @@ import { useEffect, useState } from 'react';
 import { AppShell, Container } from '@mantine/core';
 import { TopNavbar } from './components/TopNavbar.jsx';
 import { AdminPage } from './pages/admin/AdminPage.jsx';
-import { ContributePage } from './pages/ContributePage.jsx';
+import { ContributePage } from './pages/contribute/ContributePage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
+import { SharedTierListPage } from './pages/SharedTierListPage.jsx';
 import { useRoute } from './hooks/useRoute.js';
 import { useSession } from './hooks/useSession.js';
 import {
   canManageCharacters,
   canViewAdminUsers,
+  getSharedTierListUserId,
   resolveApiBaseUrl
 } from './lib/site.js';
 
-function PageForRoute({ route, apiBaseUrl, canViewCharacters, canViewUsers }) {
-  if (route === 'contribute') {
-    return <ContributePage apiBaseUrl={apiBaseUrl} />;
+function PageForRoute({
+  route,
+  apiBaseUrl,
+  canViewCharacters,
+  canViewUsers,
+  user,
+  sessionLoading,
+  sharedUserId
+}) {
+  if (route === 'shared-tier-list') {
+    return (
+      <SharedTierListPage apiBaseUrl={apiBaseUrl} sharedUserId={sharedUserId} />
+    );
+  }
+
+  if (route.startsWith('contribute')) {
+    return (
+      <ContributePage
+        apiBaseUrl={apiBaseUrl}
+        route={route}
+        user={user}
+        sessionLoading={sessionLoading}
+      />
+    );
   }
 
   if (route.startsWith('admin')) {
@@ -30,12 +53,13 @@ function PageForRoute({ route, apiBaseUrl, canViewCharacters, canViewUsers }) {
     );
   }
 
-  return <HomePage />;
+  return <HomePage apiBaseUrl={apiBaseUrl} />;
 }
 
 export function App() {
   const route = useRoute();
   const [apiBaseUrl, setApiBaseUrl] = useState(() => resolveApiBaseUrl());
+  const sharedUserId = getSharedTierListUserId(window.location.hash);
 
   useEffect(() => {
     if (apiBaseUrl) {
@@ -84,7 +108,7 @@ export function App() {
       loading ||
       !route.startsWith('admin') ||
       (route === 'admin-characters' && canViewCharacters) ||
-      (route === 'admin-users' && canViewUsers)
+      ((route === 'admin-users' || route === 'admin-community') && canViewUsers)
     ) {
       return;
     }
@@ -115,6 +139,9 @@ export function App() {
             apiBaseUrl={apiBaseUrl}
             canViewCharacters={canViewCharacters}
             canViewUsers={canViewUsers}
+            user={user}
+            sessionLoading={loading}
+            sharedUserId={sharedUserId}
           />
         </Container>
       </AppShell.Main>

@@ -12,11 +12,14 @@
     "lint": "npm run format:check"
   },
   "dependencies": {
+    "@mantine/charts": "^7.17.8",
     "@mantine/core": "^7.17.8",
     "@mantine/hooks": "^7.17.8",
+    "@mantine/notifications": "^7.17.8",
     "@tabler/icons-react": "^3.36.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "recharts": "^2.15.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",

@@ -216,6 +216,10 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
     return new Map(tiers.map((tier) => [tier.id, tier]));
   }, [tiers]);
 
+  useEffect(() => {
+    setPlacements(initialPlacements || {});
+  }, [initialPlacements]);
+
   const buckets = useMemo(() => {
     const grouped = new Map();
     for (const tier of tiers) {
@@ -244,6 +248,18 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
   function emitChange(nextPlacements) {
     setPlacements(nextPlacements);
     onChange?.(nextPlacements);
+  }
+
+  function buildNextPlacements(itemId, bucketId) {
+    const nextPlacements = { ...placements };
+
+    if (bucketId === 'unassigned') {
+      delete nextPlacements[itemId];
+      return nextPlacements;
+    }
+
+    nextPlacements[itemId] = bucketId;
+    return nextPlacements;
   }
 
   function handleDragStart(event, itemId) {
@@ -281,10 +297,7 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
       return;
     }
 
-    emitChange({
-      ...placements,
-      [itemId]: bucketId
-    });
+    emitChange(buildNextPlacements(itemId, bucketId));
     setDraggedItemId('');
   }
 
@@ -307,10 +320,7 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
       return;
     }
 
-    emitChange({
-      ...placements,
-      [activeMobileItemId]: bucketId
-    });
+    emitChange(buildNextPlacements(activeMobileItemId, bucketId));
     setActiveMobileItemId('');
   }
 
