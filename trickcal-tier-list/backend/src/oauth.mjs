@@ -1,5 +1,10 @@
 import crypto from 'node:crypto';
-import { getAuthContext, requireAdminUser, signSession } from './auth.mjs';
+import {
+  getAuthContext,
+  requireAdminUser,
+  requireManagerOrAdminUser,
+  signSession
+} from './auth.mjs';
 import { ensureUserRecord, listUsersPage } from './users.mjs';
 import {
   createCharacterImageUploadUrl,
@@ -163,21 +168,22 @@ async function listUsers(event) {
 }
 
 async function listCharacters(event) {
-  const auth = await requireAdminUser(event);
-
-  if (!auth.ok) {
-    return json(auth.statusCode, auth.body);
-  }
-
   const limit = parseLimit(event.queryStringParameters?.limit);
   const cursor = event.queryStringParameters?.cursor || null;
-  const result = await listCharactersPage({ limit, cursor });
+  const filterType = event.queryStringParameters?.filterType || '';
+  const filterValue = event.queryStringParameters?.filterValue || '';
+  const result = await listCharactersPage({
+    limit,
+    cursor,
+    filterType,
+    filterValue
+  });
 
   return json(200, result);
 }
 
 async function createCharacter(event) {
-  const auth = await requireAdminUser(event);
+  const auth = await requireManagerOrAdminUser(event);
 
   if (!auth.ok) {
     return json(auth.statusCode, auth.body);
@@ -196,7 +202,7 @@ async function createCharacter(event) {
 }
 
 async function updateCharacter(event) {
-  const auth = await requireAdminUser(event);
+  const auth = await requireManagerOrAdminUser(event);
 
   if (!auth.ok) {
     return json(auth.statusCode, auth.body);
@@ -220,7 +226,7 @@ async function updateCharacter(event) {
 }
 
 async function createCharacterImageUpload(event) {
-  const auth = await requireAdminUser(event);
+  const auth = await requireManagerOrAdminUser(event);
 
   if (!auth.ok) {
     return json(auth.statusCode, auth.body);

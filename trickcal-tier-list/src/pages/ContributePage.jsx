@@ -1,0 +1,9 @@
+import { Paper, Text } from '@mantine/core';
+
+export function ContributePage() {
+  return (
+    <Paper className="page-empty" p="xl" radius="lg" withBorder>
+      <Text className="page-kicker">Contribute content will go here.</Text>
+    </Paper>
+  );
+}

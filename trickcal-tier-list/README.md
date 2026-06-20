@@ -2,6 +2,8 @@
 
 Vite + React + Mantine frontend for the Trickcal Discord auth flow, plus the existing AWS Lambda/API Gateway backend.
 
+Repository-specific working notes live in `AGENTS.md`.
+
 ## Frontend
 
 - `npm install`

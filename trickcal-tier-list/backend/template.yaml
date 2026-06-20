@@ -42,21 +42,93 @@ Resources:
         - AttributeName: discordId
           KeyType: HASH
 
-  CharactersTable:
+  CharactersTableV2:
     Type: AWS::DynamoDB::Table
     Properties:
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: updatedAt
+          AttributeType: S
+        - AttributeName: position
+          AttributeType: S
+        - AttributeName: personality
+          AttributeType: S
+        - AttributeName: nameEnLower
+          AttributeType: S
+        - AttributeName: nameJaLower
+          AttributeType: S
+        - AttributeName: nameZhLower
+          AttributeType: S
+        - AttributeName: nameKoLower
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: CharactersByUpdatedAtIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: updatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: CharactersByPositionIndex
+          KeySchema:
+            - AttributeName: position
+              KeyType: HASH
+            - AttributeName: updatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: CharactersByPersonalityIndex
+          KeySchema:
+            - AttributeName: personality
+              KeyType: HASH
+            - AttributeName: updatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: CharactersByNameEnIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: nameEnLower
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: CharactersByNameJaIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: nameJaLower
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: CharactersByNameZhIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: nameZhLower
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: CharactersByNameKoIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: nameKoLower
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
   CharactersImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${AWS::StackName}-characters-images-${AWS::AccountId}-${AWS::Region}'
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
@@ -174,6 +246,7 @@ Resources:
         AllowMethods:
           - GET
           - POST
+          - PUT
           - OPTIONS
         AllowCredentials: true
 
@@ -186,7 +259,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
         - DynamoDBCrudPolicy:
-            TableName: !Ref CharactersTable
+            TableName: !Ref CharactersTableV2
         - S3CrudPolicy:
             BucketName: !Ref CharactersImagesBucket
       Environment:
@@ -198,7 +271,7 @@ Resources:
           LOCAL_FRONTEND_ORIGIN: !Ref LocalFrontendOrigin
           COOKIE_SECRET: !Ref CookieSecret
           USERS_TABLE_NAME: !Ref UsersTable
-          CHARACTERS_TABLE_NAME: !Ref CharactersTable
+          CHARACTERS_TABLE_NAME: !Ref CharactersTableV2
           CHARACTERS_IMAGES_BUCKET_NAME: !Ref CharactersImagesBucket
           CHARACTERS_CDN_BASE_URL: !Sub 'https://${CharactersImagesDistribution.DomainName}'
       Events:
@@ -269,7 +342,7 @@ Outputs:
     Value: !Ref UsersTable
   CharactersTableName:
     Description: Store character records here.
-    Value: !Ref CharactersTable
+    Value: !Ref CharactersTableV2
   CharactersCdnBaseUrl:
     Description: Use this value as the base URL for character images.
     Value: !Sub 'https://${CharactersImagesDistribution.DomainName}'

@@ -2,7 +2,7 @@ import {
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
-  ScanCommand,
+  QueryCommand,
   UpdateItemCommand
 } from '@aws-sdk/client-dynamodb';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
@@ -29,6 +29,13 @@ export const CHARACTER_PERSONALITY_VALUES = [
   'resonance'
 ];
 export const CHARACTER_RARITY_VALUES = [1, 2, 3];
+const CHARACTER_FILTER_TYPES = new Set(['', 'name', 'personality', 'position']);
+const CHARACTER_NAME_INDEXES = [
+  { indexName: 'CharactersByNameEnIndex', nameField: 'nameEnLower' },
+  { indexName: 'CharactersByNameJaIndex', nameField: 'nameJaLower' },
+  { indexName: 'CharactersByNameZhIndex', nameField: 'nameZhLower' },
+  { indexName: 'CharactersByNameKoIndex', nameField: 'nameKoLower' }
+];
 
 export async function getCharacterRecord(id) {
   if (!CHARACTERS_TABLE_NAME || !id) {
@@ -49,7 +56,12 @@ export async function getCharacterRecord(id) {
   return response.Item ? parseCharacterRecord(response.Item) : null;
 }
 
-export async function listCharactersPage({ limit = 20, cursor = null } = {}) {
+export async function listCharactersPage({
+  limit = 20,
+  cursor = null,
+  filterType = '',
+  filterValue = ''
+} = {}) {
   if (!CHARACTERS_TABLE_NAME) {
     return {
       characters: [],
@@ -57,27 +69,223 @@ export async function listCharactersPage({ limit = 20, cursor = null } = {}) {
     };
   }
 
-  const scanInput = {
-    TableName: CHARACTERS_TABLE_NAME,
-    Limit: limit,
-    ProjectionExpression:
-      'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion',
-    ExpressionAttributeNames: {
-      '#position': 'position',
-      '#role': 'role'
-    }
-  };
+  const normalizedFilterType = normalizeFilterType(filterType);
+  const normalizedFilterValue = normalizeFilterValue(filterValue);
 
-  const exclusiveStartKey = decodeCursor(cursor);
-  if (exclusiveStartKey) {
-    scanInput.ExclusiveStartKey = exclusiveStartKey;
+  if (normalizedFilterType === 'name') {
+    return listCharactersByNamePrefixPage({
+      limit,
+      cursor,
+      prefix: normalizedFilterValue
+    });
   }
 
-  const response = await ddbClient.send(new ScanCommand(scanInput));
+  const queryInput = buildSingleFilterQueryInput({
+    limit,
+    cursor,
+    filterType: normalizedFilterType,
+    filterValue: normalizedFilterValue
+  });
+
+  const response = await ddbClient.send(new QueryCommand(queryInput));
 
   return {
     characters: (response.Items || []).map(parseCharacterRecord),
     nextCursor: encodeCursor(response.LastEvaluatedKey || null)
+  };
+}
+
+function buildSingleFilterQueryInput({
+  limit,
+  cursor,
+  filterType,
+  filterValue
+}) {
+  const baseProjectionExpression =
+    'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion';
+
+  if (filterType === 'position') {
+    const queryInput = {
+      TableName: CHARACTERS_TABLE_NAME,
+      IndexName: 'CharactersByPositionIndex',
+      KeyConditionExpression: '#position = :position',
+      ExpressionAttributeNames: {
+        '#position': 'position',
+        '#role': 'role'
+      },
+      ExpressionAttributeValues: {
+        ':position': {
+          S: filterValue
+        }
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+      ProjectionExpression: baseProjectionExpression
+    };
+
+    const exclusiveStartKey = decodeCursor(cursor);
+    if (exclusiveStartKey) {
+      queryInput.ExclusiveStartKey = exclusiveStartKey;
+    }
+
+    return queryInput;
+  }
+
+  if (filterType === 'personality') {
+    const queryInput = {
+      TableName: CHARACTERS_TABLE_NAME,
+      IndexName: 'CharactersByPersonalityIndex',
+      KeyConditionExpression: '#personality = :personality',
+      ExpressionAttributeNames: {
+        '#personality': 'personality',
+        '#position': 'position',
+        '#role': 'role'
+      },
+      ExpressionAttributeValues: {
+        ':personality': {
+          S: filterValue
+        }
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+      ProjectionExpression: baseProjectionExpression
+    };
+
+    const exclusiveStartKey = decodeCursor(cursor);
+    if (exclusiveStartKey) {
+      queryInput.ExclusiveStartKey = exclusiveStartKey;
+    }
+
+    return queryInput;
+  }
+
+  const queryInput = {
+    TableName: CHARACTERS_TABLE_NAME,
+    IndexName: 'CharactersByUpdatedAtIndex',
+    KeyConditionExpression: '#entityType = :entityType',
+    ExpressionAttributeNames: {
+      '#entityType': 'entityType',
+      '#position': 'position',
+      '#role': 'role'
+    },
+    ExpressionAttributeValues: {
+      ':entityType': {
+        S: 'character'
+      }
+    },
+    Limit: limit,
+    ScanIndexForward: false,
+    ProjectionExpression:
+      'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion'
+  };
+
+  const exclusiveStartKey = decodeCursor(cursor);
+  if (exclusiveStartKey) {
+    queryInput.ExclusiveStartKey = exclusiveStartKey;
+  }
+
+  return queryInput;
+}
+
+async function listCharactersByNamePrefixPage({ limit, cursor, prefix }) {
+  const normalizedPrefix = prefix || '';
+  if (!normalizedPrefix) {
+    return {
+      characters: [],
+      nextCursor: null
+    };
+  }
+
+  const state = decodeCursor(cursor) || {};
+  let indexState = state.indexes || {};
+  const seenIds = new Set(state.seenIds || []);
+  const characters = [];
+  const nextIndexState = {};
+
+  while (characters.length < limit) {
+    let progress = false;
+
+    for (const index of CHARACTER_NAME_INDEXES) {
+      if (characters.length >= limit) {
+        break;
+      }
+
+      const currentState = indexState[index.indexName] || {};
+      if (currentState.done) {
+        nextIndexState[index.indexName] = currentState;
+        continue;
+      }
+
+      const response = await ddbClient.send(
+        new QueryCommand({
+          TableName: CHARACTERS_TABLE_NAME,
+          IndexName: index.indexName,
+          KeyConditionExpression:
+            '#entityType = :entityType AND begins_with(#name, :prefix)',
+          ExpressionAttributeNames: {
+            '#entityType': 'entityType',
+            '#name': index.nameField,
+            '#position': 'position',
+            '#role': 'role'
+          },
+          ExpressionAttributeValues: {
+            ':entityType': {
+              S: 'character'
+            },
+            ':prefix': {
+              S: normalizedPrefix
+            }
+          },
+          ExclusiveStartKey: currentState.lastKey,
+          Limit: Math.max(1, limit - characters.length),
+          ProjectionExpression:
+            'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion',
+          ScanIndexForward: false
+        })
+      );
+
+      progress = progress || Boolean(response.Items?.length);
+      nextIndexState[index.indexName] = {
+        lastKey: response.LastEvaluatedKey || null,
+        done: !response.LastEvaluatedKey
+      };
+
+      for (const item of response.Items || []) {
+        const character = parseCharacterRecord(item);
+        if (seenIds.has(character.id)) {
+          continue;
+        }
+
+        seenIds.add(character.id);
+        characters.push(character);
+        if (characters.length >= limit) {
+          break;
+        }
+      }
+    }
+
+    if (!progress) {
+      break;
+    }
+
+    indexState = {
+      ...indexState,
+      ...nextIndexState
+    };
+  }
+
+  const hasMore = Object.values(nextIndexState).some(
+    (item) => item && !item.done
+  );
+
+  return {
+    characters,
+    nextCursor: hasMore
+      ? encodeCursor({
+          indexes: nextIndexState,
+          seenIds: Array.from(seenIds)
+        })
+      : null
   };
 }
 
@@ -111,6 +319,7 @@ export async function updateCharacterRecord(actorId, id, input) {
   const now = new Date().toISOString();
   const update = buildUpdateExpression({
     ...payload,
+    entityType: 'character',
     updatedAt: now,
     updatedBy: actorId
   });
@@ -172,6 +381,9 @@ function buildCharacterItem(character) {
     id: {
       S: character.id
     },
+    entityType: {
+      S: 'character'
+    },
     position: {
       S: character.position
     },
@@ -199,6 +411,10 @@ function buildCharacterItem(character) {
   addOptionalString(item, 'nameJa', character.nameJa);
   addOptionalString(item, 'nameZh', character.nameZh);
   addOptionalString(item, 'nameKo', character.nameKo);
+  addOptionalString(item, 'nameEnLower', lowerOptionalString(character.nameEn));
+  addOptionalString(item, 'nameJaLower', lowerOptionalString(character.nameJa));
+  addOptionalString(item, 'nameZhLower', lowerOptionalString(character.nameZh));
+  addOptionalString(item, 'nameKoLower', lowerOptionalString(character.nameKo));
 
   return item;
 }
@@ -291,10 +507,15 @@ function validateCharacterInput(input) {
   );
 
   return {
+    entityType: 'character',
     nameEn,
     nameJa,
     nameZh,
     nameKo,
+    nameEnLower: lowerOptionalString(nameEn),
+    nameJaLower: lowerOptionalString(nameJa),
+    nameZhLower: lowerOptionalString(nameZh),
+    nameKoLower: lowerOptionalString(nameKo),
     position,
     role,
     personality,
@@ -360,6 +581,24 @@ function toAttributeValue(value) {
   };
 }
 
+function lowerOptionalString(value) {
+  return value ? String(value).toLowerCase() : null;
+}
+
+function normalizeFilterType(value) {
+  const normalized = value ? String(value).trim().toLowerCase() : '';
+
+  if (!CHARACTER_FILTER_TYPES.has(normalized)) {
+    throw new Error('Invalid filter type.');
+  }
+
+  return normalized;
+}
+
+function normalizeFilterValue(value) {
+  return value ? String(value).trim().toLowerCase() : '';
+}
+
 function validateImageContentType(contentType) {
   const allowedContentTypes = new Set([
     'image/png',
@@ -403,8 +642,11 @@ async function touchCharacterImageVersion(actorId, id) {
         }
       },
       UpdateExpression:
-        'SET imageVersion = :imageVersion, updatedAt = :updatedAt, updatedBy = :updatedBy',
+        'SET entityType = :entityType, imageVersion = :imageVersion, updatedAt = :updatedAt, updatedBy = :updatedBy',
       ExpressionAttributeValues: {
+        ':entityType': {
+          S: 'character'
+        },
         ':imageVersion': {
           S: now
         },

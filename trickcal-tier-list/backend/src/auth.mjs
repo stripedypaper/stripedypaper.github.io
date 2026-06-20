@@ -76,6 +76,31 @@ export async function requireAdminUser(event) {
   };
 }
 
+export async function requireManagerOrAdminUser(event) {
+  const context = await getAuthContext(event);
+
+  if (!context.isAuthenticated) {
+    return {
+      ok: false,
+      statusCode: 401,
+      body: { error: 'Unauthorized' }
+    };
+  }
+
+  if (context.user.role !== 'manager' && !context.isAdmin) {
+    return {
+      ok: false,
+      statusCode: 403,
+      body: { error: 'Forbidden' }
+    };
+  }
+
+  return {
+    ok: true,
+    ...context
+  };
+}
+
 export function signSession(payload) {
   return signPayload(payload);
 }
