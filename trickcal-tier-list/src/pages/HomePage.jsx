@@ -1,10 +1,12 @@
 import {
+  Avatar,
   Button,
   Group,
   Modal,
   Paper,
   SimpleGrid,
   Stack,
+  Table,
   Text
 } from '@mantine/core';
 import { BarChart } from '@mantine/charts';
@@ -180,6 +182,45 @@ function renderCommunityTooltip(character) {
   );
 }
 
+function renderFavoriteTooltip(character) {
+  return (
+    <Stack gap={6}>
+      <Text fw={700}>{getCharacterDisplayName(character)}</Text>
+      <Text size="sm">
+        Favorite votes: {character.communityStats?.favoriteCount || 0}
+      </Text>
+      <Text size="sm">
+        Score: {roundToTwo(character.communityStats?.calculated?.average || 0)}
+      </Text>
+      <Text size="sm">
+        Mono score: {roundToTwo(character.communityStats?.mono?.average || 0)}
+      </Text>
+      <Text size="sm">
+        Mixed score: {roundToTwo(character.communityStats?.mixed?.average || 0)}
+      </Text>
+    </Stack>
+  );
+}
+
+function getPersonalityAvatarColor(personality) {
+  switch (personality) {
+    case 'vivacious':
+      return '#ecdc84';
+    case 'mad':
+      return '#ec849d';
+    case 'composed':
+      return '#89beef';
+    case 'depressed':
+      return '#c684ec';
+    case 'innocent':
+      return '#91f2a8';
+    case 'resonance':
+      return '#ffffff';
+    default:
+      return '#5b4a74';
+  }
+}
+
 async function fetchCommunityCharacters(apiBaseUrl) {
   const response = await fetch(`${apiBaseUrl}/community/characters`);
 
@@ -271,6 +312,38 @@ export function HomePage({ apiBaseUrl }) {
     () => communityData?.characters || [],
     [communityData]
   );
+  const favoriteCharacters = useMemo(
+    () =>
+      [...characters]
+        .filter(
+          (character) => (character.communityStats?.favoriteCount || 0) > 0
+        )
+        .sort((left, right) => {
+          const favoriteDifference =
+            (right.communityStats?.favoriteCount || 0) -
+            (left.communityStats?.favoriteCount || 0);
+
+          if (favoriteDifference !== 0) {
+            return favoriteDifference;
+          }
+
+          const averageDifference =
+            (right.communityStats?.calculated?.average || 0) -
+            (left.communityStats?.calculated?.average || 0);
+
+          if (averageDifference !== 0) {
+            return averageDifference;
+          }
+
+          return getCharacterDisplayName(left).localeCompare(
+            getCharacterDisplayName(right),
+            undefined,
+            { sensitivity: 'base' }
+          );
+        })
+        .slice(0, 20),
+    [characters]
+  );
 
   async function handleRebuild() {
     if (!apiBaseUrl || rebuilding) {
@@ -348,6 +421,73 @@ export function HomePage({ apiBaseUrl }) {
           renderTooltipContent={renderCommunityTooltip}
           onCharacterClick={setSelectedCharacter}
         />
+
+        <Stack gap="sm">
+          <div>
+            <Text fw={700} size="xl">
+              Favorite Ranking
+            </Text>
+            <Text c="dimmed" size="sm" mt={4}>
+              Top 20 by favorite votes.
+            </Text>
+          </div>
+
+          <Paper className="question-card" p="md" radius="lg" withBorder>
+            {favoriteCharacters.length ? (
+              <Table highlightOnHover>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Apostle</Table.Th>
+                    <Table.Th>Favorites</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {favoriteCharacters.map((character) => (
+                    <Table.Tr
+                      key={character.id}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => setSelectedCharacter(character)}
+                    >
+                      <Table.Td>
+                        <div className="tier-candidate readonly-tier-candidate">
+                          <Avatar
+                            src={character.imageUrl || undefined}
+                            alt=""
+                            radius="lg"
+                            size={54}
+                            style={{
+                              backgroundColor: getPersonalityAvatarColor(
+                                character.personality
+                              ),
+                              color:
+                                character.personality === 'resonance'
+                                  ? '#171021'
+                                  : undefined
+                            }}
+                          />
+                          <Text
+                            size="sm"
+                            fw={600}
+                            className="tier-candidate-label"
+                          >
+                            {getCharacterDisplayName(character)}
+                          </Text>
+                        </div>
+                      </Table.Td>
+                      <Table.Td>
+                        {character.communityStats?.favoriteCount || 0}
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            ) : (
+              <Text c="dimmed" size="sm">
+                No favorite votes yet.
+              </Text>
+            )}
+          </Paper>
+        </Stack>
       </Stack>
 
       <CharacterDetailsModal
