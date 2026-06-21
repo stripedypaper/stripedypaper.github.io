@@ -284,20 +284,20 @@ export function HomePage({ apiBaseUrl }) {
       const refreshed = await fetchCommunityCharacters(apiBaseUrl);
       setCommunityData(refreshed);
       notifications.show({
-        title: 'Rebuilt',
+        title: 'Refreshed',
         message: rebuildResult?.computedAt
-          ? `Community tier list rebuilt at ${new Date(rebuildResult.computedAt).toLocaleString()}.`
-          : 'Community tier list rebuilt.',
+          ? `Community tier list refreshed at ${new Date(rebuildResult.computedAt).toLocaleString()}.`
+          : 'Community tier list refreshed.',
         color: 'grape'
       });
     } catch (rebuildError) {
       notifications.show({
-        title: 'Rebuild unavailable',
+        title: 'Refresh unavailable',
         message: rebuildError?.retryAfterSeconds
           ? `Try again in ${rebuildError.retryAfterSeconds} seconds.`
           : rebuildError instanceof Error
             ? rebuildError.message
-            : 'Unable to rebuild community tier list.',
+            : 'Unable to refresh community tier list.',
         color: 'red'
       });
     } finally {
