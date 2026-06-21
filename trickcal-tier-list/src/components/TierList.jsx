@@ -78,6 +78,7 @@ function TierCandidate({
   return (
     <div
       className={`tier-candidate${isSelected ? ' tier-candidate-selected' : ''}`}
+      translate="no"
       draggable={!isMobile}
       onDragStart={
         isMobile ? undefined : (event) => onDragStart(event, item.id)
@@ -148,6 +149,7 @@ function TierBucket({
             size="lg"
             className="tier-bucket-label"
             radius="md"
+            translate="no"
           >
             {bucket.label}
           </Badge>
@@ -327,7 +329,7 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
   const unassignedItems = buckets.get('unassigned') || [];
 
   return (
-    <Stack gap="md" className="tier-list">
+    <Stack gap="md" className="tier-list notranslate" translate="no">
       <Paper
         className="tier-pool"
         p="md"
@@ -337,7 +339,9 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
         onDrop={(event) => handleDrop(event, 'unassigned')}
       >
         <Group justify="space-between" mb="sm">
-          <Text fw={700}>Not added</Text>
+          <Text fw={700} translate="no">
+            Not added
+          </Text>
           <Text c="dimmed" size="sm">
             {unassignedItems.length} character
             {unassignedItems.length === 1 ? '' : 's'}

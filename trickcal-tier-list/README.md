@@ -109,6 +109,23 @@ To auto-fix formatting:
 npm run format
 ```
 
+## Pre-commit
+
+The local pre-commit check for this app is:
+
+```powershell
+npm run precommit:check
+```
+
+It runs:
+
+- `npm run lint`
+- `npm run pages:build`
+- `cd backend; sam build`
+
+Because the actual Git repo root is the parent `stripedypaper.github.io` directory, the installed Git hook must live in the parent repo's `.git/hooks/`.
+This also means a normal commit will refresh the checked-in GitHub Pages publish files (`index.html`, `config.json`, and `assets/`) before the commit is allowed to proceed.
+
 ## Backend
 
 The backend lives in `backend/` and still uses AWS SAM.

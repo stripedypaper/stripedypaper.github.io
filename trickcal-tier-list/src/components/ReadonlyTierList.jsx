@@ -125,6 +125,7 @@ function CharacterChip({ character, renderTooltipContent, onCharacterClick }) {
           className={`tier-candidate readonly-tier-candidate${
             onCharacterClick ? ' readonly-tier-candidate-clickable' : ''
           }`}
+          translate="no"
           onClick={
             onCharacterClick ? () => onCharacterClick(character) : undefined
           }
@@ -165,7 +166,7 @@ export function ReadonlyTierList({
   }));
 
   return (
-    <Stack gap="sm" className="tier-list">
+    <Stack gap="sm" className="tier-list notranslate" translate="no">
       {bucketItems.map((bucket) => (
         <Paper
           key={bucket.id}
@@ -182,6 +183,7 @@ export function ReadonlyTierList({
                 size="lg"
                 className="tier-bucket-label"
                 radius="md"
+                translate="no"
               >
                 {bucket.label}
               </Badge>

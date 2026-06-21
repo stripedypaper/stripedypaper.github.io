@@ -443,11 +443,7 @@ export function HomePage({ apiBaseUrl }) {
                 </Table.Thead>
                 <Table.Tbody>
                   {favoriteCharacters.map((character) => (
-                    <Table.Tr
-                      key={character.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => setSelectedCharacter(character)}
-                    >
+                    <Table.Tr key={character.id}>
                       <Table.Td>
                         <div className="tier-candidate readonly-tier-candidate">
                           <Avatar
