@@ -13,7 +13,8 @@ import {
   RANKING_QUESTIONS,
   RANKING_QUESTIONS_BY_ID,
   getTierScore,
-  isCharacterEligibleForQuestion
+  isCharacterEligibleForQuestion,
+  requiresCompleteAssignment
 } from './rankings-config.mjs';
 
 const RANKING_SUBMISSIONS_TABLE_NAME =
@@ -154,7 +155,22 @@ function validateAnswers(answersInput, characters) {
 
   for (const question of RANKING_QUESTIONS) {
     const rawPlacements = answersInput?.[question.id];
+    const eligibleCharacterIds = new Set(
+      characters
+        .filter((character) =>
+          isCharacterEligibleForQuestion(character, question)
+        )
+        .map((character) => character.id)
+    );
+
     if (!rawPlacements || typeof rawPlacements !== 'object') {
+      if (
+        requiresCompleteAssignment(question) &&
+        eligibleCharacterIds.size > 0
+      ) {
+        throw new Error(`Every apostle must be assigned for ${question.id}.`);
+      }
+
       continue;
     }
 
@@ -187,6 +203,13 @@ function validateAnswers(answersInput, characters) {
 
       bucketCounts.set(tierId, nextCount);
       placements[characterId] = tierId;
+    }
+
+    if (
+      requiresCompleteAssignment(question) &&
+      Object.keys(placements).length !== eligibleCharacterIds.size
+    ) {
+      throw new Error(`Every apostle must be assigned for ${question.id}.`);
     }
 
     normalizedAnswers[question.id] = placements;

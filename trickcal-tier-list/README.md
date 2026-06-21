@@ -8,7 +8,7 @@ Repository-specific working notes live in `AGENTS.md`.
 
 - `npm install`
 - `npm run dev`
-- Open the local Vite URL shown in the terminal.
+- Open `http://localhost:8000/index.src.html`.
 
 ## Config
 
@@ -37,8 +37,8 @@ npm run pages:build
 
 What it does:
 
-- restores the source Vite entry HTML from `index.src.html`
-- runs the normal production build
+- temporarily swaps in `index.src.html` as the Vite entry during build
+- restores the checked-in publish `index.html` after the build finishes
 - copies the built `index.html`, `config.json`, and `assets/` into the project root for GitHub Pages
 
 After that, commit:

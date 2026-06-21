@@ -5,8 +5,8 @@ This repo contains a Vite/React frontend in `src/` and an AWS SAM backend in `ba
 ## Common Commands
 
 - `npm install`
-- `npm run dev` — starts Vite locally.
-- `npm run build` — builds the frontend.
+- `npm run dev` — starts Vite locally at `http://localhost:8000/index.src.html`.
+- `npm run build` — builds the frontend from `index.src.html` without leaving the source entry copied over `index.html`.
 - `npm run lint` — runs Prettier check.
 - `npm run format` — rewrites files with Prettier.
 - `cd backend; sam build` — builds the Lambda bundle.
@@ -43,4 +43,4 @@ This repo contains a Vite/React frontend in `src/` and an AWS SAM backend in `ba
 - Do not commit or push unless explicitly instructed.
 - Avoid checking in generated artifacts such as `dist/` or `node_modules/`.
 - GitHub Pages is a special case: use `npm run pages:build` to refresh `index.html`, `config.json`, and `assets/` in the project root, then commit those publish files only when explicitly instructed.
-- `index.src.html` is the source Vite entry file; `index.html` may be overwritten by the publish build.
+- `index.src.html` is the source Vite entry file; `index.html` is the checked-in GitHub Pages publish file.

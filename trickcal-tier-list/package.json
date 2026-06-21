@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node scripts/use-source-index.mjs && vite",
-    "build": "node scripts/use-source-index.mjs && vite build",
+    "dev": "vite --open /index.src.html",
+    "build": "node scripts/vite-build.mjs",
     "pages:build": "node scripts/pages-build.mjs",
     "preview": "vite preview",
     "format": "prettier --write \"index.html\" \"index.src.html\" \"vite.config.js\" \"README.md\" \"AGENTS.md\" \"package.json\" \"scripts/**/*.mjs\" \"src/**/*.{js,jsx,css}\" \"backend/src/**/*.mjs\" \"public/config.json\"",

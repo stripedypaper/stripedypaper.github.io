@@ -88,3 +88,7 @@ export function getTierScore(question, tierId) {
   const tier = question.tiers.find((item) => item.id === tierId);
   return tier ? tier.score : null;
 }
+
+export function requiresCompleteAssignment(question) {
+  return question?.kind === 'personality' || question?.kind === 'position';
+}

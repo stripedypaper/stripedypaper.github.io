@@ -42,6 +42,25 @@ const POSITION_HIGHLIGHT_COLUMNS = {
   back: 0
 };
 
+function normalizeAssignedPlacements(placements) {
+  const assignedPlacements = {};
+
+  for (const [characterId, tierId] of Object.entries(placements || {})) {
+    if (typeof tierId !== 'string') {
+      continue;
+    }
+
+    const normalizedTierId = tierId.trim();
+    if (!normalizedTierId || normalizedTierId === 'unassigned') {
+      continue;
+    }
+
+    assignedPlacements[characterId] = normalizedTierId;
+  }
+
+  return assignedPlacements;
+}
+
 function getQuestionTiers(questionKind) {
   if (questionKind === 'personality') {
     return [
@@ -57,7 +76,7 @@ function getQuestionTiers(questionKind) {
         id: 'good_alternatives',
         label: 'Good alternatives',
         score: 4,
-        color: 'green'
+        color: 'blue'
       },
       {
         id: 'usable',
@@ -163,4 +182,20 @@ export function buildQuestionGroups(characters) {
   });
 
   return groups;
+}
+
+export function requiresCompleteAssignment(question) {
+  return question?.kind === 'personality' || question?.kind === 'position';
+}
+
+export function listIncompleteRequiredQuestions(questionGroups, answers) {
+  return questionGroups
+    .filter((question) => requiresCompleteAssignment(question))
+    .filter((question) => {
+      const assignedCount = Object.keys(
+        normalizeAssignedPlacements(answers?.[question.id])
+      ).length;
+
+      return assignedCount !== question.items.length;
+    });
 }

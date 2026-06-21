@@ -1,11 +1,13 @@
 import { Button, Group, Paper, Skeleton, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LineupGrid } from '../../components/LineupGrid.jsx';
 import { TierList } from '../../components/TierList.jsx';
 import {
   PERSONA_GRID_COLORS,
   POSITION_LABELS,
-  buildQuestionGroups
+  buildQuestionGroups,
+  listIncompleteRequiredQuestions
 } from '../../lib/rankings.js';
 
 function normalizeAnswers(answers) {
@@ -82,6 +84,16 @@ export function MyRankingsPage({
     () => serializeAnswers(placementsByQuestion),
     [placementsByQuestion]
   );
+  const incompleteRequiredQuestions = useMemo(
+    () => listIncompleteRequiredQuestions(questionGroups, placementsByQuestion),
+    [placementsByQuestion, questionGroups]
+  );
+  const missingAssignmentsMessage =
+    incompleteRequiredQuestions.length > 0
+      ? `${incompleteRequiredQuestions
+          .map((question) => question.label)
+          .join(', ')} must assign every apostle before saving.`
+      : '';
   const hasUnsavedChanges = currentSnapshot !== lastSavedSnapshot;
   const saveDisabled =
     !user?.id ||
@@ -121,6 +133,17 @@ export function MyRankingsPage({
   }, []);
 
   async function handleSave() {
+    if (missingAssignmentsMessage) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to save rankings',
+        message: missingAssignmentsMessage
+      });
+      setSaveState('error');
+      setSaveMessage('');
+      return;
+    }
+
     if (saveDisabled) {
       return;
     }
