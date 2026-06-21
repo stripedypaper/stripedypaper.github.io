@@ -1,5 +1,6 @@
 import { Group } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
 import { ContributeSidebar } from '../../components/ContributeSidebar.jsx';
 import { MyRankingsPage } from './MyRankingsPage.jsx';
 import { MyTierListPage } from './MyTierListPage.jsx';
@@ -33,9 +34,10 @@ async function fetchAllCharacters(apiBaseUrl) {
 }
 
 async function fetchMyRankings(apiBaseUrl) {
-  const response = await fetch(`${apiBaseUrl}/rankings/me`, {
-    credentials: 'include'
-  });
+  const response = await fetch(
+    `${apiBaseUrl}/rankings/me`,
+    buildAuthenticatedRequestInit()
+  );
 
   if (!response.ok) {
     throw new Error(`Rankings load failed with status ${response.status}.`);
@@ -46,14 +48,16 @@ async function fetchMyRankings(apiBaseUrl) {
 }
 
 async function saveMyRankings(apiBaseUrl, answers) {
-  const response = await fetch(`${apiBaseUrl}/rankings/me`, {
-    method: 'PUT',
-    credentials: 'include',
-    headers: {
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({ answers })
-  });
+  const response = await fetch(
+    `${apiBaseUrl}/rankings/me`,
+    buildAuthenticatedRequestInit({
+      method: 'PUT',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ answers })
+    })
+  );
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);

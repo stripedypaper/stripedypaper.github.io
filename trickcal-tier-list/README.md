@@ -48,6 +48,53 @@ git add trickcal-tier-list/index.html trickcal-tier-list/config.json trickcal-ti
 git commit -m "Commit built files for GitHub Pages"
 ```
 
+## Troubleshooting
+
+### Discord login succeeds but the site still shows `Login`
+
+There are two distinct failure modes that have come up:
+
+- Discord OAuth callback succeeds, but the browser does not send back `trickcal_session`
+- bearer-token fallback is present, but API Gateway blocks the CORS preflight
+
+#### Third-party cookie issue
+
+The frontend and API are on different sites:
+
+- frontend: `localhost:8000` or `stripedypaper.github.io`
+- API: `*.execute-api.us-east-1.amazonaws.com`
+
+That makes the session cookie third-party from the browser's perspective. Some browsers or privacy settings allow it, others block it. When this happens:
+
+- backend logs show `auth.callback.success`
+- frontend logs show `[auth] callback returned from Discord`
+- `/auth/me` still reports unauthenticated because no session cookie is sent
+
+To work around this, the app now also supports a bearer-token fallback:
+
+- `/auth/callback` redirects back with a temporary `session_token`
+- the frontend stores it locally
+- authenticated requests send `Authorization: Bearer ...`
+- the backend accepts either the cookie or the bearer token
+
+#### CORS preflight issue after bearer fallback
+
+Once the frontend sends `Authorization`, browsers perform a CORS preflight (`OPTIONS`).
+
+For AWS SAM `HttpApi`, `authorization` must be listed in `CorsConfiguration.AllowHeaders` in `backend/template.yaml`.
+
+Current required headers:
+
+- `content-type`
+- `authorization`
+
+If `authorization` is missing, browsers will fail with errors like:
+
+- `CORS header 'Access-Control-Allow-Origin' missing`
+- preflight `OPTIONS` returns `204` or the request never completes
+
+If you change auth headers in the future, re-check the SAM CORS config and redeploy the backend.
+
 ## Format Check
 
 ```powershell

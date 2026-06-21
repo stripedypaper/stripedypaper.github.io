@@ -9,6 +9,7 @@ import {
   Table,
   Text
 } from '@mantine/core';
+import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
 import { PAGE_SIZE, formatDate } from '../../lib/site.js';
 import { useEffect, useState } from 'react';
 
@@ -44,9 +45,10 @@ export function ManageUsersPage({ apiBaseUrl }) {
           params.set('cursor', currentCursor);
         }
 
-        const response = await fetch(`${apiBaseUrl}/admin/users?${params}`, {
-          credentials: 'include'
-        });
+        const response = await fetch(
+          `${apiBaseUrl}/admin/users?${params}`,
+          buildAuthenticatedRequestInit()
+        );
 
         if (!response.ok) {
           throw new Error(`User list failed with status ${response.status}.`);

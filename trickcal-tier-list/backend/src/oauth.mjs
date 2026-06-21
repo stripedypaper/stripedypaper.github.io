@@ -134,6 +134,13 @@ function startAuth(event) {
     prompt: 'none'
   });
 
+  logAuthEvent('info', 'auth.start', event, {
+    returnTo,
+    redirectUri,
+    hasOriginHeader: Boolean(getRequestHeader(event, 'origin')),
+    hasRefererHeader: Boolean(getRequestHeader(event, 'referer'))
+  });
+
   return redirect(`${DISCORD_API}/oauth2/authorize?${params}`, [
     cookie(STATE_COOKIE, statePayload, {
       maxAge: STATE_MAX_AGE,
@@ -146,7 +153,15 @@ async function callback(event) {
   assertConfigured();
 
   const { code, state } = event.queryStringParameters || {};
-  const statePayload = verifyPayload(getCookie(event, STATE_COOKIE) || '');
+  const rawStateCookie = getCookie(event, STATE_COOKIE) || '';
+  const statePayload = verifyPayload(rawStateCookie);
+
+  logAuthEvent('info', 'auth.callback.received', event, {
+    hasCode: Boolean(code),
+    hasState: Boolean(state),
+    hasStateCookie: Boolean(rawStateCookie),
+    hasValidStateCookie: Boolean(statePayload?.state)
+  });
 
   if (
     !code ||
@@ -154,7 +169,28 @@ async function callback(event) {
     !statePayload?.state ||
     !safeEqual(state, statePayload.state)
   ) {
-    return redirect(`${FRONTEND_URL}?auth=failed`, [clearCookie(STATE_COOKIE)]);
+    logAuthEvent('warn', 'auth.callback.rejected', event, {
+      reason: !code
+        ? 'missing_code'
+        : !state
+          ? 'missing_state'
+          : !statePayload?.state
+            ? 'invalid_or_missing_state_cookie'
+            : 'state_mismatch'
+    });
+    return redirect(
+      appendQueryParams(FRONTEND_URL, {
+        auth: 'failed',
+        reason: !code
+          ? 'missing_code'
+          : !state
+            ? 'missing_state'
+            : !statePayload?.state
+              ? 'invalid_or_missing_state_cookie'
+              : 'state_mismatch'
+      }),
+      [clearCookie(STATE_COOKIE)]
+    );
   }
 
   const token = await exchangeCode(code);
@@ -175,17 +211,34 @@ async function callback(event) {
     exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE
   });
 
-  return redirect(statePayload.returnTo || FRONTEND_URL, [
-    cookie('trickcal_session', session, {
-      maxAge: SESSION_MAX_AGE,
-      httpOnly: true
+  logAuthEvent('info', 'auth.callback.success', event, {
+    discordUserId: user.id,
+    returnTo: statePayload.returnTo || FRONTEND_URL
+  });
+
+  return redirect(
+    appendQueryParams(statePayload.returnTo || FRONTEND_URL, {
+      auth: 'success',
+      session_token: session
     }),
-    clearCookie(STATE_COOKIE)
-  ]);
+    [
+      cookie('trickcal_session', session, {
+        maxAge: SESSION_MAX_AGE,
+        httpOnly: true
+      }),
+      clearCookie(STATE_COOKIE)
+    ]
+  );
 }
 
 async function me(event) {
   const context = await getAuthContext(event);
+  logAuthEvent('info', 'auth.me', event, {
+    isAuthenticated: context.isAuthenticated,
+    discordUserId: context.user?.id || null,
+    hasSessionCookie: Boolean(getCookie(event, 'trickcal_session')),
+    hasAuthorizationHeader: Boolean(getRequestHeader(event, 'authorization'))
+  });
   return json(200, { user: context.user });
 }
 
@@ -457,6 +510,20 @@ function getAllowedOrigins() {
   return [FRONTEND_ORIGIN, LOCAL_FRONTEND_ORIGIN].filter(Boolean);
 }
 
+function appendQueryParams(urlString, params) {
+  const url = new URL(urlString);
+
+  for (const [key, value] of Object.entries(params || {})) {
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+
+    url.searchParams.set(key, String(value));
+  }
+
+  return url.toString();
+}
+
 function getCorsOrigin(event) {
   const headers = event.headers || {};
   const origin = headers.origin || headers.Origin;
@@ -529,6 +596,16 @@ function clearCookie(name) {
   return `${name}=; Path=/; Max-Age=0; Secure; HttpOnly; SameSite=None`;
 }
 
+function getRequestHeader(event, name) {
+  const headers = event.headers || {};
+  return (
+    headers[name] ||
+    headers[name.toLowerCase()] ||
+    headers[name.toUpperCase()] ||
+    ''
+  );
+}
+
 function getCookie(event, name) {
   for (const rawCookie of event.cookies || []) {
     const [key, ...valueParts] = rawCookie.split('=');
@@ -584,6 +661,23 @@ function safeEqual(left, right) {
   }
 
   return crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function logAuthEvent(level, eventName, event, details = {}) {
+  const logger = level === 'warn' ? console.warn : console.log;
+  logger(
+    JSON.stringify({
+      area: 'auth',
+      event: eventName,
+      requestId: event?.requestContext?.requestId || '',
+      method: event?.requestContext?.http?.method || '',
+      path: event?.rawPath || '',
+      origin: getRequestHeader(event, 'origin') || '',
+      referer: getRequestHeader(event, 'referer') || '',
+      userAgent: getRequestHeader(event, 'user-agent') || '',
+      ...details
+    })
+  );
 }
 
 function assertConfigured() {

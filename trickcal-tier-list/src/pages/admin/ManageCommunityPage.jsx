@@ -1,5 +1,6 @@
 import { Button, Paper, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
+import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
 
 export function ManageCommunityPage({ apiBaseUrl }) {
   const [loading, setLoading] = useState(false);
@@ -16,10 +17,12 @@ export function ManageCommunityPage({ apiBaseUrl }) {
     setError('');
 
     try {
-      const response = await fetch(`${apiBaseUrl}/admin/community/rebuild`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${apiBaseUrl}/admin/community/rebuild`,
+        buildAuthenticatedRequestInit({
+          method: 'POST'
+        })
+      );
 
       const data = await response.json().catch(() => null);
 

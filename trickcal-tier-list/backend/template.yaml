@@ -314,6 +314,7 @@ Resources:
           - !Ref LocalFrontendOrigin
         AllowHeaders:
           - content-type
+          - authorization
         AllowMethods:
           - GET
           - POST

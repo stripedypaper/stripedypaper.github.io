@@ -4,7 +4,7 @@ import { getUserRecord, isAdminRole, USER_ROLE } from './users.mjs';
 const SESSION_COOKIE = 'trickcal_session';
 
 export function getSessionFromEvent(event) {
-  const value = getCookie(event, SESSION_COOKIE);
+  const value = getCookie(event, SESSION_COOKIE) || getBearerToken(event);
   return value ? verifySession(value) : null;
 }
 
@@ -145,6 +145,17 @@ function getCookie(event, name) {
   }
 
   return null;
+}
+
+function getBearerToken(event) {
+  const headers = event.headers || {};
+  const authorization = headers.authorization || headers.Authorization || '';
+
+  if (!authorization.startsWith('Bearer ')) {
+    return '';
+  }
+
+  return authorization.slice('Bearer '.length).trim();
 }
 
 function safeEqual(left, right) {

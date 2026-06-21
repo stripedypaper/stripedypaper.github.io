@@ -13,6 +13,7 @@ import {
   TextInput
 } from '@mantine/core';
 import { IconEdit, IconPlus } from '@tabler/icons-react';
+import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
 import {
   CHARACTER_PERSONALITY_OPTIONS,
   CHARACTER_POSITION_OPTIONS,
@@ -189,16 +190,15 @@ export function ManageCharactersPage({ apiBaseUrl }) {
   async function uploadCharacterImage(characterId, imageFile) {
     const uploadResponse = await fetch(
       `${apiBaseUrl}/admin/characters/${characterId}/image-upload`,
-      {
+      buildAuthenticatedRequestInit({
         method: 'POST',
-        credentials: 'include',
         headers: {
           'content-type': 'application/json'
         },
         body: JSON.stringify({
           contentType: imageFile.type
         })
-      }
+      })
     );
 
     if (!uploadResponse.ok) {
@@ -234,14 +234,16 @@ export function ManageCharactersPage({ apiBaseUrl }) {
           ? `${apiBaseUrl}/admin/characters`
           : `${apiBaseUrl}/admin/characters/${selectedCharacter.id}`;
 
-      const response = await fetch(endpoint, {
-        method,
-        credentials: 'include',
-        headers: {
-          'content-type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await fetch(
+        endpoint,
+        buildAuthenticatedRequestInit({
+          method,
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+      );
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
