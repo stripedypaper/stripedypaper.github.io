@@ -48,6 +48,15 @@ git add trickcal-tier-list/index.html trickcal-tier-list/config.json trickcal-ti
 git commit -m "Commit built files for GitHub Pages"
 ```
 
+The repo also includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml` that can publish a Pages artifact directly from CI. That workflow:
+
+- installs `trickcal-tier-list` dependencies
+- runs `npm run format`
+- runs `npm run pages:build`
+- uploads the full repo root as the Pages artifact while excluding build-only directories such as `node_modules/` and `dist/`
+
+With that workflow in place, production publishing does not need a local `pages:build` step before push.
+
 ## Troubleshooting
 
 ### Discord login succeeds but the site still shows `Login`
@@ -108,23 +117,6 @@ To auto-fix formatting:
 ```powershell
 npm run format
 ```
-
-## Pre-commit
-
-The local pre-commit check for this app is:
-
-```powershell
-npm run precommit:check
-```
-
-It runs:
-
-- `npm run lint`
-- `npm run pages:build`
-- `cd backend; sam build`
-
-Because the actual Git repo root is the parent `stripedypaper.github.io` directory, the installed Git hook must live in the parent repo's `.git/hooks/`.
-This also means a normal commit will refresh the checked-in GitHub Pages publish files (`index.html`, `config.json`, and `assets/`) before the commit is allowed to proceed.
 
 ## Backend
 

@@ -139,21 +139,21 @@ function CharacterDetailsModal({ character, opened, onClose }) {
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Mono Score Vote Distribution"
+            title="Mono Score Vote Distribution (A1-A5)"
             data={buildNumericDistributionData(stats.mono?.distribution, 0, 5)}
             valueKey="votes"
             color="yellow.6"
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Mixed Score Vote Distribution"
+            title="Mixed Score Vote Distribution (B1-B3)"
             data={buildNumericDistributionData(stats.mixed?.distribution, 0, 5)}
             valueKey="votes"
             color="lime.6"
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Niche Vote Distribution"
+            title="Niche Vote Distribution (C1)"
             data={buildNicheDistributionData(stats.niche?.distribution)}
             valueKey="votes"
             color="red.6"
@@ -309,7 +309,13 @@ export function HomePage({ apiBaseUrl }) {
   }, [apiBaseUrl]);
 
   const characters = useMemo(
-    () => communityData?.characters || [],
+    () =>
+      (communityData?.characters || []).map((character) => ({
+        ...character,
+        secondaryText: String(
+          roundToTwo(character.communityStats?.calculated?.average || 0)
+        )
+      })),
     [communityData]
   );
   const favoriteCharacters = useMemo(

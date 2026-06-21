@@ -109,6 +109,7 @@ function getDefaultTooltipContent(character) {
 
 function CharacterChip({ character, renderTooltipContent, onCharacterClick }) {
   const label = (renderTooltipContent || getDefaultTooltipContent)(character);
+  const secondaryText = character.secondaryText || '';
 
   return (
     <Tooltip
@@ -141,9 +142,16 @@ function CharacterChip({ character, renderTooltipContent, onCharacterClick }) {
                 character.personality === 'resonance' ? '#171021' : undefined
             }}
           />
-          <Text size="sm" fw={600} className="tier-candidate-label">
-            {getCharacterDisplayName(character)}
-          </Text>
+          <div>
+            <Text size="sm" fw={600} className="tier-candidate-label">
+              {getCharacterDisplayName(character)}
+            </Text>
+            {secondaryText ? (
+              <Text size="xs" c="dimmed">
+                {secondaryText}
+              </Text>
+            ) : null}
+          </div>
         </div>
       </div>
     </Tooltip>

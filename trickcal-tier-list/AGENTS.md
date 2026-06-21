@@ -9,7 +9,6 @@ This repo contains a Vite/React frontend in `src/` and an AWS SAM backend in `ba
 - `npm run build` — builds the frontend from `index.src.html` without leaving the source entry copied over `index.html`.
 - `npm run lint` — runs Prettier check.
 - `npm run format` — rewrites files with Prettier.
-- `npm run precommit:check` — runs the local pre-commit validation sequence, including `pages:build`.
 - `cd backend; sam build` — builds the Lambda bundle.
 
 ## Local Ports
@@ -41,7 +40,6 @@ This repo contains a Vite/React frontend in `src/` and an AWS SAM backend in `ba
 - Keep changes focused and minimal.
 - Run `npm run lint` and `npm run build` before finishing frontend work.
 - Run `sam build` before finishing backend work.
-- The intended pre-commit gate for this project is `npm run precommit:check`, which refreshes GitHub Pages publish files before commit.
 - Do not commit or push unless explicitly instructed.
 - Avoid checking in generated artifacts such as `dist/` or `node_modules/`.
 - GitHub Pages is a special case: use `npm run pages:build` to refresh `index.html`, `config.json`, and `assets/` in the project root, then commit those publish files only when explicitly instructed.
