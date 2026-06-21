@@ -42,3 +42,5 @@ This repo contains a Vite/React frontend in `src/` and an AWS SAM backend in `ba
 - Run `sam build` before finishing backend work.
 - Do not commit or push unless explicitly instructed.
 - Avoid checking in generated artifacts such as `dist/` or `node_modules/`.
+- GitHub Pages is a special case: use `npm run pages:build` to refresh `index.html`, `config.json`, and `assets/` in the project root, then commit those publish files only when explicitly instructed.
+- `index.src.html` is the source Vite entry file; `index.html` may be overwritten by the publish build.

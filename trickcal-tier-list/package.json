@@ -4,11 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "node scripts/use-source-index.mjs && vite",
+    "build": "node scripts/use-source-index.mjs && vite build",
+    "pages:build": "node scripts/pages-build.mjs",
     "preview": "vite preview",
-    "format": "prettier --write \"index.html\" \"vite.config.js\" \"README.md\" \"package.json\" \"src/**/*.{js,jsx,css}\" \"backend/src/**/*.mjs\" \"public/config.json\"",
-    "format:check": "prettier --check \"index.html\" \"vite.config.js\" \"README.md\" \"package.json\" \"src/**/*.{js,jsx,css}\" \"backend/src/**/*.mjs\" \"public/config.json\"",
+    "format": "prettier --write \"index.html\" \"index.src.html\" \"vite.config.js\" \"README.md\" \"AGENTS.md\" \"package.json\" \"scripts/**/*.mjs\" \"src/**/*.{js,jsx,css}\" \"backend/src/**/*.mjs\" \"public/config.json\"",
+    "format:check": "prettier --check \"index.html\" \"index.src.html\" \"vite.config.js\" \"README.md\" \"AGENTS.md\" \"package.json\" \"scripts/**/*.mjs\" \"src/**/*.{js,jsx,css}\" \"backend/src/**/*.mjs\" \"public/config.json\"",
     "lint": "npm run format:check"
   },
   "dependencies": {

@@ -27,6 +27,27 @@ npm run build
 
 The Vite base path is set to `/trickcal-tier-list/` for GitHub Pages deployment.
 
+## GitHub Pages publish files
+
+Use this command when you want to refresh the static files that are actually served from `https://stripedypaper.github.io/trickcal-tier-list/`:
+
+```powershell
+npm run pages:build
+```
+
+What it does:
+
+- restores the source Vite entry HTML from `index.src.html`
+- runs the normal production build
+- copies the built `index.html`, `config.json`, and `assets/` into the project root for GitHub Pages
+
+After that, commit:
+
+```powershell
+git add trickcal-tier-list/index.html trickcal-tier-list/config.json trickcal-tier-list/assets
+git commit -m "Commit built files for GitHub Pages"
+```
+
 ## Format Check
 
 ```powershell
@@ -65,6 +86,7 @@ After deployment:
 3. Add Discord user records to the DynamoDB users table using the `UsersTableName` output. The table uses `discordId` as the string partition key.
 4. Use the `CharactersTableName` output for the characters table and `CharactersCdnBaseUrl` for image URLs.
 5. Rebuild and publish the `dist/` output to GitHub Pages.
+6. For this repo layout, use `npm run pages:build` and commit the generated root publish files instead of committing `dist/`.
 
 ## Authorization model
 
