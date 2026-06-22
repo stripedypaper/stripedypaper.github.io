@@ -1,4 +1,5 @@
 dist/
+assets/
 node_modules/
 backend/.aws-sam/
 backend/src/node_modules/

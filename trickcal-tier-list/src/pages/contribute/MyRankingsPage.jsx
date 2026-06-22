@@ -176,6 +176,7 @@ export function MyRankingsPage({
             6-person restricted personality
           </Text>{' '}
           content, choose the apostles you would use in your ideal lineup.
+          Assume all apostles are at 3 stars without Yearning/Aside.
         </Text>
       );
     }
@@ -210,7 +211,7 @@ export function MyRankingsPage({
         <Text span fw={700}>
           {POSITION_LABELS[question.position] || question.position} position
         </Text>
-        .
+        . Assume all apostles are at 3 stars without Yearning/Aside.
       </Text>
     );
   }

@@ -411,6 +411,11 @@ export function HomePage({ apiBaseUrl }) {
                 : '—'}
               .
             </Text>
+            <Text size="sm" mt="sm">
+              This tier list ranks the apostles according to their performance
+              at 3 stars without Yearning/Aside. Click the apostle icon to see
+              details about the voting distribution.
+            </Text>
           </div>
 
           <Button onClick={handleRebuild} loading={rebuilding} color="grape">

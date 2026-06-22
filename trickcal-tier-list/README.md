@@ -29,7 +29,7 @@ The Vite base path is set to `/trickcal-tier-list/` for GitHub Pages deployment.
 
 ## GitHub Pages publish files
 
-Use this command when you want to refresh the static files that are actually served from `https://stripedypaper.github.io/trickcal-tier-list/`:
+Use this command when you want to locally preview the static files that GitHub Pages will serve for `https://stripedypaper.github.io/trickcal-tier-list/`:
 
 ```powershell
 npm run pages:build
@@ -41,13 +41,6 @@ What it does:
 - restores the checked-in publish `index.html` after the build finishes
 - copies the built `index.html`, `config.json`, and `assets/` into the project root for GitHub Pages
 
-After that, commit:
-
-```powershell
-git add trickcal-tier-list/index.html trickcal-tier-list/config.json trickcal-tier-list/assets
-git commit -m "Commit built files for GitHub Pages"
-```
-
 The repo also includes a GitHub Actions workflow at `.github/workflows/deploy-pages.yml` that can publish a Pages artifact directly from CI. That workflow:
 
 - installs `trickcal-tier-list` dependencies
@@ -55,7 +48,11 @@ The repo also includes a GitHub Actions workflow at `.github/workflows/deploy-pa
 - runs `npm run pages:build`
 - uploads the full repo root as the Pages artifact while excluding build-only directories such as `node_modules/` and `dist/`
 
-With that workflow in place, production publishing does not need a local `pages:build` step before push.
+With that workflow in place:
+
+- production publishing does not need a local `pages:build` step before push
+- built publish artifacts such as `assets/` should not be committed
+- `pages:build` is mainly for local verification of the Pages output tree
 
 ## Troubleshooting
 
@@ -141,8 +138,7 @@ After deployment:
 2. Copy the `ApiBaseUrl` output into `public/config.json` or set `VITE_API_BASE_URL`.
 3. Add Discord user records to the DynamoDB users table using the `UsersTableName` output. The table uses `discordId` as the string partition key.
 4. Use the `CharactersTableName` output for the characters table and `CharactersCdnBaseUrl` for image URLs.
-5. Rebuild and publish the `dist/` output to GitHub Pages.
-6. For this repo layout, use `npm run pages:build` and commit the generated root publish files instead of committing `dist/`.
+5. Push the source changes and let `.github/workflows/deploy-pages.yml` publish the GitHub Pages artifact.
 
 ## Authorization model
 

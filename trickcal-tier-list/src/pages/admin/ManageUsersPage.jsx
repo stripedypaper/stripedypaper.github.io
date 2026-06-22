@@ -1,9 +1,12 @@
 import {
   Badge,
   Button,
+  Checkbox,
   Group,
+  Modal,
   Paper,
   ScrollArea,
+  Select,
   Skeleton,
   Stack,
   Table,
@@ -12,6 +15,7 @@ import {
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
 import { PAGE_SIZE, formatDate } from '../../lib/site.js';
 import { useEffect, useState } from 'react';
+import { IconEdit } from '@tabler/icons-react';
 
 export function ManageUsersPage({ apiBaseUrl }) {
   const [cursorStack, setCursorStack] = useState([null]);
@@ -19,6 +23,13 @@ export function ManageUsersPage({ apiBaseUrl }) {
   const [nextCursor, setNextCursor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [modalOpened, setModalOpened] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [roleValue, setRoleValue] = useState('user');
+  const [isCuratorValue, setIsCuratorValue] = useState(false);
 
   const currentCursor = cursorStack[cursorStack.length - 1];
   const pageNumber = cursorStack.length;
@@ -92,7 +103,7 @@ export function ManageUsersPage({ apiBaseUrl }) {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, currentCursor]);
+  }, [apiBaseUrl, currentCursor, refreshKey]);
 
   function goNext() {
     if (!nextCursor) {
@@ -110,6 +121,65 @@ export function ManageUsersPage({ apiBaseUrl }) {
 
       return previous.slice(0, -1);
     });
+  }
+
+  function openEditModal(user) {
+    setSelectedUser(user);
+    setRoleValue(user.role || 'user');
+    setIsCuratorValue(Boolean(user.isCurator));
+    setFormError('');
+    setModalOpened(true);
+  }
+
+  function closeModal() {
+    if (saving) {
+      return;
+    }
+
+    setModalOpened(false);
+  }
+
+  async function handleSaveUser() {
+    if (!apiBaseUrl || !selectedUser?.discordId) {
+      return;
+    }
+
+    setSaving(true);
+    setFormError('');
+
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/admin/users/${encodeURIComponent(selectedUser.discordId)}`,
+        buildAuthenticatedRequestInit({
+          method: 'PUT',
+          headers: {
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            role: roleValue,
+            isCurator: isCuratorValue
+          })
+        })
+      );
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(
+          data?.error || `User update failed with status ${response.status}.`
+        );
+      }
+
+      setModalOpened(false);
+      setRefreshKey((currentValue) => currentValue + 1);
+    } catch (saveError) {
+      setFormError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Unable to update user.'
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -137,10 +207,13 @@ export function ManageUsersPage({ apiBaseUrl }) {
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Id</Table.Th>
+                <Table.Th>Username</Table.Th>
                 <Table.Th>Role</Table.Th>
+                <Table.Th>Curator</Table.Th>
                 <Table.Th>Created at</Table.Th>
                 <Table.Th>Updated at</Table.Th>
                 <Table.Th>Updated by</Table.Th>
+                <Table.Th />
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -151,7 +224,13 @@ export function ManageUsersPage({ apiBaseUrl }) {
                       <Skeleton height={18} width="100%" />
                     </Table.Td>
                     <Table.Td>
+                      <Skeleton height={18} width={120} />
+                    </Table.Td>
+                    <Table.Td>
                       <Skeleton height={18} width={72} />
+                    </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={18} width={60} />
                     </Table.Td>
                     <Table.Td>
                       <Skeleton height={18} width={160} />
@@ -162,12 +241,16 @@ export function ManageUsersPage({ apiBaseUrl }) {
                     <Table.Td>
                       <Skeleton height={18} width={140} />
                     </Table.Td>
+                    <Table.Td>
+                      <Skeleton height={18} width={72} />
+                    </Table.Td>
                   </Table.Tr>
                 ))
               ) : users.length ? (
                 users.map((item) => (
                   <Table.Tr key={item.discordId}>
                     <Table.Td className="mono-cell">{item.discordId}</Table.Td>
+                    <Table.Td>{item.username || '—'}</Table.Td>
                     <Table.Td>
                       <Badge
                         color={
@@ -182,16 +265,27 @@ export function ManageUsersPage({ apiBaseUrl }) {
                         {item.role}
                       </Badge>
                     </Table.Td>
+                    <Table.Td>{item.isCurator ? 'Yes' : 'No'}</Table.Td>
                     <Table.Td>{formatDate(item.createdAt)}</Table.Td>
                     <Table.Td>{formatDate(item.updatedAt)}</Table.Td>
                     <Table.Td className="mono-cell">
                       {item.updatedBy || '—'}
                     </Table.Td>
+                    <Table.Td>
+                      <Button
+                        variant="light"
+                        size="xs"
+                        leftSection={<IconEdit size={14} />}
+                        onClick={() => openEditModal(item)}
+                      >
+                        Edit
+                      </Button>
+                    </Table.Td>
                   </Table.Tr>
                 ))
               ) : (
                 <Table.Tr>
-                  <Table.Td colSpan={5}>
+                  <Table.Td colSpan={8}>
                     <Text c="dimmed">No users found.</Text>
                   </Table.Td>
                 </Table.Tr>
@@ -220,6 +314,47 @@ export function ManageUsersPage({ apiBaseUrl }) {
           </Button>
         </Group>
       </Paper>
+
+      <Modal
+        opened={modalOpened}
+        onClose={closeModal}
+        title="Edit User"
+        centered
+      >
+        <Stack gap="md">
+          <Text size="sm">
+            <strong>ID:</strong> {selectedUser?.discordId || '—'}
+          </Text>
+          <Text size="sm">
+            <strong>Username:</strong> {selectedUser?.username || '—'}
+          </Text>
+          <Select
+            label="Role"
+            data={[
+              { value: 'user', label: 'User' },
+              { value: 'manager', label: 'Manager' },
+              { value: 'admin', label: 'Admin' }
+            ]}
+            value={roleValue}
+            onChange={(value) => setRoleValue(value || 'user')}
+            allowDeselect={false}
+          />
+          <Checkbox
+            label="Is curator"
+            checked={isCuratorValue}
+            onChange={(event) => setIsCuratorValue(event.currentTarget.checked)}
+          />
+          {formError ? <Text c="red">{formError}</Text> : null}
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeModal} disabled={saving}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveUser} loading={saving} color="grape">
+              Save
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }

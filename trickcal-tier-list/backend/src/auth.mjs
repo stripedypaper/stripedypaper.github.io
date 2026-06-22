@@ -26,8 +26,10 @@ export async function getAuthContext(event) {
   return {
     user: {
       ...session.user,
+      username: userRecord?.username || session.user.username || '',
       role,
-      isAdmin
+      isAdmin,
+      isCurator: userRecord?.isCurator || false
     },
     isAuthenticated: true,
     isAdmin

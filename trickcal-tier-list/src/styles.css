@@ -345,6 +345,16 @@ body::before {
 
 .readonly-tier-candidate-clickable {
   cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+}
+
+.readonly-tier-candidate-clickable:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(190, 155, 255, 0.42);
+  transform: translateY(-1px);
 }
 
 .readonly-tier-tooltip {

@@ -13,7 +13,7 @@ import {
   signSession
 } from './auth.mjs';
 import { getRankingSubmission, saveRankingSubmission } from './rankings.mjs';
-import { ensureUserRecord, listUsersPage } from './users.mjs';
+import { ensureUserRecord, listUsersPage, updateUserRecord } from './users.mjs';
 import {
   createCharacterImageUploadUrl,
   createCharacterRecord,
@@ -81,6 +81,10 @@ export async function handler(event) {
 
     if (method === 'GET' && path === '/admin/users') {
       return listUsers(event);
+    }
+
+    if (method === 'PUT' && path.startsWith('/admin/users/')) {
+      return updateUser(event);
     }
 
     if (method === 'POST' && path === '/admin/community/rebuild') {
@@ -254,6 +258,30 @@ async function listUsers(event) {
   const result = await listUsersPage({ limit, cursor });
 
   return json(200, result);
+}
+
+async function updateUser(event) {
+  const auth = await requireAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const discordId = getUserIdFromPath(event.rawPath);
+    const body = parseJsonBody(event);
+    const user = await updateUserRecord(auth.user.id, discordId, body);
+
+    if (!user) {
+      return json(404, { error: 'Not found' });
+    }
+
+    return json(200, user);
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
 }
 
 async function getMyRankings(event) {
@@ -625,6 +653,11 @@ function getCharacterIdFromPath(path) {
 function getRankingUserIdFromPath(path) {
   const parts = path.split('/').filter(Boolean);
   return parts[1] || '';
+}
+
+function getUserIdFromPath(path) {
+  const parts = path.split('/').filter(Boolean);
+  return parts[2] || '';
 }
 
 function parseLimit(value) {
