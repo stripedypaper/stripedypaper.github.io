@@ -96,13 +96,9 @@ export function ContributePage({
   const ownedYearningPlacementsKey = serializeValue(ownedYearningPlacements);
   const questionGroups = useMemo(
     () =>
-      buildQuestionGroups(
-        characters,
-        questionnaireVersion,
-        {
-          'ranking-y-1': ownedYearningPlacements
-        }
-      ),
+      buildQuestionGroups(characters, questionnaireVersion, {
+        'ranking-y-1': ownedYearningPlacements
+      }),
     [characters, ownedYearningPlacementsKey, questionnaireVersion]
   );
 
@@ -219,37 +215,33 @@ export function ContributePage({
       return;
     }
 
-    setPlacementsByQuestion((currentValue) =>
-      {
-        const nextValue = sanitizePlacementsByQuestion(
-          questionGroups,
-          currentValue
-        );
-        return serializeValue(nextValue) === serializeValue(currentValue)
-          ? currentValue
-          : nextValue;
+    setPlacementsByQuestion((currentValue) => {
+      const nextValue = sanitizePlacementsByQuestion(
+        questionGroups,
+        currentValue
+      );
+      return serializeValue(nextValue) === serializeValue(currentValue)
+        ? currentValue
+        : nextValue;
+    });
+    setSubmission((currentValue) => {
+      if (!currentValue) {
+        return currentValue;
       }
-    );
-    setSubmission((currentValue) =>
-      {
-        if (!currentValue) {
-          return currentValue;
-        }
 
-        const nextAnswers = sanitizePlacementsByQuestion(
-          questionGroups,
-          currentValue.answers || {}
-        );
+      const nextAnswers = sanitizePlacementsByQuestion(
+        questionGroups,
+        currentValue.answers || {}
+      );
 
-        return serializeValue(nextAnswers) ===
-          serializeValue(currentValue.answers || {})
-          ? currentValue
-          : {
-              ...currentValue,
-              answers: nextAnswers
-            };
-      }
-    );
+      return serializeValue(nextAnswers) ===
+        serializeValue(currentValue.answers || {})
+        ? currentValue
+        : {
+            ...currentValue,
+            answers: nextAnswers
+          };
+    });
   }, [questionGroups]);
 
   function handleQuestionChange(questionId, nextPlacements) {

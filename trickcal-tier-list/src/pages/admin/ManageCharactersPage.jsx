@@ -187,7 +187,11 @@ export function ManageCharactersPage({ apiBaseUrl }) {
     setModalOpened(false);
   }
 
-  async function uploadCharacterImage(characterId, imageFile, imageType = 'default') {
+  async function uploadCharacterImage(
+    characterId,
+    imageFile,
+    imageType = 'default'
+  ) {
     const uploadResponse = await fetch(
       `${apiBaseUrl}/admin/characters/${characterId}/image-upload`,
       buildAuthenticatedRequestInit({

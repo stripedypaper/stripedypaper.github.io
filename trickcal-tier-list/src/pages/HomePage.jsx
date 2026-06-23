@@ -216,7 +216,9 @@ async function fetchCommunityFavorites(apiBaseUrl, questionnaireVersion) {
   );
 
   if (!response.ok) {
-    throw new Error(`Community favorites failed with status ${response.status}.`);
+    throw new Error(
+      `Community favorites failed with status ${response.status}.`
+    );
   }
 
   return response.json();
@@ -327,7 +329,10 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
           return !character.isYearning;
         }
 
-        return !character.isYearning || (character.communityStats?.calculated?.count || 0) > 0;
+        return (
+          !character.isYearning ||
+          (character.communityStats?.calculated?.count || 0) > 0
+        );
       }),
     [characters, showYearning]
   );

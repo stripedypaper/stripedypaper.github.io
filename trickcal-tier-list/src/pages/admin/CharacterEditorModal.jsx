@@ -72,7 +72,13 @@ export function CharacterEditorModal({
         ) : null}
 
         {character?.imageUrl ? (
-          <Image src={character.imageUrl} alt="" radius="md" h={160} fit="contain" />
+          <Image
+            src={character.imageUrl}
+            alt=""
+            radius="md"
+            h={160}
+            fit="contain"
+          />
         ) : null}
 
         {character?.hasYearning && character?.yearningImageUrl ? (

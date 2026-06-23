@@ -1,11 +1,4 @@
-import {
-  Badge,
-  Button,
-  Group,
-  Paper,
-  Stack,
-  Text
-} from '@mantine/core';
+import { Badge, Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { CharacterAvatar } from './CharacterAvatar.jsx';

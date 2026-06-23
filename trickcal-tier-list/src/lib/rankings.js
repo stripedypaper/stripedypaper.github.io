@@ -183,7 +183,8 @@ export function buildQuestionGroups(
   const selectableCandidates =
     questionnaireVersion === QUESTIONNAIRE_VERSION_V4
       ? candidates.filter(
-          (candidate) => !candidate.isYearning || ownedYearningIds.has(candidate.id)
+          (candidate) =>
+            !candidate.isYearning || ownedYearningIds.has(candidate.id)
         )
       : candidates;
   const groups = [];

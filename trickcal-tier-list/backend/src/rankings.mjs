@@ -384,16 +384,15 @@ async function saveRankingSubmissionModern(
   );
 
   const nextCharacterIds = new Set(
-    nextScores.map(
-      (score) => score.characterVariantKey || score.characterId
-    )
+    nextScores.map((score) => score.characterVariantKey || score.characterId)
   );
 
   await Promise.all(
     nextScores.map((score) =>
       ddbClient.send(
         new PutItemCommand({
-          TableName: getModernUserCharacterScoresTableName(questionnaireVersion),
+          TableName:
+            getModernUserCharacterScoresTableName(questionnaireVersion),
           Item: buildUserCharacterScoreItemV2(score)
         })
       )
@@ -409,17 +408,15 @@ async function saveRankingSubmissionModern(
       .map((score) =>
         ddbClient.send(
           new DeleteItemCommand({
-            TableName: getModernUserCharacterScoresTableName(questionnaireVersion),
+            TableName:
+              getModernUserCharacterScoresTableName(questionnaireVersion),
             Key: {
               userVersionKey: {
                 S: buildUserVersionKey(userId, questionnaireVersion)
               },
-              [getModernCharacterKeyAttributeName(questionnaireVersion)]:
-                {
-                  S:
-                    score.characterVariantKey ||
-                    score.characterId
-                }
+              [getModernCharacterKeyAttributeName(questionnaireVersion)]: {
+                S: score.characterVariantKey || score.characterId
+              }
             }
           })
         )
@@ -671,7 +668,10 @@ function deriveCharacterScoresModern(
       isYearning: Boolean(character.isYearning),
       questionnaireVersion,
       userVersionKey: buildUserVersionKey(userId, questionnaireVersion),
-      versionCharacterKey: buildVersionCharacterKey(questionnaireVersion, character.id),
+      versionCharacterKey: buildVersionCharacterKey(
+        questionnaireVersion,
+        character.id
+      ),
       monoScores,
       monoScore,
       mixedCrusadeScore,
@@ -850,7 +850,9 @@ function buildUserCharacterScoreItemV2(score) {
       S: score.characterVariantKey || score.characterId
     },
     questionnaireVersion: { S: score.questionnaireVersion },
-    [score.characterVariantKey ? 'versionCharacterVariantKey' : 'versionCharacterKey']: {
+    [score.characterVariantKey
+      ? 'versionCharacterVariantKey'
+      : 'versionCharacterKey']: {
       S: score.versionCharacterKey
     },
     submittedAt: { S: score.submittedAt },
@@ -1081,7 +1083,10 @@ function assertV2RankingsConfigured() {
     throw new Error('V2 ranking submissions table is not configured.');
   }
 
-  if (!USER_CHARACTER_SCORES_V2_TABLE_NAME && !USER_CHARACTER_SCORES_V4_TABLE_NAME) {
+  if (
+    !USER_CHARACTER_SCORES_V2_TABLE_NAME &&
+    !USER_CHARACTER_SCORES_V4_TABLE_NAME
+  ) {
     throw new Error('Modern user character scores table is not configured.');
   }
 }

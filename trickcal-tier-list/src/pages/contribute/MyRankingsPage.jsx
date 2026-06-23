@@ -82,13 +82,9 @@ export function MyRankingsPage({
 
   const questionGroups = useMemo(
     () =>
-      buildQuestionGroups(
-        characters,
-        questionnaireVersion,
-        {
-          'ranking-y-1': ownedYearningPlacements
-        }
-      ),
+      buildQuestionGroups(characters, questionnaireVersion, {
+        'ranking-y-1': ownedYearningPlacements
+      }),
     [characters, ownedYearningPlacements, questionnaireVersion]
   );
   const currentSnapshot = useMemo(
@@ -244,7 +240,7 @@ export function MyRankingsPage({
           <Text span fw={800}>
             {question.role.toUpperCase()} apostles
           </Text>
-          . Assume all apostles are at 3 stars without Yearning/Aside.
+          .
         </Text>
       );
     }
@@ -261,7 +257,7 @@ export function MyRankingsPage({
           <Text span fw={800}>
             {question.role.toUpperCase()} apostles
           </Text>
-          . Assume all apostles are at 3 stars without Yearning/Aside.
+          .
         </Text>
       );
     }
@@ -277,7 +273,8 @@ export function MyRankingsPage({
     if (question.kind === 'owned-yearning') {
       return (
         <Text mt="xs">
-          Select the apostles for which you own 2-star or higher Yearning and can evaluate them objectively and accurately.
+          Select the apostles for which you own 2-star or higher Yearning and
+          can evaluate them objectively and accurately.
         </Text>
       );
     }

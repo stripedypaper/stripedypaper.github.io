@@ -56,8 +56,7 @@ export function MyTierListPage({
     ? submission.derivedScores
     : [];
   const scoredCharacters = useMemo(
-    () =>
-      mergeCharacterScores(characters, derivedScores, questionnaireVersion),
+    () => mergeCharacterScores(characters, derivedScores, questionnaireVersion),
     [characters, derivedScores, questionnaireVersion]
   );
   const allVariants = useMemo(
@@ -79,7 +78,9 @@ export function MyTierListPage({
         ? scoredCharacters.filter(
             (character) =>
               !character.isYearning ||
-              scoredVariantKeys.has(character.characterVariantKey || character.id)
+              scoredVariantKeys.has(
+                character.characterVariantKey || character.id
+              )
           )
         : scoredCharacters.filter((character) => !character.isYearning),
     [scoredCharacters, scoredVariantKeys, showYearning]
@@ -90,7 +91,9 @@ export function MyTierListPage({
         ? allVariants.filter(
             (character) =>
               character.isYearning &&
-              !scoredVariantKeys.has(character.characterVariantKey || character.id)
+              !scoredVariantKeys.has(
+                character.characterVariantKey || character.id
+              )
           )
         : [],
     [allVariants, scoredVariantKeys, showYearning]

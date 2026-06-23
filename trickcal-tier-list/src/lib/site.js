@@ -211,7 +211,11 @@ export function expandCharacterVariants(
         character.id
     };
 
-    if (!isVariantAware || !character.hasYearning || !character.yearningImageUrl) {
+    if (
+      !isVariantAware ||
+      !character.hasYearning ||
+      !character.yearningImageUrl
+    ) {
       return [baseVariant];
     }
 

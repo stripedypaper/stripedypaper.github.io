@@ -761,7 +761,9 @@ function buildCharacterStatsItemV4({
   windowStart,
   recentScores
 }) {
-  const mono = buildScoreAggregate(recentScores.map((score) => score.monoScore));
+  const mono = buildScoreAggregate(
+    recentScores.map((score) => score.monoScore)
+  );
   const mixedCrusade = buildScoreAggregate(
     recentScores.map((score) => score.mixedCrusadeScore)
   );
@@ -1229,7 +1231,10 @@ function mergeCommunityCharacters({
     ...character,
     communityStats:
       statsByCharacterId.get(character[idField] || character.id) ||
-      makeEmptyCommunityStats(character[idField] || character.id, questionnaireVersion)
+      makeEmptyCommunityStats(
+        character[idField] || character.id,
+        questionnaireVersion
+      )
   }));
 
   mergedCharacters.sort((left, right) => {
