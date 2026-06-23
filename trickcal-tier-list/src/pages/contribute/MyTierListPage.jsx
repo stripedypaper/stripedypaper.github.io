@@ -1,41 +1,14 @@
-import { Button, Group, Paper, Stack, Switch, Text } from '@mantine/core';
+import { Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconShare } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
-import { ReadonlyTierList } from '../../components/ReadonlyTierList.jsx';
-import { expandCharacterVariants } from '../../lib/site.js';
-import { SCORE_BUCKETS } from '../../lib/tierBuckets.js';
-
-function roundToTwo(value) {
-  return Number((value || 0).toFixed(2));
-}
-
-function mergeCharacterScores(characters, derivedScores) {
-  const variants = expandCharacterVariants(characters);
-  const charactersById = new Map(
-    variants.map((character) => [
-      character.characterVariantKey || character.id,
-      character
-    ])
-  );
-
-  return derivedScores
-    .map((score) => {
-      const character = charactersById.get(
-        score.characterVariantKey || score.characterId
-      );
-      if (!character) {
-        return null;
-      }
-
-      return {
-        ...character,
-        ...score,
-        secondaryText: String(roundToTwo(score.calculatedScore || 0))
-      };
-    })
-    .filter(Boolean);
-}
+import { ReadonlyTierListSection } from '../../components/ReadonlyTierListSection.jsx';
+import { formatDate } from '../../lib/site.js';
+import {
+  buildReadonlyTierListDisplay,
+  hasRatedVariant,
+  mergeCharacterScores
+} from '../../lib/readonlyTierList.js';
 
 export function MyTierListPage({
   characters,
@@ -57,44 +30,15 @@ export function MyTierListPage({
     () => mergeCharacterScores(characters, derivedScores),
     [characters, derivedScores]
   );
-  const allVariants = useMemo(
-    () => expandCharacterVariants(characters),
-    [characters]
-  );
-  const scoredVariantKeys = useMemo(
+  const { visibleCharacters, unratedYearnings } = useMemo(
     () =>
-      new Set(
-        scoredCharacters.map(
-          (character) => character.characterVariantKey || character.id
-        )
-      ),
-    [scoredCharacters]
-  );
-  const visibleCharacters = useMemo(
-    () =>
-      showYearning
-        ? scoredCharacters.filter(
-            (character) =>
-              !character.isYearning ||
-              scoredVariantKeys.has(
-                character.characterVariantKey || character.id
-              )
-          )
-        : scoredCharacters.filter((character) => !character.isYearning),
-    [scoredCharacters, scoredVariantKeys, showYearning]
-  );
-  const unratedYearnings = useMemo(
-    () =>
-      showYearning
-        ? allVariants.filter(
-            (character) =>
-              character.isYearning &&
-              !scoredVariantKeys.has(
-                character.characterVariantKey || character.id
-              )
-          )
-        : [],
-    [allVariants, scoredVariantKeys, showYearning]
+      buildReadonlyTierListDisplay({
+        allCharacters: characters,
+        scoredCharacters,
+        showYearning,
+        isCharacterRated: hasRatedVariant
+      }),
+    [characters, scoredCharacters, showYearning]
   );
 
   async function handleShare() {
@@ -146,8 +90,7 @@ export function MyTierListPage({
             My Tier List
           </Text>
           <Text c="dimmed" size="sm" mt={4}>
-            Generated from rankings saved{' '}
-            {new Date(submission.updatedAt).toLocaleString()}.
+            Generated from rankings saved {formatDate(submission.updatedAt)}.
           </Text>
         </div>
 
@@ -160,25 +103,11 @@ export function MyTierListPage({
         </Button>
       </Group>
 
-      <Switch
-        checked={showYearning}
-        onChange={(event) => setShowYearning(event.currentTarget.checked)}
-        label="Show Yearning"
-      />
-
-      <ReadonlyTierList
-        buckets={SCORE_BUCKETS}
+      <ReadonlyTierListSection
+        showYearning={showYearning}
+        onShowYearningChange={setShowYearning}
         characters={visibleCharacters}
-        extraBucket={
-          showYearning
-            ? {
-                id: 'unrated-yearnings',
-                label: 'Unrated Yearnings',
-                color: 'gray',
-                items: unratedYearnings
-              }
-            : null
-        }
+        unratedYearnings={unratedYearnings}
       />
     </Stack>
   );

@@ -1,65 +1,13 @@
-import { Paper, Stack, Switch, Text } from '@mantine/core';
+import { Paper, Stack, Text } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
-import { ReadonlyTierList } from '../components/ReadonlyTierList.jsx';
-import { expandCharacterVariants } from '../lib/site.js';
-import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
-
-function roundToTwo(value) {
-  return Number((value || 0).toFixed(2));
-}
-
-function mergeCharacterScores(characters, derivedScores) {
-  const variants = expandCharacterVariants(characters);
-  const charactersById = new Map(
-    variants.map((character) => [
-      character.characterVariantKey || character.id,
-      character
-    ])
-  );
-
-  return derivedScores
-    .map((score) => {
-      const character = charactersById.get(
-        score.characterVariantKey || score.characterId
-      );
-      if (!character) {
-        return null;
-      }
-
-      return {
-        ...character,
-        ...score,
-        secondaryText: String(roundToTwo(score.calculatedScore || 0))
-      };
-    })
-    .filter(Boolean);
-}
-
-async function fetchAllCharacters(apiBaseUrl) {
-  const allCharacters = [];
-  let cursor = null;
-
-  do {
-    const params = new URLSearchParams({ limit: '100' });
-
-    if (cursor) {
-      params.set('cursor', cursor);
-    }
-
-    const response = await fetch(`${apiBaseUrl}/admin/characters?${params}`);
-    if (!response.ok) {
-      throw new Error(`Character list failed with status ${response.status}.`);
-    }
-
-    const data = await response.json();
-    allCharacters.push(
-      ...(Array.isArray(data.characters) ? data.characters : [])
-    );
-    cursor = data.nextCursor || null;
-  } while (cursor);
-
-  return allCharacters;
-}
+import { ReadonlyTierListSection } from '../components/ReadonlyTierListSection.jsx';
+import { fetchAllCharacters } from '../lib/charactersApi.js';
+import { formatDate } from '../lib/site.js';
+import {
+  buildReadonlyTierListDisplay,
+  hasRatedVariant,
+  mergeCharacterScores
+} from '../lib/readonlyTierList.js';
 
 async function fetchSharedSubmission(apiBaseUrl, userId) {
   const response = await fetch(
@@ -91,44 +39,15 @@ export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
     () => mergeCharacterScores(characters, derivedScores),
     [characters, derivedScores]
   );
-  const allVariants = useMemo(
-    () => expandCharacterVariants(characters),
-    [characters]
-  );
-  const scoredVariantKeys = useMemo(
+  const { visibleCharacters, unratedYearnings } = useMemo(
     () =>
-      new Set(
-        scoredCharacters.map(
-          (character) => character.characterVariantKey || character.id
-        )
-      ),
-    [scoredCharacters]
-  );
-  const visibleCharacters = useMemo(
-    () =>
-      showYearning
-        ? scoredCharacters.filter(
-            (character) =>
-              !character.isYearning ||
-              scoredVariantKeys.has(
-                character.characterVariantKey || character.id
-              )
-          )
-        : scoredCharacters.filter((character) => !character.isYearning),
-    [scoredCharacters, scoredVariantKeys, showYearning]
-  );
-  const unratedYearnings = useMemo(
-    () =>
-      showYearning
-        ? allVariants.filter(
-            (character) =>
-              character.isYearning &&
-              !scoredVariantKeys.has(
-                character.characterVariantKey || character.id
-              )
-          )
-        : [],
-    [allVariants, scoredVariantKeys, showYearning]
+      buildReadonlyTierListDisplay({
+        allCharacters: characters,
+        scoredCharacters,
+        showYearning,
+        isCharacterRated: hasRatedVariant
+      }),
+    [characters, scoredCharacters, showYearning]
   );
 
   useEffect(() => {
@@ -215,30 +134,15 @@ export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
           Shared Tier List
         </Text>
         <Text c="dimmed" size="sm" mt={4}>
-          Generated from rankings saved{' '}
-          {new Date(submission.updatedAt).toLocaleString()}.
+          Generated from rankings saved {formatDate(submission.updatedAt)}.
         </Text>
       </div>
 
-      <Switch
-        checked={showYearning}
-        onChange={(event) => setShowYearning(event.currentTarget.checked)}
-        label="Show Yearning"
-      />
-
-      <ReadonlyTierList
-        buckets={SCORE_BUCKETS}
+      <ReadonlyTierListSection
+        showYearning={showYearning}
+        onShowYearningChange={setShowYearning}
         characters={visibleCharacters}
-        extraBucket={
-          showYearning
-            ? {
-                id: 'unrated-yearnings',
-                label: 'Unrated Yearnings',
-                color: 'gray',
-                items: unratedYearnings
-              }
-            : null
-        }
+        unratedYearnings={unratedYearnings}
       />
     </Stack>
   );

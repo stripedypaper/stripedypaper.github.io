@@ -4,7 +4,6 @@ import {
   Modal,
   Paper,
   SimpleGrid,
-  Switch,
   Stack,
   Table,
   Text
@@ -12,11 +11,15 @@ import {
 import { BarChart } from '@mantine/charts';
 import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useState } from 'react';
-import { ReadonlyTierList } from '../components/ReadonlyTierList.jsx';
+import { ReadonlyTierListSection } from '../components/ReadonlyTierListSection.jsx';
 import { ReadonlyCharacterChip } from '../components/ReadonlyCharacterChip.jsx';
 import { ScoreTooltip } from '../components/ScoreTooltip.jsx';
-import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
-import { getCharacterDisplayName } from '../lib/site.js';
+import { formatDate, getCharacterDisplayName } from '../lib/site.js';
+import {
+  addCommunitySecondaryText,
+  buildReadonlyTierListDisplay,
+  hasCommunityRating
+} from '../lib/readonlyTierList.js';
 
 function roundToTwo(value) {
   return Number((value || 0).toFixed(2));
@@ -294,39 +297,18 @@ export function HomePage({ apiBaseUrl }) {
   }, [apiBaseUrl]);
 
   const characters = useMemo(
-    () =>
-      (communityData?.characters || []).map((character) => ({
-        ...character,
-        secondaryText: String(
-          roundToTwo(character.communityStats?.calculated?.average || 0)
-        )
-      })),
+    () => addCommunitySecondaryText(communityData?.characters || []),
     [communityData]
   );
-  const visibleCharacters = useMemo(
+  const { visibleCharacters, unratedYearnings } = useMemo(
     () =>
-      characters.filter((character) => {
-        if (!showYearning) {
-          return !character.isYearning;
-        }
-
-        return (
-          !character.isYearning ||
-          (character.communityStats?.calculated?.count || 0) > 0
-        );
+      buildReadonlyTierListDisplay({
+        allCharacters: communityData?.characters || [],
+        scoredCharacters: characters,
+        showYearning,
+        isCharacterRated: hasCommunityRating
       }),
-    [characters, showYearning]
-  );
-  const unratedYearnings = useMemo(
-    () =>
-      showYearning
-        ? characters.filter(
-            (character) =>
-              character.isYearning &&
-              (character.communityStats?.calculated?.count || 0) === 0
-          )
-        : [],
-    [characters, showYearning]
+    [characters, communityData, showYearning]
   );
   const favoriteCharacters = useMemo(
     () =>
@@ -366,7 +348,7 @@ export function HomePage({ apiBaseUrl }) {
       notifications.show({
         title: 'Refreshed',
         message: rebuildResult?.computedAt
-          ? `Community tier list refreshed at ${new Date(rebuildResult.computedAt).toLocaleString()}.`
+          ? `Community tier list refreshed at ${formatDate(rebuildResult.computedAt)}.`
           : 'Community tier list refreshed.',
         color: 'grape'
       });
@@ -406,11 +388,7 @@ export function HomePage({ apiBaseUrl }) {
               Community Tier List
             </Text>
             <Text c="dimmed" size="sm" mt={4}>
-              Last updated{' '}
-              {communityData?.computedAt
-                ? new Date(communityData.computedAt).toLocaleString()
-                : '—'}
-              .
+              Last updated {formatDate(communityData?.computedAt)}.
             </Text>
           </div>
 
@@ -419,30 +397,16 @@ export function HomePage({ apiBaseUrl }) {
           </Button>
         </Group>
 
-        <Switch
-          checked={showYearning}
-          onChange={(event) => setShowYearning(event.currentTarget.checked)}
-          label="Show Yearning"
-        />
-
-        <ReadonlyTierList
-          buckets={SCORE_BUCKETS}
+        <ReadonlyTierListSection
+          showYearning={showYearning}
+          onShowYearningChange={setShowYearning}
           characters={visibleCharacters}
           getScore={(character) =>
             character.communityStats?.calculated?.average || 0
           }
           renderTooltipContent={renderCommunityTooltip}
           onCharacterClick={setSelectedCharacter}
-          extraBucket={
-            showYearning
-              ? {
-                  id: 'unrated-yearnings',
-                  label: 'Unrated Yearnings',
-                  color: 'gray',
-                  items: unratedYearnings
-                }
-              : null
-          }
+          unratedYearnings={unratedYearnings}
         />
 
         <Stack gap="sm">

@@ -1,6 +1,7 @@
 import { Group } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
+import { fetchAllCharacters } from '../../lib/charactersApi.js';
 import {
   buildQuestionGroups,
   sanitizePlacementsByQuestion
@@ -11,34 +12,6 @@ import { MyTierListPage } from './MyTierListPage.jsx';
 
 function serializeValue(value) {
   return JSON.stringify(value || {});
-}
-
-async function fetchAllCharacters(apiBaseUrl) {
-  const allCharacters = [];
-  let cursor = null;
-
-  do {
-    const params = new URLSearchParams({
-      limit: '100'
-    });
-
-    if (cursor) {
-      params.set('cursor', cursor);
-    }
-
-    const response = await fetch(`${apiBaseUrl}/admin/characters?${params}`);
-    if (!response.ok) {
-      throw new Error(`Character list failed with status ${response.status}.`);
-    }
-
-    const data = await response.json();
-    allCharacters.push(
-      ...(Array.isArray(data.characters) ? data.characters : [])
-    );
-    cursor = data.nextCursor || null;
-  } while (cursor);
-
-  return allCharacters;
 }
 
 async function fetchMyRankings(apiBaseUrl) {
