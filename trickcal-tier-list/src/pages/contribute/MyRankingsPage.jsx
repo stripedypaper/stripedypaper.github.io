@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { LineupGrid } from '../../components/LineupGrid.jsx';
 import { TierList } from '../../components/TierList.jsx';
 import { getStaticImageUrl } from '../../lib/site.js';
-import { isQuestionnaireVersionV4 } from '../../lib/questionnaireVersion.js';
 import {
   PERSONA_GRID_COLORS,
   buildQuestionGroups,
@@ -67,8 +66,7 @@ export function MyRankingsPage({
   placementsByQuestion,
   submission,
   onChange,
-  onSave,
-  questionnaireVersion
+  onSave
 }) {
   const [saveState, setSaveState] = useState('idle');
   const [saveMessage, setSaveMessage] = useState('');
@@ -82,10 +80,10 @@ export function MyRankingsPage({
 
   const questionGroups = useMemo(
     () =>
-      buildQuestionGroups(characters, questionnaireVersion, {
+      buildQuestionGroups(characters, {
         'ranking-y-1': ownedYearningPlacements
       }),
-    [characters, ownedYearningPlacements, questionnaireVersion]
+    [characters, ownedYearningPlacements]
   );
   const currentSnapshot = useMemo(
     () => serializeAnswers(placementsByQuestion),
@@ -204,26 +202,13 @@ export function MyRankingsPage({
 
   function renderQuestionPrompt(question) {
     if (question.kind === 'personality') {
-      if (isQuestionnaireVersionV4(questionnaireVersion)) {
-        return (
-          <Text mt="xs">
-            For{' '}
-            <Text span fw={800} c={PERSONA_GRID_COLORS[question.personality]}>
-              restricted personality
-            </Text>{' '}
-            content, rate the performance of these apostles.
-          </Text>
-        );
-      }
-
       return (
         <Text mt="xs">
           For{' '}
           <Text span fw={800} c={PERSONA_GRID_COLORS[question.personality]}>
-            6-person restricted personality
+            restricted personality
           </Text>{' '}
-          content, choose the apostles you would use in your ideal lineup.
-          Assume all apostles are at 3 stars without Yearning/Aside.
+          content, rate the performance of these apostles.
         </Text>
       );
     }

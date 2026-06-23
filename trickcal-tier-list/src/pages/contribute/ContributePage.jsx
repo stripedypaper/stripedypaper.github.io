@@ -1,7 +1,6 @@
 import { Group } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
-import { withQuestionnaireVersion } from '../../lib/questionnaireVersion.js';
 import {
   buildQuestionGroups,
   sanitizePlacementsByQuestion
@@ -42,9 +41,9 @@ async function fetchAllCharacters(apiBaseUrl) {
   return allCharacters;
 }
 
-async function fetchMyRankings(apiBaseUrl, questionnaireVersion) {
+async function fetchMyRankings(apiBaseUrl) {
   const response = await fetch(
-    `${apiBaseUrl}${withQuestionnaireVersion('/rankings/me', questionnaireVersion)}`,
+    `${apiBaseUrl}/rankings/me`,
     buildAuthenticatedRequestInit()
   );
 
@@ -56,9 +55,9 @@ async function fetchMyRankings(apiBaseUrl, questionnaireVersion) {
   return data.submission || null;
 }
 
-async function saveMyRankings(apiBaseUrl, answers, questionnaireVersion) {
+async function saveMyRankings(apiBaseUrl, answers) {
   const response = await fetch(
-    `${apiBaseUrl}${withQuestionnaireVersion('/rankings/me', questionnaireVersion)}`,
+    `${apiBaseUrl}/rankings/me`,
     buildAuthenticatedRequestInit({
       method: 'PUT',
       headers: {
@@ -79,13 +78,7 @@ async function saveMyRankings(apiBaseUrl, answers, questionnaireVersion) {
   return data.submission || null;
 }
 
-export function ContributePage({
-  apiBaseUrl,
-  route,
-  user,
-  sessionLoading,
-  questionnaireVersion
-}) {
+export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -96,10 +89,10 @@ export function ContributePage({
   const ownedYearningPlacementsKey = serializeValue(ownedYearningPlacements);
   const questionGroups = useMemo(
     () =>
-      buildQuestionGroups(characters, questionnaireVersion, {
+      buildQuestionGroups(characters, {
         'ranking-y-1': ownedYearningPlacements
       }),
-    [characters, ownedYearningPlacementsKey, questionnaireVersion]
+    [characters, ownedYearningPlacementsKey]
   );
 
   useEffect(() => {
@@ -165,20 +158,13 @@ export function ContributePage({
       }
 
       try {
-        const nextSubmission = await fetchMyRankings(
-          apiBaseUrl,
-          questionnaireVersion
-        );
+        const nextSubmission = await fetchMyRankings(apiBaseUrl);
         if (!active) {
           return;
         }
 
         const sanitizedAnswers = sanitizePlacementsByQuestion(
-          buildQuestionGroups(
-            characters,
-            questionnaireVersion,
-            nextSubmission?.answers || {}
-          ),
+          buildQuestionGroups(characters, nextSubmission?.answers || {}),
           nextSubmission?.answers || {}
         );
 
@@ -208,7 +194,7 @@ export function ContributePage({
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, characters, questionnaireVersion, user?.id]);
+  }, [apiBaseUrl, characters, user?.id]);
 
   useEffect(() => {
     if (!questionGroups.length) {
@@ -254,8 +240,7 @@ export function ContributePage({
   async function handleSave() {
     const nextSubmission = await saveMyRankings(
       apiBaseUrl,
-      sanitizePlacementsByQuestion(questionGroups, placementsByQuestion),
-      questionnaireVersion
+      sanitizePlacementsByQuestion(questionGroups, placementsByQuestion)
     );
     const sanitizedAnswers = sanitizePlacementsByQuestion(
       questionGroups,
@@ -289,7 +274,6 @@ export function ContributePage({
             submission={submission}
             user={user}
             sessionLoading={sessionLoading}
-            questionnaireVersion={questionnaireVersion}
           />
         ) : (
           <MyRankingsPage
@@ -303,7 +287,6 @@ export function ContributePage({
             submission={submission}
             onChange={handleQuestionChange}
             onSave={handleSave}
-            questionnaireVersion={questionnaireVersion}
           />
         )}
       </div>

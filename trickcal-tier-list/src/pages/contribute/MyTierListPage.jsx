@@ -3,7 +3,6 @@ import { notifications } from '@mantine/notifications';
 import { IconShare } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import { ReadonlyTierList } from '../../components/ReadonlyTierList.jsx';
-import { DEFAULT_QUESTIONNAIRE_VERSION } from '../../lib/questionnaireVersion.js';
 import { expandCharacterVariants } from '../../lib/site.js';
 import { SCORE_BUCKETS } from '../../lib/tierBuckets.js';
 
@@ -11,8 +10,8 @@ function roundToTwo(value) {
   return Number((value || 0).toFixed(2));
 }
 
-function mergeCharacterScores(characters, derivedScores, questionnaireVersion) {
-  const variants = expandCharacterVariants(characters, questionnaireVersion);
+function mergeCharacterScores(characters, derivedScores) {
+  const variants = expandCharacterVariants(characters);
   const charactersById = new Map(
     variants.map((character) => [
       character.characterVariantKey || character.id,
@@ -44,24 +43,23 @@ export function MyTierListPage({
   rankingsLoading,
   submission,
   user,
-  sessionLoading,
-  questionnaireVersion = DEFAULT_QUESTIONNAIRE_VERSION
+  sessionLoading
 }) {
   const [showYearning, setShowYearning] = useState(false);
   const shareHref =
     user?.id && typeof window !== 'undefined'
-      ? `${window.location.origin}${window.location.pathname}?questionnaireVersion=${encodeURIComponent(questionnaireVersion)}#/tier-list/${encodeURIComponent(user.id)}`
+      ? `${window.location.origin}${window.location.pathname}#/tier-list/${encodeURIComponent(user.id)}`
       : '';
   const derivedScores = Array.isArray(submission?.derivedScores)
     ? submission.derivedScores
     : [];
   const scoredCharacters = useMemo(
-    () => mergeCharacterScores(characters, derivedScores, questionnaireVersion),
-    [characters, derivedScores, questionnaireVersion]
+    () => mergeCharacterScores(characters, derivedScores),
+    [characters, derivedScores]
   );
   const allVariants = useMemo(
-    () => expandCharacterVariants(characters, questionnaireVersion),
-    [characters, questionnaireVersion]
+    () => expandCharacterVariants(characters),
+    [characters]
   );
   const scoredVariantKeys = useMemo(
     () =>

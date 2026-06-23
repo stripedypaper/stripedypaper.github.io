@@ -15,7 +15,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { ReadonlyTierList } from '../components/ReadonlyTierList.jsx';
 import { ReadonlyCharacterChip } from '../components/ReadonlyCharacterChip.jsx';
 import { ScoreTooltip } from '../components/ScoreTooltip.jsx';
-import { withQuestionnaireVersion } from '../lib/questionnaireVersion.js';
 import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
 import { getCharacterDisplayName } from '../lib/site.js';
 
@@ -184,16 +183,10 @@ function renderCommunityTooltip(character) {
   );
 }
 
-async function fetchCommunityCharacters(apiBaseUrl, questionnaireVersion) {
-  const response = await fetch(
-    `${apiBaseUrl}${withQuestionnaireVersion(
-      '/community/characters',
-      questionnaireVersion
-    )}`,
-    {
-      cache: 'no-store'
-    }
-  );
+async function fetchCommunityCharacters(apiBaseUrl) {
+  const response = await fetch(`${apiBaseUrl}/community/characters`, {
+    cache: 'no-store'
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -204,16 +197,10 @@ async function fetchCommunityCharacters(apiBaseUrl, questionnaireVersion) {
   return response.json();
 }
 
-async function fetchCommunityFavorites(apiBaseUrl, questionnaireVersion) {
-  const response = await fetch(
-    `${apiBaseUrl}${withQuestionnaireVersion(
-      '/community/favorites',
-      questionnaireVersion
-    )}`,
-    {
-      cache: 'no-store'
-    }
-  );
+async function fetchCommunityFavorites(apiBaseUrl) {
+  const response = await fetch(`${apiBaseUrl}/community/favorites`, {
+    cache: 'no-store'
+  });
 
   if (!response.ok) {
     throw new Error(
@@ -224,17 +211,11 @@ async function fetchCommunityFavorites(apiBaseUrl, questionnaireVersion) {
   return response.json();
 }
 
-async function triggerCommunityRebuild(apiBaseUrl, questionnaireVersion) {
-  const response = await fetch(
-    `${apiBaseUrl}${withQuestionnaireVersion(
-      '/community/rebuild',
-      questionnaireVersion
-    )}`,
-    {
-      method: 'POST',
-      cache: 'no-store'
-    }
-  );
+async function triggerCommunityRebuild(apiBaseUrl) {
+  const response = await fetch(`${apiBaseUrl}/community/rebuild`, {
+    method: 'POST',
+    cache: 'no-store'
+  });
   const data = await response.json().catch(() => null);
 
   if (response.status === 429) {
@@ -254,7 +235,7 @@ async function triggerCommunityRebuild(apiBaseUrl, questionnaireVersion) {
   return data;
 }
 
-export function HomePage({ apiBaseUrl, questionnaireVersion }) {
+export function HomePage({ apiBaseUrl }) {
   const [communityData, setCommunityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -281,8 +262,8 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
 
       try {
         const [data, favorites] = await Promise.all([
-          fetchCommunityCharacters(apiBaseUrl, questionnaireVersion),
-          fetchCommunityFavorites(apiBaseUrl, questionnaireVersion)
+          fetchCommunityCharacters(apiBaseUrl),
+          fetchCommunityFavorites(apiBaseUrl)
         ]);
         if (!active) {
           return;
@@ -310,7 +291,7 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, questionnaireVersion]);
+  }, [apiBaseUrl]);
 
   const characters = useMemo(
     () =>
@@ -377,18 +358,9 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
     setRebuilding(true);
 
     try {
-      const rebuildResult = await triggerCommunityRebuild(
-        apiBaseUrl,
-        questionnaireVersion
-      );
-      const refreshed = await fetchCommunityCharacters(
-        apiBaseUrl,
-        questionnaireVersion
-      );
-      const refreshedFavorites = await fetchCommunityFavorites(
-        apiBaseUrl,
-        questionnaireVersion
-      );
+      const rebuildResult = await triggerCommunityRebuild(apiBaseUrl);
+      const refreshed = await fetchCommunityCharacters(apiBaseUrl);
+      const refreshedFavorites = await fetchCommunityFavorites(apiBaseUrl);
       setCommunityData(refreshed);
       setFavoriteData(refreshedFavorites);
       notifications.show({

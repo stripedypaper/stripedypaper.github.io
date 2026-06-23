@@ -1,5 +1,3 @@
-import { DEFAULT_QUESTIONNAIRE_VERSION } from './questionnaireVersion.js';
-
 export const TOP_NAV = [
   { key: 'home', label: 'Tier list', hash: '#/' },
   { key: 'contribute', label: 'Contribute', hash: '#/contribute' },
@@ -186,22 +184,13 @@ export function parseCharacterVariantKey(value = '') {
   };
 }
 
-export function expandCharacterVariants(
-  characters,
-  questionnaireVersion = DEFAULT_QUESTIONNAIRE_VERSION
-) {
-  const isVariantAware = questionnaireVersion === '2026-06-22-v4';
-
+export function expandCharacterVariants(characters) {
   return (characters || []).flatMap((character) => {
     const baseVariant = {
       ...character,
-      id: isVariantAware
-        ? buildCharacterVariantKey(character.id, false)
-        : character.id,
+      id: buildCharacterVariantKey(character.id, false),
       characterId: character.id,
-      characterVariantKey: isVariantAware
-        ? buildCharacterVariantKey(character.id, false)
-        : character.id,
+      characterVariantKey: buildCharacterVariantKey(character.id, false),
       isYearning: false,
       baseName:
         character.nameEn ||
@@ -211,11 +200,7 @@ export function expandCharacterVariants(
         character.id
     };
 
-    if (
-      !isVariantAware ||
-      !character.hasYearning ||
-      !character.yearningImageUrl
-    ) {
+    if (!character.hasYearning || !character.yearningImageUrl) {
       return [baseVariant];
     }
 

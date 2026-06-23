@@ -1,7 +1,6 @@
 import { Paper, Stack, Switch, Text } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { ReadonlyTierList } from '../components/ReadonlyTierList.jsx';
-import { withQuestionnaireVersion } from '../lib/questionnaireVersion.js';
 import { expandCharacterVariants } from '../lib/site.js';
 import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
 
@@ -9,8 +8,8 @@ function roundToTwo(value) {
   return Number((value || 0).toFixed(2));
 }
 
-function mergeCharacterScores(characters, derivedScores, questionnaireVersion) {
-  const variants = expandCharacterVariants(characters, questionnaireVersion);
+function mergeCharacterScores(characters, derivedScores) {
+  const variants = expandCharacterVariants(characters);
   const charactersById = new Map(
     variants.map((character) => [
       character.characterVariantKey || character.id,
@@ -62,12 +61,9 @@ async function fetchAllCharacters(apiBaseUrl) {
   return allCharacters;
 }
 
-async function fetchSharedSubmission(apiBaseUrl, userId, questionnaireVersion) {
+async function fetchSharedSubmission(apiBaseUrl, userId) {
   const response = await fetch(
-    `${apiBaseUrl}${withQuestionnaireVersion(
-      `/rankings/${encodeURIComponent(userId)}`,
-      questionnaireVersion
-    )}`
+    `${apiBaseUrl}/rankings/${encodeURIComponent(userId)}`
   );
 
   if (response.status === 404) {
@@ -82,11 +78,7 @@ async function fetchSharedSubmission(apiBaseUrl, userId, questionnaireVersion) {
   return data.submission || null;
 }
 
-export function SharedTierListPage({
-  apiBaseUrl,
-  sharedUserId,
-  questionnaireVersion
-}) {
+export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
   const [characters, setCharacters] = useState([]);
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -96,12 +88,12 @@ export function SharedTierListPage({
     ? submission.derivedScores
     : [];
   const scoredCharacters = useMemo(
-    () => mergeCharacterScores(characters, derivedScores, questionnaireVersion),
-    [characters, derivedScores, questionnaireVersion]
+    () => mergeCharacterScores(characters, derivedScores),
+    [characters, derivedScores]
   );
   const allVariants = useMemo(
-    () => expandCharacterVariants(characters, questionnaireVersion),
-    [characters, questionnaireVersion]
+    () => expandCharacterVariants(characters),
+    [characters]
   );
   const scoredVariantKeys = useMemo(
     () =>
@@ -158,7 +150,7 @@ export function SharedTierListPage({
       try {
         const [nextCharacters, nextSubmission] = await Promise.all([
           fetchAllCharacters(apiBaseUrl),
-          fetchSharedSubmission(apiBaseUrl, sharedUserId, questionnaireVersion)
+          fetchSharedSubmission(apiBaseUrl, sharedUserId)
         ]);
 
         if (!active) {
@@ -187,7 +179,7 @@ export function SharedTierListPage({
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, questionnaireVersion, sharedUserId]);
+  }, [apiBaseUrl, sharedUserId]);
 
   if (loading) {
     return (

@@ -39,7 +39,6 @@ export const PERSONA_GRID_COLORS = {
   mad: '#ec849d'
 };
 
-const QUESTIONNAIRE_VERSION_V4 = '2026-06-22-v4';
 const OWNED_YEARNING_QUESTION_ID_V4 = 'ranking-y-1';
 
 const MIXED_CRUSADE_LINEUP_GRID = [
@@ -72,45 +71,18 @@ function normalizeAssignedPlacements(placements) {
   return assignedPlacements;
 }
 
-function getQuestionTiers(questionKind, questionnaireVersion) {
+function getQuestionTiers(questionKind) {
   if (questionKind === 'personality') {
-    if (questionnaireVersion === QUESTIONNAIRE_VERSION_V4) {
-      return [
-        {
-          id: 'meta_defining',
-          label: 'Meta-defining',
-          score: 10,
-          color: 'grape'
-        },
-        { id: 'exceptional', label: 'Exceptional', score: 9, color: 'blue' },
-        { id: 'strong', label: 'Strong', score: 8, color: 'teal' },
-        { id: 'good', label: 'Good', score: 6, color: 'green' },
-        { id: 'usable', label: 'Usable', score: 4, color: 'yellow' },
-        { id: 'do_not_use', label: 'Do not use', score: 0, color: 'red' }
-      ];
-    }
-
     return [
       {
-        id: 'top_6',
-        label: 'Top 6',
+        id: 'meta_defining',
+        label: 'Meta-defining',
         score: 10,
-        color: 'grape',
-        minimum: 6,
-        maximum: 6
+        color: 'grape'
       },
-      {
-        id: 'good_alternatives',
-        label: 'Best alternatives',
-        score: 8,
-        color: 'blue'
-      },
-      {
-        id: 'good',
-        label: 'Good',
-        score: 6,
-        color: 'teal'
-      },
+      { id: 'exceptional', label: 'Exceptional', score: 9, color: 'blue' },
+      { id: 'strong', label: 'Strong', score: 8, color: 'teal' },
+      { id: 'good', label: 'Good', score: 6, color: 'green' },
       {
         id: 'usable',
         label: 'Usable',
@@ -169,35 +141,25 @@ function matchesPersonality(character, personality) {
   );
 }
 
-export function buildQuestionGroups(
-  characters,
-  questionnaireVersion = QUESTIONNAIRE_VERSION_V4,
-  answers = {}
-) {
-  const candidates = expandCharacterVariants(characters, questionnaireVersion);
+export function buildQuestionGroups(characters, answers = {}) {
+  const candidates = expandCharacterVariants(characters);
   const ownedYearningIds = new Set(
     Object.entries(answers?.[OWNED_YEARNING_QUESTION_ID_V4] || {})
       .filter(([, tierId]) => tierId === 'owned')
       .map(([characterId]) => characterId)
   );
-  const selectableCandidates =
-    questionnaireVersion === QUESTIONNAIRE_VERSION_V4
-      ? candidates.filter(
-          (candidate) =>
-            !candidate.isYearning || ownedYearningIds.has(candidate.id)
-        )
-      : candidates;
+  const selectableCandidates = candidates.filter(
+    (candidate) => !candidate.isYearning || ownedYearningIds.has(candidate.id)
+  );
   const groups = [];
 
-  if (questionnaireVersion === QUESTIONNAIRE_VERSION_V4) {
-    groups.push({
-      id: OWNED_YEARNING_QUESTION_ID_V4,
-      label: 'Ranking Y1: Owned Yearnings',
-      kind: 'owned-yearning',
-      tiers: getOwnedYearningQuestionTiers(),
-      items: candidates.filter((candidate) => candidate.isYearning)
-    });
-  }
+  groups.push({
+    id: OWNED_YEARNING_QUESTION_ID_V4,
+    label: 'Ranking Y1: Owned Yearnings',
+    kind: 'owned-yearning',
+    tiers: getOwnedYearningQuestionTiers(),
+    items: candidates.filter((candidate) => candidate.isYearning)
+  });
 
   PERSONALITY_ORDER.forEach((personality, index) => {
     const items = selectableCandidates.filter((character) =>
@@ -215,7 +177,7 @@ export function buildQuestionGroups(
           Array.from({ length: 3 }, () => PERSONA_GRID_COLORS[personality])
         )
       },
-      tiers: getQuestionTiers('personality', questionnaireVersion),
+      tiers: getQuestionTiers('personality'),
       items
     });
   });
@@ -235,7 +197,7 @@ export function buildQuestionGroups(
           items: ['🐻', '👻', '🐻', '👻']
         }
       },
-      tiers: getQuestionTiers('mixed', questionnaireVersion),
+      tiers: getQuestionTiers('mixed'),
       items: selectableCandidates.filter((character) => character.role === role)
     });
   });
@@ -252,7 +214,7 @@ export function buildQuestionGroups(
         cells: MIXED_FRONTIER_LINEUP_GRID,
         trailingEmoji: '👾'
       },
-      tiers: getQuestionTiers('mixed', questionnaireVersion),
+      tiers: getQuestionTiers('mixed'),
       items: selectableCandidates.filter((character) => character.role === role)
     });
   });
@@ -262,10 +224,7 @@ export function buildQuestionGroups(
     label: 'Ranking F: Favorite',
     kind: 'favorite',
     tiers: getFavoriteQuestionTiers(),
-    items:
-      questionnaireVersion === QUESTIONNAIRE_VERSION_V4
-        ? selectableCandidates.filter((candidate) => !candidate.isYearning)
-        : [...selectableCandidates]
+    items: selectableCandidates.filter((candidate) => !candidate.isYearning)
   });
 
   return groups;

@@ -704,9 +704,7 @@ function parseJsonBody(event) {
 }
 
 function getQuestionnaireVersion(event) {
-  return resolveQuestionnaireVersion(
-    event?.queryStringParameters?.questionnaireVersion
-  );
+  return resolveQuestionnaireVersion();
 }
 
 function safeEqual(left, right) {

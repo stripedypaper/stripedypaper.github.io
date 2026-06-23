@@ -140,6 +140,33 @@ After deployment:
 4. Use the `CharactersTableName` output for the characters table and `CharactersCdnBaseUrl` for image URLs.
 5. Push the source changes and let `.github/workflows/deploy-pages.yml` publish the GitHub Pages artifact.
 
+### DynamoDB table status
+
+The stack still defines several older tables for retention purposes, but the live app now only uses the v4 questionnaire path.
+
+Active runtime tables:
+
+- `UsersTable`
+- `CharactersTableV2`
+- `RankingSubmissionsV2Table`
+- `UserCharacterScoresV4Table`
+- `UserFavoritesTable`
+- `CommunityCharacterStatsV4Table`
+
+Retained tables with effectively no current application read/write paths:
+
+- `RankingSubmissionsTable`
+- `UserCharacterScoresTable`
+- `CommunityCharacterStatsTable`
+- `UserCharacterScoresV2Table`
+- `CommunityCharacterStatsV2Table`
+
+Notes:
+
+- `RankingSubmissionsV2Table` remains active despite the name; it stores the current v4 raw submissions keyed by `userId` and `questionnaireVersion`.
+- The frontend no longer selects questionnaire versions, and the backend now resolves all ranking/community flows to the active v4 path.
+- These retained tables should be treated as historical/manual-recovery data unless you deliberately reintroduce code paths for them.
+
 ## Authorization model
 
 - The first login for a Discord ID creates a `user` row in the users table.

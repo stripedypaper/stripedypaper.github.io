@@ -1,9 +1,8 @@
 import { Button, Paper, Stack, Text } from '@mantine/core';
 import { useState } from 'react';
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
-import { withQuestionnaireVersion } from '../../lib/questionnaireVersion.js';
 
-export function ManageCommunityPage({ apiBaseUrl, questionnaireVersion }) {
+export function ManageCommunityPage({ apiBaseUrl }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -19,10 +18,7 @@ export function ManageCommunityPage({ apiBaseUrl, questionnaireVersion }) {
 
     try {
       const response = await fetch(
-        `${apiBaseUrl}${withQuestionnaireVersion(
-          '/admin/community/rebuild',
-          questionnaireVersion
-        )}`,
+        `${apiBaseUrl}/admin/community/rebuild`,
         buildAuthenticatedRequestInit({
           method: 'POST'
         })

@@ -30,10 +30,7 @@ export function AdminPage({
         {routeKey === 'characters' && canViewCharacters ? (
           <ManageCharactersPage apiBaseUrl={apiBaseUrl} />
         ) : routeKey === 'community' && canViewUsers ? (
-          <ManageCommunityPage
-            apiBaseUrl={apiBaseUrl}
-            questionnaireVersion={questionnaireVersion}
-          />
+          <ManageCommunityPage apiBaseUrl={apiBaseUrl} />
         ) : canViewUsers ? (
           <ManageUsersPage apiBaseUrl={apiBaseUrl} />
         ) : null}
