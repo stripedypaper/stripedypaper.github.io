@@ -108,7 +108,7 @@ function CharacterDetailsModal({ character, opened, onClose }) {
           <Paper className="question-card" p="md" radius="lg" withBorder>
             <Stack gap={4}>
               <Text c="dimmed" size="sm">
-                Mixed crusade average
+                Crusade average
               </Text>
               <Text fw={700} size="xl">
                 {roundToTwo(stats.mixedCrusade?.average || 0)}
@@ -118,7 +118,7 @@ function CharacterDetailsModal({ character, opened, onClose }) {
           <Paper className="question-card" p="md" radius="lg" withBorder>
             <Stack gap={4}>
               <Text c="dimmed" size="sm">
-                Mixed frontier average
+                Raid average
               </Text>
               <Text fw={700} size="xl">
                 {roundToTwo(stats.mixedFrontier?.average || 0)}
@@ -143,14 +143,14 @@ function CharacterDetailsModal({ character, opened, onClose }) {
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Mixed Crusade Score Vote Distribution"
+            title="Crusade Score Vote Distribution"
             data={buildSortedDistributionData(stats.mixedCrusade?.distribution)}
             valueKey="votes"
             color="lime.6"
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Mixed Frontier Score Vote Distribution"
+            title="Raid Score Vote Distribution"
             data={buildSortedDistributionData(
               stats.mixedFrontier?.distribution
             )}
@@ -176,8 +176,9 @@ function renderCommunityTooltip(character) {
       raidScore={roundToTwo(
         character.communityStats?.mixedFrontier?.average || 0
       )}
-      mixedLabel="Mixed score"
-      raidLabel="Raid score"
+      monoLabel="Mono"
+      mixedLabel="Crusade"
+      raidLabel="Raid"
     />
   );
 }

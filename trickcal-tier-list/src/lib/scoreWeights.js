@@ -1,11 +1,11 @@
 export const SCORE_WEIGHTS = {
-  mono: 0.2,
-  mixed: 0.5,
+  mono: 0.25,
+  mixed: 0.45,
   raid: 0.3
 };
 
 export const SCORE_WEIGHT_LABELS = {
-  mono: '20%',
-  mixed: '50%',
+  mono: '25%',
+  mixed: '45%',
   raid: '30%'
 };

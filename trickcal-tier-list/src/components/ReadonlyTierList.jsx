@@ -37,21 +37,21 @@ function buildBreakdownLines(character) {
 
     if (typeof character.monoScore === 'number') {
       lines.push({
-        label: 'Mono score',
+        label: 'Mono',
         score: character.monoScore * 0.2
       });
     }
 
     if (typeof character.mixedCrusadeScore === 'number') {
       lines.push({
-        label: 'Mixed score',
+        label: 'Crusade',
         score: character.mixedCrusadeScore * 0.5
       });
     }
 
     if (typeof character.mixedFrontierScore === 'number') {
       lines.push({
-        label: 'Raid score',
+        label: 'Raid',
         score: character.mixedFrontierScore * 0.3
       });
     }
@@ -73,8 +73,8 @@ function buildBreakdownLines(character) {
     calculatedScore > monoScore + mixedScore ? nicheScore : 0;
 
   const lines = [
-    { label: 'Mono score', score: monoScore },
-    { label: 'Mixed score', score: mixedScore }
+    { label: 'Mono', score: monoScore },
+    { label: 'Crusade', score: mixedScore }
   ];
 
   if (hasNicheVote) {
@@ -96,6 +96,9 @@ function getDefaultTooltipContent(character) {
         monoScore={character.monoScore ?? 0}
         mixedScore={character.mixedCrusadeScore ?? 0}
         raidScore={character.mixedFrontierScore ?? 0}
+        monoLabel="Mono"
+        mixedLabel="Crusade"
+        raidLabel="Raid"
       />
     );
   }
@@ -111,6 +114,8 @@ function getDefaultTooltipContent(character) {
       score={character.calculatedScore ?? 0}
       monoScore={character.monoScore ?? 0}
       mixedScore={character.mixedScore ?? 0}
+      monoLabel="Mono"
+      mixedLabel="Crusade"
     />
   );
 }

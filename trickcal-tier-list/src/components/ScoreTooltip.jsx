@@ -16,14 +16,15 @@ export function ScoreTooltip({
   monoScore,
   mixedScore,
   raidScore,
-  mixedLabel = 'Mixed score',
-  raidLabel = 'Raid score'
+  monoLabel = 'Mono',
+  mixedLabel = 'Crusade',
+  raidLabel = 'Raid'
 }) {
   return (
     <Stack gap={6}>
       <Text fw={700}>{title}</Text>
       <Text size="sm">
-        Mono score:{' '}
+        {monoLabel}:{' '}
         <Text span c="dimmed">
           {formatNumber(monoScore)} × {SCORE_WEIGHT_LABELS.mono} =
         </Text>{' '}

@@ -184,8 +184,8 @@ export function MyRankingsPage({
     if (question.kind === 'mixed-crusade') {
       return (
         <Text mt="xs">
-          For Crusade-like content focusing on wave-based combat versus multiple
-          enemies, but{' '}
+          For Crusade-like content focusing on wave-based combat with restricted
+          access to Senior skills versus multiple enemies, but{' '}
           <Text span fw={800}>
             ignoring personality bonuses
           </Text>
