@@ -1,7 +1,11 @@
 import { Group } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
 import { withQuestionnaireVersion } from '../../lib/questionnaireVersion.js';
+import {
+  buildQuestionGroups,
+  sanitizePlacementsByQuestion
+} from '../../lib/rankings.js';
 import { ContributeSidebar } from '../../components/ContributeSidebar.jsx';
 import { MyRankingsPage } from './MyRankingsPage.jsx';
 import { MyTierListPage } from './MyTierListPage.jsx';
@@ -84,6 +88,10 @@ export function ContributePage({
   const [placementsByQuestion, setPlacementsByQuestion] = useState({});
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [submission, setSubmission] = useState(null);
+  const questionGroups = useMemo(
+    () => buildQuestionGroups(characters),
+    [characters]
+  );
 
   useEffect(() => {
     let active = true;
@@ -156,8 +164,20 @@ export function ContributePage({
           return;
         }
 
-        setSubmission(nextSubmission);
-        setPlacementsByQuestion(nextSubmission?.answers || {});
+        const sanitizedAnswers = sanitizePlacementsByQuestion(
+          questionGroups,
+          nextSubmission?.answers || {}
+        );
+
+        setSubmission(
+          nextSubmission
+            ? {
+                ...nextSubmission,
+                answers: sanitizedAnswers
+              }
+            : null
+        );
+        setPlacementsByQuestion(sanitizedAnswers);
       } catch {
         if (active) {
           setSubmission(null);
@@ -175,7 +195,28 @@ export function ContributePage({
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, questionnaireVersion, user?.id]);
+  }, [apiBaseUrl, questionnaireVersion, questionGroups, user?.id]);
+
+  useEffect(() => {
+    if (!questionGroups.length) {
+      return;
+    }
+
+    setPlacementsByQuestion((currentValue) =>
+      sanitizePlacementsByQuestion(questionGroups, currentValue)
+    );
+    setSubmission((currentValue) =>
+      currentValue
+        ? {
+            ...currentValue,
+            answers: sanitizePlacementsByQuestion(
+              questionGroups,
+              currentValue.answers || {}
+            )
+          }
+        : currentValue
+    );
+  }, [questionGroups]);
 
   function handleQuestionChange(questionId, nextPlacements) {
     setPlacementsByQuestion((currentValue) => ({
@@ -187,11 +228,22 @@ export function ContributePage({
   async function handleSave() {
     const nextSubmission = await saveMyRankings(
       apiBaseUrl,
-      placementsByQuestion,
+      sanitizePlacementsByQuestion(questionGroups, placementsByQuestion),
       questionnaireVersion
     );
-    setSubmission(nextSubmission);
-    setPlacementsByQuestion(nextSubmission?.answers || {});
+    const sanitizedAnswers = sanitizePlacementsByQuestion(
+      questionGroups,
+      nextSubmission?.answers || {}
+    );
+    setSubmission(
+      nextSubmission
+        ? {
+            ...nextSubmission,
+            answers: sanitizedAnswers
+          }
+        : null
+    );
+    setPlacementsByQuestion(sanitizedAnswers);
     return nextSubmission;
   }
 

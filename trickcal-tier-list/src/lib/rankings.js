@@ -226,3 +226,66 @@ export function listIncompleteRequiredQuestions(questionGroups, answers) {
       return assignedCount !== question.items.length;
     });
 }
+
+export function listQuestionsWithUnsatisfiedMinimums(questionGroups, answers) {
+  return questionGroups.flatMap((question) => {
+    const placements = normalizeAssignedPlacements(answers?.[question.id]);
+    const countsByTierId = Object.values(placements).reduce(
+      (counts, tierId) => {
+        counts[tierId] = (counts[tierId] || 0) + 1;
+        return counts;
+      },
+      {}
+    );
+
+    return (question.tiers || [])
+      .filter(
+        (tier) =>
+          typeof tier.minimum === 'number' &&
+          (countsByTierId[tier.id] || 0) < tier.minimum
+      )
+      .map((tier) => ({
+        question,
+        tier,
+        assignedCount: countsByTierId[tier.id] || 0
+      }));
+  });
+}
+
+export function sanitizePlacementsByQuestion(questionGroups, answers) {
+  const sanitized = {};
+
+  for (const question of questionGroups) {
+    const rawPlacements = answers?.[question.id];
+    if (!rawPlacements || typeof rawPlacements !== 'object') {
+      continue;
+    }
+
+    const eligibleCharacterIds = new Set(
+      (question.items || []).map((item) => item.id)
+    );
+    const allowedTierIds = new Set(
+      (question.tiers || []).map((tier) => tier.id)
+    );
+    const nextPlacements = {};
+
+    for (const [characterId, tierId] of Object.entries(
+      normalizeAssignedPlacements(rawPlacements)
+    )) {
+      if (
+        !eligibleCharacterIds.has(characterId) ||
+        !allowedTierIds.has(tierId)
+      ) {
+        continue;
+      }
+
+      nextPlacements[characterId] = tierId;
+    }
+
+    if (Object.keys(nextPlacements).length > 0) {
+      sanitized[question.id] = nextPlacements;
+    }
+  }
+
+  return sanitized;
+}

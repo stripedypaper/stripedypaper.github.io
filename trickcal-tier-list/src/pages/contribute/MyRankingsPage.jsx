@@ -7,7 +7,8 @@ import { getStaticImageUrl } from '../../lib/site.js';
 import {
   PERSONA_GRID_COLORS,
   buildQuestionGroups,
-  listIncompleteRequiredQuestions
+  listIncompleteRequiredQuestions,
+  listQuestionsWithUnsatisfiedMinimums
 } from '../../lib/rankings.js';
 
 function normalizeAnswers(answers) {
@@ -88,11 +89,28 @@ export function MyRankingsPage({
     () => listIncompleteRequiredQuestions(questionGroups, placementsByQuestion),
     [placementsByQuestion, questionGroups]
   );
+  const unsatisfiedMinimums = useMemo(
+    () =>
+      listQuestionsWithUnsatisfiedMinimums(
+        questionGroups,
+        placementsByQuestion
+      ),
+    [placementsByQuestion, questionGroups]
+  );
   const missingAssignmentsMessage =
     incompleteRequiredQuestions.length > 0
       ? `${incompleteRequiredQuestions
           .map((question) => question.label)
           .join(', ')} must assign every apostle before saving.`
+      : '';
+  const minimumRequirementsMessage =
+    unsatisfiedMinimums.length > 0
+      ? unsatisfiedMinimums
+          .map(
+            ({ question, tier, assignedCount }) =>
+              `${question.label} ${tier.label} must have at least ${tier.minimum} apostles (${assignedCount}/${tier.minimum}).`
+          )
+          .join(' ')
       : '';
   const hasUnsavedChanges = currentSnapshot !== lastSavedSnapshot;
   const saveDisabled =
@@ -138,6 +156,17 @@ export function MyRankingsPage({
         color: 'red',
         title: 'Unable to save rankings',
         message: missingAssignmentsMessage
+      });
+      setSaveState('error');
+      setSaveMessage('');
+      return;
+    }
+
+    if (minimumRequirementsMessage) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to save rankings',
+        message: minimumRequirementsMessage
       });
       setSaveState('error');
       setSaveMessage('');

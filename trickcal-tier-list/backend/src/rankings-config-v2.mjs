@@ -11,7 +11,7 @@ export const PERSONALITY_ORDER_V2 = [
 export const ROLE_ORDER_V2 = ['dps', 'support', 'tank'];
 
 export const PERSONALITY_TIERS_V2 = [
-  { id: 'top_6', score: 10, maximum: 6 },
+  { id: 'top_6', score: 10, minimum: 6, maximum: 6 },
   { id: 'good_alternatives', score: 8 },
   { id: 'good', score: 6 },
   { id: 'usable', score: 4 },

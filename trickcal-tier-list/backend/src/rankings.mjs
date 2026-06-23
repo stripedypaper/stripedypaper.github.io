@@ -477,6 +477,19 @@ function validateAnswers({
       throw new Error(`Every apostle must be assigned for ${question.id}.`);
     }
 
+    for (const tier of question.tiers) {
+      if (typeof tier.minimum !== 'number') {
+        continue;
+      }
+
+      const assignedCount = bucketCounts.get(tier.id) || 0;
+      if (assignedCount < tier.minimum) {
+        throw new Error(
+          `${question.id} ${tier.id} requires at least ${tier.minimum} characters.`
+        );
+      }
+    }
+
     normalizedAnswers[question.id] = placements;
   }
 
