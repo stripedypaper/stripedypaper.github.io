@@ -4,6 +4,7 @@ import {
   Modal,
   Paper,
   SimpleGrid,
+  Switch,
   Stack,
   Table,
   Text
@@ -188,13 +189,34 @@ async function fetchCommunityCharacters(apiBaseUrl, questionnaireVersion) {
     `${apiBaseUrl}${withQuestionnaireVersion(
       '/community/characters',
       questionnaireVersion
-    )}`
+    )}`,
+    {
+      cache: 'no-store'
+    }
   );
 
   if (!response.ok) {
     throw new Error(
       `Community tier list failed with status ${response.status}.`
     );
+  }
+
+  return response.json();
+}
+
+async function fetchCommunityFavorites(apiBaseUrl, questionnaireVersion) {
+  const response = await fetch(
+    `${apiBaseUrl}${withQuestionnaireVersion(
+      '/community/favorites',
+      questionnaireVersion
+    )}`,
+    {
+      cache: 'no-store'
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Community favorites failed with status ${response.status}.`);
   }
 
   return response.json();
@@ -207,7 +229,8 @@ async function triggerCommunityRebuild(apiBaseUrl, questionnaireVersion) {
       questionnaireVersion
     )}`,
     {
-      method: 'POST'
+      method: 'POST',
+      cache: 'no-store'
     }
   );
   const data = await response.json().catch(() => null);
@@ -235,6 +258,8 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
   const [error, setError] = useState('');
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [rebuilding, setRebuilding] = useState(false);
+  const [favoriteData, setFavoriteData] = useState(null);
+  const [showYearning, setShowYearning] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -253,15 +278,16 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
       }
 
       try {
-        const data = await fetchCommunityCharacters(
-          apiBaseUrl,
-          questionnaireVersion
-        );
+        const [data, favorites] = await Promise.all([
+          fetchCommunityCharacters(apiBaseUrl, questionnaireVersion),
+          fetchCommunityFavorites(apiBaseUrl, questionnaireVersion)
+        ]);
         if (!active) {
           return;
         }
 
         setCommunityData(data);
+        setFavoriteData(favorites);
       } catch (loadError) {
         if (active) {
           setError(
@@ -294,12 +320,31 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
       })),
     [communityData]
   );
+  const visibleCharacters = useMemo(
+    () =>
+      characters.filter((character) => {
+        if (!showYearning) {
+          return !character.isYearning;
+        }
+
+        return !character.isYearning || (character.communityStats?.calculated?.count || 0) > 0;
+      }),
+    [characters, showYearning]
+  );
+  const unratedYearnings = useMemo(
+    () =>
+      showYearning
+        ? characters.filter(
+            (character) =>
+              character.isYearning &&
+              (character.communityStats?.calculated?.count || 0) === 0
+          )
+        : [],
+    [characters, showYearning]
+  );
   const favoriteCharacters = useMemo(
     () =>
-      [...characters]
-        .filter(
-          (character) => (character.communityStats?.favoriteCount || 0) > 0
-        )
+      [...(favoriteData?.characters || [])]
         .sort((left, right) => {
           const favoriteDifference =
             (right.communityStats?.favoriteCount || 0) -
@@ -309,14 +354,6 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
             return favoriteDifference;
           }
 
-          const averageDifference =
-            (right.communityStats?.calculated?.average || 0) -
-            (left.communityStats?.calculated?.average || 0);
-
-          if (averageDifference !== 0) {
-            return averageDifference;
-          }
-
           return getCharacterDisplayName(left).localeCompare(
             getCharacterDisplayName(right),
             undefined,
@@ -324,7 +361,7 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
           );
         })
         .slice(0, 20),
-    [characters]
+    [favoriteData]
   );
 
   async function handleRebuild() {
@@ -343,7 +380,12 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
         apiBaseUrl,
         questionnaireVersion
       );
+      const refreshedFavorites = await fetchCommunityFavorites(
+        apiBaseUrl,
+        questionnaireVersion
+      );
       setCommunityData(refreshed);
+      setFavoriteData(refreshedFavorites);
       notifications.show({
         title: 'Refreshed',
         message: rebuildResult?.computedAt
@@ -393,11 +435,6 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
                 : '—'}
               .
             </Text>
-            <Text size="sm" mt="sm">
-              This tier list ranks the apostles according to their performance
-              at 3 stars without Yearning/Aside. Click the apostle icon to see
-              details about the voting distribution.
-            </Text>
           </div>
 
           <Button onClick={handleRebuild} loading={rebuilding} color="grape">
@@ -405,14 +442,30 @@ export function HomePage({ apiBaseUrl, questionnaireVersion }) {
           </Button>
         </Group>
 
+        <Switch
+          checked={showYearning}
+          onChange={(event) => setShowYearning(event.currentTarget.checked)}
+          label="Show Yearning"
+        />
+
         <ReadonlyTierList
           buckets={SCORE_BUCKETS}
-          characters={characters}
+          characters={visibleCharacters}
           getScore={(character) =>
             character.communityStats?.calculated?.average || 0
           }
           renderTooltipContent={renderCommunityTooltip}
           onCharacterClick={setSelectedCharacter}
+          extraBucket={
+            showYearning
+              ? {
+                  id: 'unrated-yearnings',
+                  label: 'Unrated Yearnings',
+                  color: 'gray',
+                  items: unratedYearnings
+                }
+              : null
+          }
         />
 
         <Stack gap="sm">

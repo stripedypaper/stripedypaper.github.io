@@ -24,7 +24,6 @@ import {
   MIXED_CRUSADE_QUESTION_IDS_V2,
   MIXED_FRONTIER_QUESTION_IDS_V2,
   PERSONALITY_QUESTION_IDS_V2,
-  QUESTIONNAIRE_VERSION_V2,
   RANKING_QUESTIONS_BY_ID_V2,
   RANKING_QUESTIONS_V2,
   getTierScoreV2,
@@ -32,9 +31,21 @@ import {
   requiresCompleteAssignmentV2
 } from './rankings-config-v2.mjs';
 import {
+  MIXED_CRUSADE_QUESTION_IDS_V4,
+  MIXED_FRONTIER_QUESTION_IDS_V4,
+  OWNED_YEARNING_QUESTION_ID_V4,
+  PERSONALITY_QUESTION_IDS_V4,
+  RANKING_QUESTIONS_BY_ID_V4,
+  RANKING_QUESTIONS_V4,
+  getTierScoreV4,
+  isCharacterEligibleForQuestionV4,
+  requiresCompleteAssignmentV4
+} from './rankings-config-v4.mjs';
+import {
   ACTIVE_QUESTIONNAIRE_VERSION,
   LEGACY_QUESTIONNAIRE_VERSION,
   isQuestionnaireVersionV2,
+  isQuestionnaireVersionV4,
   resolveQuestionnaireVersion
 } from './questionnaire-version.mjs';
 import { calculateQuestionnaireV2Score } from './score-weights.mjs';
@@ -47,6 +58,33 @@ const RANKING_SUBMISSIONS_V2_TABLE_NAME =
   process.env.RANKING_SUBMISSIONS_V2_TABLE_NAME;
 const USER_CHARACTER_SCORES_V2_TABLE_NAME =
   process.env.USER_CHARACTER_SCORES_V2_TABLE_NAME;
+const USER_CHARACTER_SCORES_V4_TABLE_NAME =
+  process.env.USER_CHARACTER_SCORES_V4_TABLE_NAME;
+
+const MODERN_RANKING_CONFIGS = {
+  v2: {
+    questions: RANKING_QUESTIONS_V2,
+    questionsById: RANKING_QUESTIONS_BY_ID_V2,
+    personalityQuestionIds: PERSONALITY_QUESTION_IDS_V2,
+    mixedCrusadeQuestionIds: MIXED_CRUSADE_QUESTION_IDS_V2,
+    mixedFrontierQuestionIds: MIXED_FRONTIER_QUESTION_IDS_V2,
+    getTierScore: getTierScoreV2,
+    isCharacterEligibleForQuestion: isCharacterEligibleForQuestionV2,
+    requiresCompleteAssignment: requiresCompleteAssignmentV2,
+    variantAware: false
+  },
+  v4: {
+    questions: RANKING_QUESTIONS_V4,
+    questionsById: RANKING_QUESTIONS_BY_ID_V4,
+    personalityQuestionIds: PERSONALITY_QUESTION_IDS_V4,
+    mixedCrusadeQuestionIds: MIXED_CRUSADE_QUESTION_IDS_V4,
+    mixedFrontierQuestionIds: MIXED_FRONTIER_QUESTION_IDS_V4,
+    getTierScore: getTierScoreV4,
+    isCharacterEligibleForQuestion: isCharacterEligibleForQuestionV4,
+    requiresCompleteAssignment: requiresCompleteAssignmentV4,
+    variantAware: true
+  }
+};
 
 const ddbClient = new DynamoDBClient({});
 
@@ -55,8 +93,8 @@ export async function getRankingSubmission(userId, questionnaireVersionInput) {
     questionnaireVersionInput
   );
 
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
-    return getRankingSubmissionV2(userId, questionnaireVersion);
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
+    return getRankingSubmissionModern(userId, questionnaireVersion);
   }
 
   return getRankingSubmissionLegacy(userId);
@@ -71,8 +109,12 @@ export async function saveRankingSubmission(
     questionnaireVersionInput
   );
 
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
-    return saveRankingSubmissionV2(userId, answersInput, questionnaireVersion);
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
+    return saveRankingSubmissionModern(
+      userId,
+      answersInput,
+      questionnaireVersion
+    );
   }
 
   return saveRankingSubmissionLegacy(userId, answersInput);
@@ -86,7 +128,7 @@ export async function listUserCharacterScores(
     questionnaireVersionInput
   );
 
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
     return listUserCharacterScoresV2(userId, questionnaireVersion);
   }
 
@@ -137,7 +179,7 @@ async function saveRankingSubmissionLegacy(userId, answersInput) {
   const characters = await listAllCharacters();
   const answers = validateAnswers({
     answersInput,
-    characters,
+    candidates: characters,
     questions: RANKING_QUESTIONS,
     isCharacterEligibleForQuestion,
     requiresCompleteAssignment,
@@ -170,7 +212,7 @@ async function saveRankingSubmissionLegacy(userId, answersInput) {
   );
 
   const nextCharacterIds = new Set(
-    nextScores.map((score) => score.characterId)
+    nextScores.map((score) => score.characterVariantKey || score.characterId)
   );
 
   await Promise.all(
@@ -186,7 +228,10 @@ async function saveRankingSubmissionLegacy(userId, answersInput) {
 
   await Promise.all(
     existingScores
-      .filter((score) => !nextCharacterIds.has(score.characterId))
+      .filter(
+        (score) =>
+          !nextCharacterIds.has(score.characterVariantKey || score.characterId)
+      )
       .map((score) =>
         ddbClient.send(
           new DeleteItemCommand({
@@ -246,7 +291,7 @@ async function listUserCharacterScoresLegacy(userId) {
   return scores;
 }
 
-async function getRankingSubmissionV2(userId, questionnaireVersion) {
+async function getRankingSubmissionModern(userId, questionnaireVersion) {
   if (!RANKING_SUBMISSIONS_V2_TABLE_NAME || !userId) {
     return null;
   }
@@ -284,33 +329,41 @@ async function getRankingSubmissionV2(userId, questionnaireVersion) {
   );
 }
 
-async function saveRankingSubmissionV2(
+async function saveRankingSubmissionModern(
   userId,
   answersInput,
   questionnaireVersion
 ) {
   assertV2RankingsConfigured();
+  const config = getModernRankingConfig(questionnaireVersion);
 
   const characters = await listAllCharacters();
+  const candidates = buildScoreCandidates(characters, questionnaireVersion);
+  const ownedYearningIds = getOwnedYearningCandidateIds(
+    answersInput,
+    questionnaireVersion
+  );
   const answers = validateAnswers({
     answersInput,
-    characters,
-    questions: RANKING_QUESTIONS_V2,
-    isCharacterEligibleForQuestion: isCharacterEligibleForQuestionV2,
-    requiresCompleteAssignment: requiresCompleteAssignmentV2,
-    questionnaireLabel: questionnaireVersion
+    candidates,
+    questions: config.questions,
+    isCharacterEligibleForQuestion: config.isCharacterEligibleForQuestion,
+    requiresCompleteAssignment: config.requiresCompleteAssignment,
+    questionnaireLabel: questionnaireVersion,
+    ownedYearningIds
   });
   const now = new Date().toISOString();
   const existingScores = await listUserCharacterScoresV2(
     userId,
     questionnaireVersion
   );
-  const nextScores = deriveCharacterScoresV2(
+  const nextScores = deriveCharacterScoresModern(
     userId,
     questionnaireVersion,
     answers,
-    characters,
-    now
+    candidates,
+    now,
+    config
   );
   const favoriteCharacterId = getFavoriteCharacterIdFromAnswers(
     answers,
@@ -331,14 +384,16 @@ async function saveRankingSubmissionV2(
   );
 
   const nextCharacterIds = new Set(
-    nextScores.map((score) => score.characterId)
+    nextScores.map(
+      (score) => score.characterVariantKey || score.characterId
+    )
   );
 
   await Promise.all(
     nextScores.map((score) =>
       ddbClient.send(
         new PutItemCommand({
-          TableName: USER_CHARACTER_SCORES_V2_TABLE_NAME,
+          TableName: getModernUserCharacterScoresTableName(questionnaireVersion),
           Item: buildUserCharacterScoreItemV2(score)
         })
       )
@@ -347,16 +402,24 @@ async function saveRankingSubmissionV2(
 
   await Promise.all(
     existingScores
-      .filter((score) => !nextCharacterIds.has(score.characterId))
+      .filter(
+        (score) =>
+          !nextCharacterIds.has(score.characterVariantKey || score.characterId)
+      )
       .map((score) =>
         ddbClient.send(
           new DeleteItemCommand({
-            TableName: USER_CHARACTER_SCORES_V2_TABLE_NAME,
+            TableName: getModernUserCharacterScoresTableName(questionnaireVersion),
             Key: {
               userVersionKey: {
                 S: buildUserVersionKey(userId, questionnaireVersion)
               },
-              characterId: { S: score.characterId }
+              [getModernCharacterKeyAttributeName(questionnaireVersion)]:
+                {
+                  S:
+                    score.characterVariantKey ||
+                    score.characterId
+                }
             }
           })
         )
@@ -383,7 +446,8 @@ async function saveRankingSubmissionV2(
 }
 
 async function listUserCharacterScoresV2(userId, questionnaireVersion) {
-  if (!USER_CHARACTER_SCORES_V2_TABLE_NAME || !userId) {
+  const tableName = getModernUserCharacterScoresTableName(questionnaireVersion);
+  if (!tableName || !userId) {
     return [];
   }
 
@@ -393,7 +457,7 @@ async function listUserCharacterScoresV2(userId, questionnaireVersion) {
   do {
     const response = await ddbClient.send(
       new QueryCommand({
-        TableName: USER_CHARACTER_SCORES_V2_TABLE_NAME,
+        TableName: tableName,
         KeyConditionExpression: 'userVersionKey = :userVersionKey',
         ExpressionAttributeValues: {
           ':userVersionKey': {
@@ -413,22 +477,30 @@ async function listUserCharacterScoresV2(userId, questionnaireVersion) {
 
 function validateAnswers({
   answersInput,
-  characters,
+  candidates,
   questions,
   isCharacterEligibleForQuestion: eligibilityFn,
-  requiresCompleteAssignment: completeAssignmentFn
+  requiresCompleteAssignment: completeAssignmentFn,
+  ownedYearningIds = new Set()
 }) {
   const normalizedAnswers = {};
-  const charactersById = new Map(
-    characters.map((character) => [character.id, character])
+  const candidatesById = new Map(
+    candidates.map((candidate) => [candidate.id, candidate])
   );
 
   for (const question of questions) {
     const rawPlacements = answersInput?.[question.id];
     const eligibleCharacterIds = new Set(
-      characters
-        .filter((character) => eligibilityFn(character, question))
-        .map((character) => character.id)
+      candidates
+        .filter((candidate) =>
+          isEligibleCandidateForQuestion(
+            candidate,
+            question,
+            eligibilityFn,
+            ownedYearningIds
+          )
+        )
+        .map((candidate) => candidate.id)
     );
 
     if (!rawPlacements || typeof rawPlacements !== 'object') {
@@ -443,12 +515,19 @@ function validateAnswers({
     const bucketCounts = new Map();
 
     for (const [characterId, tierIdValue] of Object.entries(rawPlacements)) {
-      const character = charactersById.get(characterId);
-      if (!character) {
+      const candidate = candidatesById.get(characterId);
+      if (!candidate) {
         continue;
       }
 
-      if (!eligibilityFn(character, question)) {
+      if (
+        !isEligibleCandidateForQuestion(
+          candidate,
+          question,
+          eligibilityFn,
+          ownedYearningIds
+        )
+      ) {
         throw new Error(
           `Character ${characterId} is not valid for ${question.id}.`
         );
@@ -542,27 +621,30 @@ function deriveCharacterScoresLegacy(userId, answers, characters, timestamp) {
   return scores;
 }
 
-function deriveCharacterScoresV2(
+function deriveCharacterScoresModern(
   userId,
   questionnaireVersion,
   answers,
-  characters,
-  timestamp
+  candidates,
+  timestamp,
+  config
 ) {
   const scores = [];
 
-  for (const character of characters) {
-    const monoScores = getCharacterMonoScoresV2(character, answers);
+  for (const character of candidates) {
+    const monoScores = getCharacterMonoScoresModern(character, answers, config);
     const monoScore = getMaxNumericValue(Object.values(monoScores));
     const mixedCrusadeScore = getCharacterQuestionScoreV2(
       answers,
-      MIXED_CRUSADE_QUESTION_IDS_V2.get(character.role),
-      character.id
+      config.mixedCrusadeQuestionIds.get(character.role),
+      character.id,
+      config
     );
     const mixedFrontierScore = getCharacterQuestionScoreV2(
       answers,
-      MIXED_FRONTIER_QUESTION_IDS_V2.get(character.role),
-      character.id
+      config.mixedFrontierQuestionIds.get(character.role),
+      character.id,
+      config
     );
     const favorite = isCharacterFavorite(answers, 'ranking-f-1', character.id);
 
@@ -583,13 +665,13 @@ function deriveCharacterScoresV2(
 
     scores.push({
       userId,
-      characterId: character.id,
+      characterId: character.characterId || character.id,
+      baseCharacterId: character.characterId || character.id,
+      characterVariantKey: character.id,
+      isYearning: Boolean(character.isYearning),
       questionnaireVersion,
       userVersionKey: buildUserVersionKey(userId, questionnaireVersion),
-      versionCharacterKey: buildVersionCharacterKey(
-        questionnaireVersion,
-        character.id
-      ),
+      versionCharacterKey: buildVersionCharacterKey(questionnaireVersion, character.id),
       monoScores,
       monoScore,
       mixedCrusadeScore,
@@ -631,13 +713,13 @@ function getCharacterMonoScoresLegacy(character, answers) {
   return questionScores;
 }
 
-function getCharacterMonoScoresV2(character, answers) {
+function getCharacterMonoScoresModern(character, answers, config) {
   const questionScores = {};
 
   for (const [
     personality,
     questionId
-  ] of PERSONALITY_QUESTION_IDS_V2.entries()) {
+  ] of config.personalityQuestionIds.entries()) {
     if (
       character.personality !== personality &&
       character.personality !== 'resonance'
@@ -650,8 +732,8 @@ function getCharacterMonoScoresV2(character, answers) {
       continue;
     }
 
-    const question = RANKING_QUESTIONS_BY_ID_V2.get(questionId);
-    const score = getTierScoreV2(question, tierId);
+    const question = config.questionsById.get(questionId);
+    const score = config.getTierScore(question, tierId);
     if (score !== null) {
       questionScores[questionId] = score;
     }
@@ -685,7 +767,7 @@ function getCharacterNicheScoreLegacy(character, answers) {
   return getTierScore(question, tierId);
 }
 
-function getCharacterQuestionScoreV2(answers, questionId, characterId) {
+function getCharacterQuestionScoreV2(answers, questionId, characterId, config) {
   if (!questionId) {
     return null;
   }
@@ -695,8 +777,8 @@ function getCharacterQuestionScoreV2(answers, questionId, characterId) {
     return null;
   }
 
-  const question = RANKING_QUESTIONS_BY_ID_V2.get(questionId);
-  return getTierScoreV2(question, tierId);
+  const question = config.questionsById.get(questionId);
+  return config.getTierScore(question, tierId);
 }
 
 function isCharacterFavorite(answers, questionId, characterId) {
@@ -764,14 +846,23 @@ function buildUserCharacterScoreItemLegacy(score) {
 function buildUserCharacterScoreItemV2(score) {
   const item = {
     userVersionKey: { S: score.userVersionKey },
-    characterId: { S: score.characterId },
+    [score.characterVariantKey ? 'characterVariantKey' : 'characterId']: {
+      S: score.characterVariantKey || score.characterId
+    },
     questionnaireVersion: { S: score.questionnaireVersion },
-    versionCharacterKey: { S: score.versionCharacterKey },
+    [score.characterVariantKey ? 'versionCharacterVariantKey' : 'versionCharacterKey']: {
+      S: score.versionCharacterKey
+    },
     submittedAt: { S: score.submittedAt },
     derivedAt: { S: score.derivedAt },
     updatedAt: { S: score.updatedAt },
     favorite: { BOOL: score.favorite }
   };
+
+  if (score.characterVariantKey) {
+    item.characterId = { S: score.baseCharacterId || score.characterId };
+    item.isYearning = { BOOL: Boolean(score.isYearning) };
+  }
 
   if (Object.keys(score.monoScores).length) {
     item.monoScores = toNumberMapAttribute(score.monoScores);
@@ -831,6 +922,10 @@ function parseUserCharacterScoreLegacy(item) {
 function parseUserCharacterScoreV2(item) {
   return withCalculatedScoreV2({
     characterId: item.characterId?.S || '',
+    baseCharacterId: item.characterId?.S || '',
+    characterVariantKey:
+      item.characterVariantKey?.S || item.characterId?.S || '',
+    isYearning: item.isYearning?.BOOL || false,
     questionnaireVersion:
       item.questionnaireVersion?.S || ACTIVE_QUESTIONNAIRE_VERSION,
     monoScores: parseNumberMap(item.monoScores),
@@ -848,10 +943,14 @@ function withFavoriteSelection(submission, favoriteCharacterId, questionId) {
   const answers = {
     ...(submission?.answers || {})
   };
+  const favoriteAnswerKey = normalizeFavoriteAnswerKey(
+    submission?.questionnaireVersion,
+    favoriteCharacterId
+  );
 
-  if (favoriteCharacterId) {
+  if (favoriteAnswerKey) {
     answers[questionId] = {
-      [favoriteCharacterId]: 'favorite'
+      [favoriteAnswerKey]: 'favorite'
     };
   } else {
     delete answers[questionId];
@@ -859,7 +958,8 @@ function withFavoriteSelection(submission, favoriteCharacterId, questionId) {
 
   const derivedScores = (submission?.derivedScores || []).map((score) => ({
     ...score,
-    favorite: score.characterId === favoriteCharacterId
+    favorite:
+      (score.characterVariantKey || score.characterId) === favoriteAnswerKey
   }));
 
   return {
@@ -876,7 +976,7 @@ function getFavoriteCharacterIdFromAnswers(answers, questionId) {
   }
 
   const [favoriteCharacterId] = Object.keys(favoritePlacements);
-  return favoriteCharacterId || '';
+  return normalizeBaseCharacterId(favoriteCharacterId || '');
 }
 
 function toNestedMapAttribute(value) {
@@ -981,7 +1081,126 @@ function assertV2RankingsConfigured() {
     throw new Error('V2 ranking submissions table is not configured.');
   }
 
-  if (!USER_CHARACTER_SCORES_V2_TABLE_NAME) {
-    throw new Error('V2 user character scores table is not configured.');
+  if (!USER_CHARACTER_SCORES_V2_TABLE_NAME && !USER_CHARACTER_SCORES_V4_TABLE_NAME) {
+    throw new Error('Modern user character scores table is not configured.');
   }
+}
+
+function getModernRankingConfig(questionnaireVersion) {
+  if (isQuestionnaireVersionV2(questionnaireVersion)) {
+    return MODERN_RANKING_CONFIGS.v2;
+  }
+
+  if (isQuestionnaireVersionV4(questionnaireVersion)) {
+    return MODERN_RANKING_CONFIGS.v4;
+  }
+
+  return MODERN_RANKING_CONFIGS.v4;
+}
+
+function buildScoreCandidates(characters, questionnaireVersion) {
+  if (!isQuestionnaireVersionV4(questionnaireVersion)) {
+    return characters.map((character) => ({
+      ...character,
+      id: character.id,
+      characterId: character.id,
+      isYearning: false
+    }));
+  }
+
+  return characters.flatMap((character) => {
+    const baseCandidate = {
+      ...character,
+      id: `${character.id}#base`,
+      characterId: character.id,
+      isYearning: false
+    };
+
+    if (!character.hasYearning || !character.yearningImageUrl) {
+      return [baseCandidate];
+    }
+
+    return [
+      baseCandidate,
+      {
+        ...character,
+        id: `${character.id}#yearning`,
+        characterId: character.id,
+        isYearning: true
+      }
+    ];
+  });
+}
+
+function getOwnedYearningCandidateIds(answersInput, questionnaireVersion) {
+  if (!isQuestionnaireVersionV4(questionnaireVersion)) {
+    return new Set();
+  }
+
+  const placements = answersInput?.[OWNED_YEARNING_QUESTION_ID_V4];
+  if (!placements || typeof placements !== 'object') {
+    return new Set();
+  }
+
+  return new Set(
+    Object.entries(placements)
+      .filter(([, tierId]) => normalizeTierId(tierId) === 'owned')
+      .map(([characterId]) => characterId)
+  );
+}
+
+function isEligibleCandidateForQuestion(
+  candidate,
+  question,
+  eligibilityFn,
+  ownedYearningIds
+) {
+  if (!eligibilityFn(candidate, question)) {
+    return false;
+  }
+
+  if (question.kind === 'owned-yearning') {
+    return candidate.isYearning;
+  }
+
+  if (candidate.isYearning) {
+    return ownedYearningIds.has(candidate.id);
+  }
+
+  return true;
+}
+
+function getModernUserCharacterScoresTableName(questionnaireVersion) {
+  return isQuestionnaireVersionV4(questionnaireVersion)
+    ? USER_CHARACTER_SCORES_V4_TABLE_NAME
+    : USER_CHARACTER_SCORES_V2_TABLE_NAME;
+}
+
+function getModernCharacterKeyAttributeName(questionnaireVersion) {
+  return isQuestionnaireVersionV4(questionnaireVersion)
+    ? 'characterVariantKey'
+    : 'characterId';
+}
+
+function normalizeFavoriteAnswerKey(questionnaireVersion, favoriteCharacterId) {
+  if (!favoriteCharacterId) {
+    return '';
+  }
+
+  return isQuestionnaireVersionV4(questionnaireVersion)
+    ? `${normalizeBaseCharacterId(favoriteCharacterId)}#base`
+    : normalizeBaseCharacterId(favoriteCharacterId);
+}
+
+function normalizeBaseCharacterId(value) {
+  const normalized = String(value || '').trim();
+  if (normalized.endsWith('#base')) {
+    return normalized.slice(0, -'#base'.length);
+  }
+
+  if (normalized.endsWith('#yearning')) {
+    return normalized.slice(0, -'#yearning'.length);
+  }
+
+  return normalized;
 }

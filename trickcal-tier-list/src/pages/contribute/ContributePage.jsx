@@ -10,6 +10,10 @@ import { ContributeSidebar } from '../../components/ContributeSidebar.jsx';
 import { MyRankingsPage } from './MyRankingsPage.jsx';
 import { MyTierListPage } from './MyTierListPage.jsx';
 
+function serializeValue(value) {
+  return JSON.stringify(value || {});
+}
+
 async function fetchAllCharacters(apiBaseUrl) {
   const allCharacters = [];
   let cursor = null;
@@ -88,9 +92,18 @@ export function ContributePage({
   const [placementsByQuestion, setPlacementsByQuestion] = useState({});
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [submission, setSubmission] = useState(null);
+  const ownedYearningPlacements = placementsByQuestion['ranking-y-1'] || {};
+  const ownedYearningPlacementsKey = serializeValue(ownedYearningPlacements);
   const questionGroups = useMemo(
-    () => buildQuestionGroups(characters),
-    [characters]
+    () =>
+      buildQuestionGroups(
+        characters,
+        questionnaireVersion,
+        {
+          'ranking-y-1': ownedYearningPlacements
+        }
+      ),
+    [characters, ownedYearningPlacementsKey, questionnaireVersion]
   );
 
   useEffect(() => {
@@ -142,7 +155,7 @@ export function ContributePage({
     let active = true;
 
     async function loadRankings() {
-      if (!apiBaseUrl || !user?.id) {
+      if (!apiBaseUrl || !user?.id || !characters.length) {
         if (active) {
           setPlacementsByQuestion({});
           setSubmission(null);
@@ -165,7 +178,11 @@ export function ContributePage({
         }
 
         const sanitizedAnswers = sanitizePlacementsByQuestion(
-          questionGroups,
+          buildQuestionGroups(
+            characters,
+            questionnaireVersion,
+            nextSubmission?.answers || {}
+          ),
           nextSubmission?.answers || {}
         );
 
@@ -195,7 +212,7 @@ export function ContributePage({
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, questionnaireVersion, questionGroups, user?.id]);
+  }, [apiBaseUrl, characters, questionnaireVersion, user?.id]);
 
   useEffect(() => {
     if (!questionGroups.length) {
@@ -203,18 +220,35 @@ export function ContributePage({
     }
 
     setPlacementsByQuestion((currentValue) =>
-      sanitizePlacementsByQuestion(questionGroups, currentValue)
+      {
+        const nextValue = sanitizePlacementsByQuestion(
+          questionGroups,
+          currentValue
+        );
+        return serializeValue(nextValue) === serializeValue(currentValue)
+          ? currentValue
+          : nextValue;
+      }
     );
     setSubmission((currentValue) =>
-      currentValue
-        ? {
-            ...currentValue,
-            answers: sanitizePlacementsByQuestion(
-              questionGroups,
-              currentValue.answers || {}
-            )
-          }
-        : currentValue
+      {
+        if (!currentValue) {
+          return currentValue;
+        }
+
+        const nextAnswers = sanitizePlacementsByQuestion(
+          questionGroups,
+          currentValue.answers || {}
+        );
+
+        return serializeValue(nextAnswers) ===
+          serializeValue(currentValue.answers || {})
+          ? currentValue
+          : {
+              ...currentValue,
+              answers: nextAnswers
+            };
+      }
     );
   }, [questionGroups]);
 

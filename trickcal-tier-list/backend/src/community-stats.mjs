@@ -9,7 +9,9 @@ import { listAllCharacters } from './characters.mjs';
 import { listFavoriteCountsByCharacter } from './favorites.mjs';
 import {
   ACTIVE_QUESTIONNAIRE_VERSION,
+  LEGACY_QUESTIONNAIRE_VERSION,
   isQuestionnaireVersionV2,
+  isQuestionnaireVersionV4,
   resolveQuestionnaireVersion
 } from './questionnaire-version.mjs';
 import { calculateQuestionnaireV2Score } from './score-weights.mjs';
@@ -22,6 +24,10 @@ const USER_CHARACTER_SCORES_V2_TABLE_NAME =
   process.env.USER_CHARACTER_SCORES_V2_TABLE_NAME;
 const COMMUNITY_CHARACTER_STATS_V2_TABLE_NAME =
   process.env.COMMUNITY_CHARACTER_STATS_V2_TABLE_NAME;
+const USER_CHARACTER_SCORES_V4_TABLE_NAME =
+  process.env.USER_CHARACTER_SCORES_V4_TABLE_NAME;
+const COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME =
+  process.env.COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME;
 
 const ddbClient = new DynamoDBClient({});
 const COMMUNITY_STATS_TYPE = 'CHARACTER';
@@ -37,7 +43,10 @@ export async function rebuildCommunityCharacterStats(
     questionnaireVersionInput
   );
 
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
+    if (isQuestionnaireVersionV4(questionnaireVersion)) {
+      return rebuildCommunityCharacterStatsV4(questionnaireVersion);
+    }
     return rebuildCommunityCharacterStatsV2(questionnaireVersion);
   }
 
@@ -49,7 +58,10 @@ export async function triggerPublicCommunityRebuild(questionnaireVersionInput) {
     questionnaireVersionInput
   );
 
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
+    if (isQuestionnaireVersionV4(questionnaireVersion)) {
+      return triggerPublicCommunityRebuildV4(questionnaireVersion);
+    }
     return triggerPublicCommunityRebuildV2(questionnaireVersion);
   }
 
@@ -61,7 +73,10 @@ export async function listCommunityCharacterStats(questionnaireVersionInput) {
     questionnaireVersionInput
   );
 
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
+    if (isQuestionnaireVersionV4(questionnaireVersion)) {
+      return listCommunityCharacterStatsV4(questionnaireVersion);
+    }
     return listCommunityCharacterStatsV2(questionnaireVersion);
   }
 
@@ -76,7 +91,10 @@ export async function listCommunityFavorites({
     questionnaireVersionInput
   );
 
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
+    if (isQuestionnaireVersionV4(questionnaireVersion)) {
+      return listCommunityFavoritesV4({ limit, questionnaireVersion });
+    }
     return listCommunityFavoritesV2({ limit, questionnaireVersion });
   }
 
@@ -287,6 +305,55 @@ async function rebuildCommunityCharacterStatsV2(questionnaireVersion) {
   };
 }
 
+async function rebuildCommunityCharacterStatsV4(questionnaireVersion) {
+  assertV4CommunityStatsConfigured();
+
+  const characters = buildScoreCandidates(await listAllCharacters());
+  const computedAt = new Date().toISOString();
+  const windowStartDate = new Date(
+    Date.now() - COMMUNITY_WINDOW_DAYS * 24 * 60 * 60 * 1000
+  );
+  const windowStart = windowStartDate.toISOString();
+
+  const statsItems = await Promise.all(
+    characters.map(async (character) => {
+      const recentScores = await listCharacterScoresSinceV4(
+        questionnaireVersion,
+        character.characterVariantKey,
+        windowStart
+      );
+
+      return buildCharacterStatsItemV4({
+        questionnaireVersion,
+        characterVariantKey: character.characterVariantKey,
+        characterId: character.characterId,
+        isYearning: character.isYearning,
+        computedAt,
+        windowStart,
+        recentScores
+      });
+    })
+  );
+
+  await Promise.all(
+    statsItems.map((item) =>
+      ddbClient.send(
+        new PutItemCommand({
+          TableName: COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME,
+          Item: item
+        })
+      )
+    )
+  );
+
+  return {
+    questionnaireVersion,
+    charactersProcessed: statsItems.length,
+    computedAt,
+    windowStart
+  };
+}
+
 async function triggerPublicCommunityRebuildV2(questionnaireVersion) {
   assertV2CommunityStatsConfigured();
 
@@ -346,6 +413,66 @@ async function triggerPublicCommunityRebuildV2(questionnaireVersion) {
   };
 }
 
+async function triggerPublicCommunityRebuildV4(questionnaireVersion) {
+  assertV4CommunityStatsConfigured();
+
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const allowedBefore = new Date(
+    now.getTime() - COMMUNITY_REBUILD_COOLDOWN_MS
+  ).toISOString();
+
+  try {
+    await ddbClient.send(
+      new PutItemCommand({
+        TableName: COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME,
+        Item: {
+          versionCharacterVariantKey: {
+            S: buildVersionCharacterVariantKey(
+              questionnaireVersion,
+              COMMUNITY_REBUILD_LOCK_ID
+            )
+          },
+          questionnaireVersion: { S: questionnaireVersion },
+          characterVariantKey: { S: COMMUNITY_REBUILD_LOCK_ID },
+          characterId: { S: COMMUNITY_REBUILD_LOCK_ID },
+          statsType: { S: COMMUNITY_META_TYPE },
+          lastRequestedAt: { S: nowIso }
+        },
+        ConditionExpression:
+          'attribute_not_exists(versionCharacterVariantKey) OR lastRequestedAt <= :allowedBefore',
+        ExpressionAttributeValues: {
+          ':allowedBefore': { S: allowedBefore }
+        }
+      })
+    );
+  } catch (error) {
+    if (error?.name === 'ConditionalCheckFailedException') {
+      const lock = await getCommunityRebuildLockV4(questionnaireVersion);
+      const cooldownError = new Error('Community rebuild is on cooldown.');
+      cooldownError.name = 'CommunityRebuildCooldownError';
+      cooldownError.retryAfterSeconds = getRetryAfterSeconds(
+        lock?.lastRequestedAt
+      );
+      cooldownError.lastRequestedAt = lock?.lastRequestedAt || '';
+      throw cooldownError;
+    }
+
+    throw error;
+  }
+
+  const result = await rebuildCommunityCharacterStatsV4(questionnaireVersion);
+  await writeCommunityRebuildLockV4(questionnaireVersion, {
+    lastRequestedAt: nowIso,
+    lastCompletedAt: result.computedAt
+  });
+
+  return {
+    ...result,
+    cooldownSeconds: COMMUNITY_REBUILD_COOLDOWN_MS / 1000
+  };
+}
+
 async function listCommunityCharacterStatsV2(questionnaireVersion) {
   assertV2CommunityStatsConfigured();
 
@@ -358,6 +485,22 @@ async function listCommunityCharacterStatsV2(questionnaireVersion) {
     characters,
     stats,
     questionnaireVersion
+  });
+}
+
+async function listCommunityCharacterStatsV4(questionnaireVersion) {
+  assertV4CommunityStatsConfigured();
+
+  const [characters, stats] = await Promise.all([
+    buildScoreCandidates(await listAllCharacters()),
+    queryCommunityStatsV4(questionnaireVersion)
+  ]);
+
+  return mergeCommunityCharacters({
+    characters,
+    stats,
+    questionnaireVersion,
+    idField: 'characterVariantKey'
   });
 }
 
@@ -398,6 +541,32 @@ async function listCommunityFavoritesV2({
           : null;
       })
       .filter(Boolean)
+  };
+}
+
+async function listCommunityFavoritesV4({
+  limit = 10,
+  questionnaireVersion = ACTIVE_QUESTIONNAIRE_VERSION
+} = {}) {
+  const characters = await listAllCharacters();
+  const counts = await listFavoriteCountsByCharacter();
+
+  return {
+    questionnaireVersion,
+    characters: [...characters]
+      .map((character) => ({
+        ...character,
+        communityStats: {
+          favoriteCount: counts.get(character.id) || 0
+        }
+      }))
+      .filter((character) => (character.communityStats.favoriteCount || 0) > 0)
+      .sort(
+        (left, right) =>
+          (right.communityStats.favoriteCount || 0) -
+          (left.communityStats.favoriteCount || 0)
+      )
+      .slice(0, limit)
   };
 }
 
@@ -453,6 +622,41 @@ async function listCharacterScoresSinceV2(
     );
 
     scores.push(...(response.Items || []).map(parseUserCharacterScoreV2));
+    exclusiveStartKey = response.LastEvaluatedKey;
+  } while (exclusiveStartKey);
+
+  return scores;
+}
+
+async function listCharacterScoresSinceV4(
+  questionnaireVersion,
+  characterVariantKey,
+  windowStart
+) {
+  const scores = [];
+  let exclusiveStartKey;
+
+  do {
+    const response = await ddbClient.send(
+      new QueryCommand({
+        TableName: USER_CHARACTER_SCORES_V4_TABLE_NAME,
+        IndexName: 'ScoresByVersionCharacterVariantSubmittedAtIndex',
+        KeyConditionExpression:
+          'versionCharacterVariantKey = :versionCharacterVariantKey AND submittedAt >= :windowStart',
+        ExpressionAttributeValues: {
+          ':versionCharacterVariantKey': {
+            S: buildVersionCharacterVariantKey(
+              questionnaireVersion,
+              characterVariantKey
+            )
+          },
+          ':windowStart': { S: windowStart }
+        },
+        ExclusiveStartKey: exclusiveStartKey
+      })
+    );
+
+    scores.push(...(response.Items || []).map(parseUserCharacterScoreV4));
     exclusiveStartKey = response.LastEvaluatedKey;
   } while (exclusiveStartKey);
 
@@ -533,6 +737,56 @@ function buildCharacterStatsItemV2({
     computedAt: { S: computedAt },
     windowStart: { S: windowStart },
     favoriteCount: { N: String(favoriteCount) },
+    monoCount: { N: String(mono.count) },
+    monoAverage: { N: String(mono.average) },
+    monoDistribution: toNumberMapAttribute(mono.distribution),
+    mixedCrusadeCount: { N: String(mixedCrusade.count) },
+    mixedCrusadeAverage: { N: String(mixedCrusade.average) },
+    mixedCrusadeDistribution: toNumberMapAttribute(mixedCrusade.distribution),
+    mixedFrontierCount: { N: String(mixedFrontier.count) },
+    mixedFrontierAverage: { N: String(mixedFrontier.average) },
+    mixedFrontierDistribution: toNumberMapAttribute(mixedFrontier.distribution),
+    calculatedCount: { N: String(calculated.count) },
+    calculatedAverage: { N: String(calculated.average) },
+    calculatedDistribution: toNumberMapAttribute(calculated.distribution)
+  };
+}
+
+function buildCharacterStatsItemV4({
+  questionnaireVersion,
+  characterVariantKey,
+  characterId,
+  isYearning,
+  computedAt,
+  windowStart,
+  recentScores
+}) {
+  const mono = buildScoreAggregate(recentScores.map((score) => score.monoScore));
+  const mixedCrusade = buildScoreAggregate(
+    recentScores.map((score) => score.mixedCrusadeScore)
+  );
+  const mixedFrontier = buildScoreAggregate(
+    recentScores.map((score) => score.mixedFrontierScore)
+  );
+  const calculated = buildScoreAggregate(
+    recentScores.map((score) => score.calculatedScore)
+  );
+
+  return {
+    versionCharacterVariantKey: {
+      S: buildVersionCharacterVariantKey(
+        questionnaireVersion,
+        characterVariantKey
+      )
+    },
+    questionnaireVersion: { S: questionnaireVersion },
+    characterVariantKey: { S: characterVariantKey },
+    characterId: { S: characterId },
+    isYearning: { BOOL: Boolean(isYearning) },
+    statsType: { S: COMMUNITY_STATS_TYPE },
+    computedAt: { S: computedAt },
+    windowStart: { S: windowStart },
+    favoriteCount: { N: '0' },
     monoCount: { N: String(mono.count) },
     monoAverage: { N: String(mono.average) },
     monoDistribution: toNumberMapAttribute(mono.distribution),
@@ -641,6 +895,34 @@ async function queryCommunityStatsV2(questionnaireVersion) {
   return items;
 }
 
+async function queryCommunityStatsV4(questionnaireVersion) {
+  const items = [];
+  let exclusiveStartKey;
+
+  do {
+    const response = await ddbClient.send(
+      new QueryCommand({
+        TableName: COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME,
+        IndexName: 'StatsByVersionCharacterVariantIndex',
+        KeyConditionExpression: 'questionnaireVersion = :questionnaireVersion',
+        ExpressionAttributeValues: {
+          ':questionnaireVersion': { S: questionnaireVersion }
+        },
+        ExclusiveStartKey: exclusiveStartKey
+      })
+    );
+
+    items.push(
+      ...(response.Items || [])
+        .map(parseCommunityStatsV4)
+        .filter((item) => item.statsType === COMMUNITY_STATS_TYPE)
+    );
+    exclusiveStartKey = response.LastEvaluatedKey;
+  } while (exclusiveStartKey);
+
+  return items;
+}
+
 async function getCommunityRebuildLockLegacy() {
   const response = await ddbClient.send(
     new GetItemCommand({
@@ -695,6 +977,27 @@ async function getCommunityRebuildLockV2(questionnaireVersion) {
   };
 }
 
+async function getCommunityRebuildLockV4(questionnaireVersion) {
+  const response = await ddbClient.send(
+    new GetItemCommand({
+      TableName: COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME,
+      Key: {
+        versionCharacterVariantKey: {
+          S: buildVersionCharacterVariantKey(
+            questionnaireVersion,
+            COMMUNITY_REBUILD_LOCK_ID
+          )
+        }
+      }
+    })
+  );
+
+  return {
+    lastRequestedAt: response.Item?.lastRequestedAt?.S || '',
+    lastCompletedAt: response.Item?.lastCompletedAt?.S || ''
+  };
+}
+
 async function writeCommunityRebuildLockV2(
   questionnaireVersion,
   { lastRequestedAt, lastCompletedAt }
@@ -710,6 +1013,31 @@ async function writeCommunityRebuildLockV2(
           )
         },
         questionnaireVersion: { S: questionnaireVersion },
+        characterId: { S: COMMUNITY_REBUILD_LOCK_ID },
+        statsType: { S: COMMUNITY_META_TYPE },
+        lastRequestedAt: { S: lastRequestedAt },
+        lastCompletedAt: { S: lastCompletedAt }
+      }
+    })
+  );
+}
+
+async function writeCommunityRebuildLockV4(
+  questionnaireVersion,
+  { lastRequestedAt, lastCompletedAt }
+) {
+  await ddbClient.send(
+    new PutItemCommand({
+      TableName: COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME,
+      Item: {
+        versionCharacterVariantKey: {
+          S: buildVersionCharacterVariantKey(
+            questionnaireVersion,
+            COMMUNITY_REBUILD_LOCK_ID
+          )
+        },
+        questionnaireVersion: { S: questionnaireVersion },
+        characterVariantKey: { S: COMMUNITY_REBUILD_LOCK_ID },
         characterId: { S: COMMUNITY_REBUILD_LOCK_ID },
         statsType: { S: COMMUNITY_META_TYPE },
         lastRequestedAt: { S: lastRequestedAt },
@@ -786,6 +1114,45 @@ function parseCommunityStatsV2(item) {
   };
 }
 
+function parseCommunityStatsV4(item) {
+  return {
+    characterVariantKey:
+      item.characterVariantKey?.S || item.characterId?.S || '',
+    characterId: item.characterId?.S || '',
+    isYearning: item.isYearning?.BOOL || false,
+    questionnaireVersion:
+      item.questionnaireVersion?.S || ACTIVE_QUESTIONNAIRE_VERSION,
+    statsType: item.statsType?.S || '',
+    computedAt: item.computedAt?.S || '',
+    windowStart: item.windowStart?.S || '',
+    favoriteCount: item.favoriteCount?.N ? Number(item.favoriteCount.N) : 0,
+    mono: {
+      count: item.monoCount?.N ? Number(item.monoCount.N) : 0,
+      average: item.monoAverage?.N ? Number(item.monoAverage.N) : 0,
+      distribution: parseNumberMap(item.monoDistribution)
+    },
+    mixedCrusade: {
+      count: item.mixedCrusadeCount?.N ? Number(item.mixedCrusadeCount.N) : 0,
+      average: item.mixedCrusadeAverage?.N
+        ? Number(item.mixedCrusadeAverage.N)
+        : 0,
+      distribution: parseNumberMap(item.mixedCrusadeDistribution)
+    },
+    mixedFrontier: {
+      count: item.mixedFrontierCount?.N ? Number(item.mixedFrontierCount.N) : 0,
+      average: item.mixedFrontierAverage?.N
+        ? Number(item.mixedFrontierAverage.N)
+        : 0,
+      distribution: parseNumberMap(item.mixedFrontierDistribution)
+    },
+    calculated: {
+      count: item.calculatedCount?.N ? Number(item.calculatedCount.N) : 0,
+      average: item.calculatedAverage?.N ? Number(item.calculatedAverage.N) : 0,
+      distribution: parseNumberMap(item.calculatedDistribution)
+    }
+  };
+}
+
 function parseUserCharacterScoreLegacy(item) {
   return {
     monoScore: parseOptionalNumber(item.monoScore),
@@ -796,6 +1163,19 @@ function parseUserCharacterScoreLegacy(item) {
 }
 
 function parseUserCharacterScoreV2(item) {
+  return {
+    monoScore: parseOptionalNumber(item.monoScore),
+    mixedCrusadeScore: parseOptionalNumber(item.mixedCrusadeScore),
+    mixedFrontierScore: parseOptionalNumber(item.mixedFrontierScore),
+    calculatedScore: calculateQuestionnaireV2Score({
+      monoScore: parseOptionalNumber(item.monoScore),
+      mixedCrusadeScore: parseOptionalNumber(item.mixedCrusadeScore),
+      mixedFrontierScore: parseOptionalNumber(item.mixedFrontierScore)
+    })
+  };
+}
+
+function parseUserCharacterScoreV4(item) {
   return {
     monoScore: parseOptionalNumber(item.monoScore),
     mixedCrusadeScore: parseOptionalNumber(item.mixedCrusadeScore),
@@ -835,16 +1215,21 @@ function toNumberMapAttribute(value) {
   };
 }
 
-function mergeCommunityCharacters({ characters, stats, questionnaireVersion }) {
+function mergeCommunityCharacters({
+  characters,
+  stats,
+  questionnaireVersion,
+  idField = 'characterId'
+}) {
   const statsByCharacterId = new Map(
-    stats.map((item) => [item.characterId, item])
+    stats.map((item) => [item[idField], item])
   );
 
   const mergedCharacters = characters.map((character) => ({
     ...character,
     communityStats:
-      statsByCharacterId.get(character.id) ||
-      makeEmptyCommunityStats(character.id, questionnaireVersion)
+      statsByCharacterId.get(character[idField] || character.id) ||
+      makeEmptyCommunityStats(character[idField] || character.id, questionnaireVersion)
   }));
 
   mergedCharacters.sort((left, right) => {
@@ -876,9 +1261,11 @@ function mergeCommunityCharacters({ characters, stats, questionnaireVersion }) {
 }
 
 function makeEmptyCommunityStats(characterId, questionnaireVersion) {
-  if (isQuestionnaireVersionV2(questionnaireVersion)) {
+  if (questionnaireVersion !== LEGACY_QUESTIONNAIRE_VERSION) {
     return {
       characterId,
+      characterVariantKey: characterId,
+      isYearning: characterId.endsWith?.('#yearning') || false,
       questionnaireVersion,
       statsType: COMMUNITY_STATS_TYPE,
       computedAt: '',
@@ -941,6 +1328,13 @@ function buildVersionCharacterKey(questionnaireVersion, characterId) {
   return `${questionnaireVersion}#${characterId}`;
 }
 
+function buildVersionCharacterVariantKey(
+  questionnaireVersion,
+  characterVariantKey
+) {
+  return `${questionnaireVersion}#${characterVariantKey}`;
+}
+
 function assertLegacyCommunityStatsConfigured() {
   if (!USER_CHARACTER_SCORES_TABLE_NAME) {
     throw new Error('User character scores table is not configured.');
@@ -959,6 +1353,43 @@ function assertV2CommunityStatsConfigured() {
   if (!COMMUNITY_CHARACTER_STATS_V2_TABLE_NAME) {
     throw new Error('V2 community character stats table is not configured.');
   }
+}
+
+function assertV4CommunityStatsConfigured() {
+  if (!USER_CHARACTER_SCORES_V4_TABLE_NAME) {
+    throw new Error('V4 user character scores table is not configured.');
+  }
+
+  if (!COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME) {
+    throw new Error('V4 community character stats table is not configured.');
+  }
+}
+
+function buildScoreCandidates(characters) {
+  return characters.flatMap((character) => {
+    const baseCandidate = {
+      ...character,
+      id: `${character.id}#base`,
+      characterId: character.id,
+      characterVariantKey: `${character.id}#base`,
+      isYearning: false
+    };
+
+    if (!character.hasYearning || !character.yearningImageUrl) {
+      return [baseCandidate];
+    }
+
+    return [
+      baseCandidate,
+      {
+        ...character,
+        id: `${character.id}#yearning`,
+        characterId: character.id,
+        characterVariantKey: `${character.id}#yearning`,
+        isYearning: true
+      }
+    ];
+  });
 }
 
 function getRetryAfterSeconds(lastRequestedAt) {

@@ -1,9 +1,14 @@
-export const DEFAULT_QUESTIONNAIRE_VERSION = '2026-06-22-v2';
+export const DEFAULT_QUESTIONNAIRE_VERSION = '2026-06-22-v4';
 
 const SUPPORTED_QUESTIONNAIRE_VERSIONS = new Set([
   '2026-06-20-v1',
+  '2026-06-22-v2',
   DEFAULT_QUESTIONNAIRE_VERSION
 ]);
+
+export function isQuestionnaireVersionV4(value) {
+  return (value || DEFAULT_QUESTIONNAIRE_VERSION) === '2026-06-22-v4';
+}
 
 export function resolveQuestionnaireVersion(search = '') {
   if (typeof window === 'undefined' && !search) {

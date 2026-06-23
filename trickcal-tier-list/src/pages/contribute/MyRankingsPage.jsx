@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { LineupGrid } from '../../components/LineupGrid.jsx';
 import { TierList } from '../../components/TierList.jsx';
 import { getStaticImageUrl } from '../../lib/site.js';
+import { isQuestionnaireVersionV4 } from '../../lib/questionnaireVersion.js';
 import {
   PERSONA_GRID_COLORS,
   buildQuestionGroups,
@@ -66,7 +67,8 @@ export function MyRankingsPage({
   placementsByQuestion,
   submission,
   onChange,
-  onSave
+  onSave,
+  questionnaireVersion
 }) {
   const [saveState, setSaveState] = useState('idle');
   const [saveMessage, setSaveMessage] = useState('');
@@ -76,10 +78,18 @@ export function MyRankingsPage({
   );
   const [isTopSaveVisible, setIsTopSaveVisible] = useState(true);
   const saveActionsRef = useRef(null);
+  const ownedYearningPlacements = placementsByQuestion['ranking-y-1'] || {};
 
   const questionGroups = useMemo(
-    () => buildQuestionGroups(characters),
-    [characters]
+    () =>
+      buildQuestionGroups(
+        characters,
+        questionnaireVersion,
+        {
+          'ranking-y-1': ownedYearningPlacements
+        }
+      ),
+    [characters, ownedYearningPlacements, questionnaireVersion]
   );
   const currentSnapshot = useMemo(
     () => serializeAnswers(placementsByQuestion),
@@ -198,6 +208,18 @@ export function MyRankingsPage({
 
   function renderQuestionPrompt(question) {
     if (question.kind === 'personality') {
+      if (isQuestionnaireVersionV4(questionnaireVersion)) {
+        return (
+          <Text mt="xs">
+            For{' '}
+            <Text span fw={800} c={PERSONA_GRID_COLORS[question.personality]}>
+              restricted personality
+            </Text>{' '}
+            content, rate the performance of these apostles.
+          </Text>
+        );
+      }
+
       return (
         <Text mt="xs">
           For{' '}
@@ -248,6 +270,14 @@ export function MyRankingsPage({
       return (
         <Text mt="xs">
           Choose your favorite apostle! Does not affect score.
+        </Text>
+      );
+    }
+
+    if (question.kind === 'owned-yearning') {
+      return (
+        <Text mt="xs">
+          Select the apostles for which you own 2-star or higher Yearning and can evaluate them objectively and accurately.
         </Text>
       );
     }

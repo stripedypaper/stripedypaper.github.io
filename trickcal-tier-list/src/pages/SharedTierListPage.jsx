@@ -1,24 +1,36 @@
-import { Paper, Stack, Text } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { Paper, Stack, Switch, Text } from '@mantine/core';
+import { useEffect, useMemo, useState } from 'react';
 import { ReadonlyTierList } from '../components/ReadonlyTierList.jsx';
 import { withQuestionnaireVersion } from '../lib/questionnaireVersion.js';
+import { expandCharacterVariants } from '../lib/site.js';
 import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
 
-function mergeCharacterScores(characters, derivedScores) {
+function roundToTwo(value) {
+  return Number((value || 0).toFixed(2));
+}
+
+function mergeCharacterScores(characters, derivedScores, questionnaireVersion) {
+  const variants = expandCharacterVariants(characters, questionnaireVersion);
   const charactersById = new Map(
-    characters.map((character) => [character.id, character])
+    variants.map((character) => [
+      character.characterVariantKey || character.id,
+      character
+    ])
   );
 
   return derivedScores
     .map((score) => {
-      const character = charactersById.get(score.characterId);
+      const character = charactersById.get(
+        score.characterVariantKey || score.characterId
+      );
       if (!character) {
         return null;
       }
 
       return {
         ...character,
-        ...score
+        ...score,
+        secondaryText: String(roundToTwo(score.calculatedScore || 0))
       };
     })
     .filter(Boolean);
@@ -79,6 +91,50 @@ export function SharedTierListPage({
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showYearning, setShowYearning] = useState(false);
+  const derivedScores = Array.isArray(submission?.derivedScores)
+    ? submission.derivedScores
+    : [];
+  const scoredCharacters = useMemo(
+    () =>
+      mergeCharacterScores(characters, derivedScores, questionnaireVersion),
+    [characters, derivedScores, questionnaireVersion]
+  );
+  const allVariants = useMemo(
+    () => expandCharacterVariants(characters, questionnaireVersion),
+    [characters, questionnaireVersion]
+  );
+  const scoredVariantKeys = useMemo(
+    () =>
+      new Set(
+        scoredCharacters.map(
+          (character) => character.characterVariantKey || character.id
+        )
+      ),
+    [scoredCharacters]
+  );
+  const visibleCharacters = useMemo(
+    () =>
+      showYearning
+        ? scoredCharacters.filter(
+            (character) =>
+              !character.isYearning ||
+              scoredVariantKeys.has(character.characterVariantKey || character.id)
+          )
+        : scoredCharacters.filter((character) => !character.isYearning),
+    [scoredCharacters, scoredVariantKeys, showYearning]
+  );
+  const unratedYearnings = useMemo(
+    () =>
+      showYearning
+        ? allVariants.filter(
+            (character) =>
+              character.isYearning &&
+              !scoredVariantKeys.has(character.characterVariantKey || character.id)
+          )
+        : [],
+    [allVariants, scoredVariantKeys, showYearning]
+  );
 
   useEffect(() => {
     let active = true;
@@ -157,11 +213,6 @@ export function SharedTierListPage({
     );
   }
 
-  const scoredCharacters = mergeCharacterScores(
-    characters,
-    submission.derivedScores
-  );
-
   return (
     <Stack gap="lg">
       <div>
@@ -174,7 +225,26 @@ export function SharedTierListPage({
         </Text>
       </div>
 
-      <ReadonlyTierList buckets={SCORE_BUCKETS} characters={scoredCharacters} />
+      <Switch
+        checked={showYearning}
+        onChange={(event) => setShowYearning(event.currentTarget.checked)}
+        label="Show Yearning"
+      />
+
+      <ReadonlyTierList
+        buckets={SCORE_BUCKETS}
+        characters={visibleCharacters}
+        extraBucket={
+          showYearning
+            ? {
+                id: 'unrated-yearnings',
+                label: 'Unrated Yearnings',
+                color: 'gray',
+                items: unratedYearnings
+              }
+            : null
+        }
+      />
     </Stack>
   );
 }

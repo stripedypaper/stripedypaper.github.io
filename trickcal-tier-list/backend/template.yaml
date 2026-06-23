@@ -298,6 +298,58 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  UserCharacterScoresV4Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userVersionKey
+          AttributeType: S
+        - AttributeName: characterVariantKey
+          AttributeType: S
+        - AttributeName: versionCharacterVariantKey
+          AttributeType: S
+        - AttributeName: submittedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userVersionKey
+          KeyType: HASH
+        - AttributeName: characterVariantKey
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: ScoresByVersionCharacterVariantSubmittedAtIndex
+          KeySchema:
+            - AttributeName: versionCharacterVariantKey
+              KeyType: HASH
+            - AttributeName: submittedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  CommunityCharacterStatsV4Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: versionCharacterVariantKey
+          AttributeType: S
+        - AttributeName: questionnaireVersion
+          AttributeType: S
+        - AttributeName: characterVariantKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: versionCharacterVariantKey
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: StatsByVersionCharacterVariantIndex
+          KeySchema:
+            - AttributeName: questionnaireVersion
+              KeyType: HASH
+            - AttributeName: characterVariantKey
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
   CharactersImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -447,6 +499,10 @@ Resources:
             TableName: !Ref UserFavoritesTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CommunityCharacterStatsV2Table
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserCharacterScoresV4Table
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CommunityCharacterStatsV4Table
         - S3CrudPolicy:
             BucketName: !Ref CharactersImagesBucket
       Environment:
@@ -466,6 +522,8 @@ Resources:
           USER_CHARACTER_SCORES_V2_TABLE_NAME: !Ref UserCharacterScoresV2Table
           USER_FAVORITES_TABLE_NAME: !Ref UserFavoritesTable
           COMMUNITY_CHARACTER_STATS_V2_TABLE_NAME: !Ref CommunityCharacterStatsV2Table
+          USER_CHARACTER_SCORES_V4_TABLE_NAME: !Ref UserCharacterScoresV4Table
+          COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME: !Ref CommunityCharacterStatsV4Table
           CHARACTERS_IMAGES_BUCKET_NAME: !Ref CharactersImagesBucket
           CHARACTERS_CDN_BASE_URL: !Sub 'https://${CharactersImagesDistribution.DomainName}'
       Events:
@@ -606,6 +664,12 @@ Outputs:
   CommunityCharacterStatsV2TableName:
     Description: Store materialized versioned community character statistics here.
     Value: !Ref CommunityCharacterStatsV2Table
+  UserCharacterScoresV4TableName:
+    Description: Store versioned per-user derived variant character scores here.
+    Value: !Ref UserCharacterScoresV4Table
+  CommunityCharacterStatsV4TableName:
+    Description: Store materialized versioned variant community character statistics here.
+    Value: !Ref CommunityCharacterStatsV4Table
   CharactersCdnBaseUrl:
     Description: Use this value as the base URL for character images.
     Value: !Sub 'https://${CharactersImagesDistribution.DomainName}'

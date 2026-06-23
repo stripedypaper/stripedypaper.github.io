@@ -187,7 +187,7 @@ export function ManageCharactersPage({ apiBaseUrl }) {
     setModalOpened(false);
   }
 
-  async function uploadCharacterImage(characterId, imageFile) {
+  async function uploadCharacterImage(characterId, imageFile, imageType = 'default') {
     const uploadResponse = await fetch(
       `${apiBaseUrl}/admin/characters/${characterId}/image-upload`,
       buildAuthenticatedRequestInit({
@@ -196,7 +196,8 @@ export function ManageCharactersPage({ apiBaseUrl }) {
           'content-type': 'application/json'
         },
         body: JSON.stringify({
-          contentType: imageFile.type
+          contentType: imageFile.type,
+          imageType
         })
       })
     );
@@ -256,6 +257,14 @@ export function ManageCharactersPage({ apiBaseUrl }) {
 
       if (formState.imageFile) {
         await uploadCharacterImage(savedCharacter.id, formState.imageFile);
+      }
+
+      if (formState.hasYearning && formState.yearningImageFile) {
+        await uploadCharacterImage(
+          savedCharacter.id,
+          formState.yearningImageFile,
+          'yearning'
+        );
       }
 
       setModalOpened(false);
@@ -359,7 +368,7 @@ export function ManageCharactersPage({ apiBaseUrl }) {
         >
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Preview</Table.Th>
+              <Table.Th w={108}>Preview</Table.Th>
               <Table.Th>Name</Table.Th>
               <Table.Th>Position</Table.Th>
               <Table.Th>Role</Table.Th>
@@ -398,13 +407,23 @@ export function ManageCharactersPage({ apiBaseUrl }) {
             ) : characters.length ? (
               characters.map((item) => (
                 <Table.Tr key={item.id}>
-                  <Table.Td>
-                    <Avatar
-                      src={item.imageUrl || undefined}
-                      alt=""
-                      radius="md"
-                      size={44}
-                    />
+                  <Table.Td w={108}>
+                    <Group gap="xs" wrap="nowrap">
+                      <Avatar
+                        src={item.imageUrl || undefined}
+                        alt=""
+                        radius="md"
+                        size={44}
+                      />
+                      {item.hasYearning && item.yearningImageUrl ? (
+                        <Avatar
+                          src={item.yearningImageUrl}
+                          alt=""
+                          radius="md"
+                          size={44}
+                        />
+                      ) : null}
+                    </Group>
                   </Table.Td>
                   <Table.Td>{getCharacterDisplayName(item)}</Table.Td>
                   <Table.Td>

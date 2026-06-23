@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Badge,
   Button,
   Group,
@@ -9,28 +8,11 @@ import {
 } from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { IconAlertCircle } from '@tabler/icons-react';
+import { CharacterAvatar } from './CharacterAvatar.jsx';
+import { getCharacterDisplayName } from '../lib/site.js';
 
 function getItemLabel(item) {
-  return item.nameEn || item.nameJa || item.nameZh || item.nameKo || item.id;
-}
-
-function getPersonalityAvatarColor(personality) {
-  switch (personality) {
-    case 'vivacious':
-      return '#ecdc84';
-    case 'mad':
-      return '#ec849d';
-    case 'composed':
-      return '#89beef';
-    case 'depressed':
-      return '#c684ec';
-    case 'innocent':
-      return '#91f2a8';
-    case 'resonance':
-      return '#ffffff';
-    default:
-      return '#5b4a74';
-  }
+  return getCharacterDisplayName(item);
 }
 
 function sortItemsByLabel(items) {
@@ -96,16 +78,7 @@ function TierCandidate({
       role={isMobile ? 'button' : undefined}
       tabIndex={isMobile ? 0 : undefined}
     >
-      <Avatar
-        src={item.imageUrl || undefined}
-        alt=""
-        radius="lg"
-        size={54}
-        style={{
-          backgroundColor: getPersonalityAvatarColor(item.personality),
-          color: item.personality === 'resonance' ? '#171021' : undefined
-        }}
-      />
+      <CharacterAvatar character={item} />
       {showLabels ? (
         <Text size="sm" fw={600} className="tier-candidate-label">
           {getItemLabel(item)}
@@ -167,7 +140,7 @@ function TierBucket({
           >
             {bucket.label}
           </Badge>
-          {typeof bucket.score === 'number' ? (
+          {bucket.showScore !== false && typeof bucket.score === 'number' ? (
             <Text size="sm" fw={700} c="dimmed" className="tier-bucket-score">
               Score: {bucket.score > 0 ? `+${bucket.score}` : '0'}
             </Text>

@@ -467,7 +467,8 @@ async function createCharacterImageUpload(event) {
     const upload = await createCharacterImageUploadUrl(
       auth.user.id,
       id,
-      body.contentType
+      body.contentType,
+      body.imageType || 'default'
     );
 
     return json(200, upload);

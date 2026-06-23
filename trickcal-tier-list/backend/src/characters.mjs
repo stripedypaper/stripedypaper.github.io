@@ -119,7 +119,7 @@ function buildSingleFilterQueryInput({
   filterValue
 }) {
   const baseProjectionExpression =
-    'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion';
+    'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl';
 
   if (filterType === 'position') {
     const queryInput = {
@@ -192,8 +192,7 @@ function buildSingleFilterQueryInput({
     },
     Limit: limit,
     ScanIndexForward: false,
-    ProjectionExpression:
-      'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion'
+    ProjectionExpression: baseProjectionExpression
   };
 
   const exclusiveStartKey = decodeCursor(cursor);
@@ -256,7 +255,7 @@ async function listCharactersByNamePrefixPage({ limit, cursor, prefix }) {
           ExclusiveStartKey: currentState.lastKey,
           Limit: Math.max(1, limit - characters.length),
           ProjectionExpression:
-            'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion',
+            'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl',
           ScanIndexForward: false
         })
       );
@@ -360,12 +359,17 @@ export async function updateCharacterRecord(actorId, id, input) {
   return response.Attributes ? parseCharacterRecord(response.Attributes) : null;
 }
 
-export async function createCharacterImageUploadUrl(actorId, id, contentType) {
+export async function createCharacterImageUploadUrl(
+  actorId,
+  id,
+  contentType,
+  imageType = 'default'
+) {
   assertCharacterUploadConfigured();
   validateImageContentType(contentType);
-
-  const imageVersion = await touchCharacterImageVersion(actorId, id);
-  const key = getCharacterImageKey(id);
+  validateImageType(imageType);
+  const imageVersion = await touchCharacterImageVersion(actorId, id, imageType);
+  const key = getCharacterImageKey(id, imageType);
   const command = new PutObjectCommand({
     Bucket: CHARACTERS_IMAGES_BUCKET_NAME,
     Key: key,
@@ -378,7 +382,10 @@ export async function createCharacterImageUploadUrl(actorId, id, contentType) {
 
   return {
     uploadUrl,
-    imageUrl: makeCharacterImageUrl(id, imageVersion)
+    imageUrl:
+      imageType === 'yearning'
+        ? makeCharacterYearningImageUrl(id, imageVersion)
+        : makeCharacterImageUrl(id, imageVersion)
   };
 }
 
@@ -432,6 +439,8 @@ function buildCharacterItem(character) {
   addOptionalString(item, 'nameJaLower', lowerOptionalString(character.nameJa));
   addOptionalString(item, 'nameZhLower', lowerOptionalString(character.nameZh));
   addOptionalString(item, 'nameKoLower', lowerOptionalString(character.nameKo));
+  addOptionalBoolean(item, 'hasYearning', character.hasYearning);
+  addOptionalString(item, 'yearningImageUrl', character.yearningImageUrl);
 
   return item;
 }
@@ -490,6 +499,8 @@ function parseCharacterRecord(item) {
     updatedAt: item.updatedAt?.S || '',
     updatedBy: item.updatedBy?.S || '',
     imageVersion: item.imageVersion?.S || '',
+    hasYearning: item.hasYearning?.BOOL || false,
+    yearningImageUrl: item.yearningImageUrl?.S || '',
     imageUrl: makeCharacterImageUrl(
       item.id?.S || '',
       item.imageVersion?.S || item.updatedAt?.S || ''
@@ -522,6 +533,13 @@ function validateCharacterInput(input) {
     CHARACTER_RARITY_VALUES,
     'rarity'
   );
+  const hasYearning = normalizeOptionalBoolean(input?.hasYearning);
+  const yearningImageUrl =
+    hasYearning && input?.yearningImageUrl
+      ? normalizeOptionalString(input?.yearningImageUrl)
+      : hasYearning
+        ? normalizeOptionalString(input?.yearningImageUrl)
+        : null;
 
   return {
     entityType: 'character',
@@ -536,7 +554,9 @@ function validateCharacterInput(input) {
     position,
     role,
     personality,
-    rarity
+    rarity,
+    hasYearning,
+    yearningImageUrl
   };
 }
 
@@ -586,7 +606,23 @@ function addOptionalString(item, fieldName, value) {
   };
 }
 
+function addOptionalBoolean(item, fieldName, value) {
+  if (typeof value !== 'boolean') {
+    return;
+  }
+
+  item[fieldName] = {
+    BOOL: value
+  };
+}
+
 function toAttributeValue(value) {
+  if (typeof value === 'boolean') {
+    return {
+      BOOL: value
+    };
+  }
+
   if (typeof value === 'number') {
     return {
       N: String(value)
@@ -630,7 +666,10 @@ function validateImageContentType(contentType) {
 }
 
 function getCharacterImageKey(id) {
-  return `characters/${id}/image`;
+  const imageType = arguments[1] || 'default';
+  return imageType === 'yearning'
+    ? `characters/${id}/yearning-image`
+    : `characters/${id}/image`;
 }
 
 function assertCharacterTableConfigured() {
@@ -647,8 +686,45 @@ function assertCharacterUploadConfigured() {
   }
 }
 
-async function touchCharacterImageVersion(actorId, id) {
+async function touchCharacterImageVersion(actorId, id, imageType = 'default') {
   const now = new Date().toISOString();
+  const updateExpression =
+    imageType === 'yearning'
+      ? 'SET entityType = :entityType, hasYearning = :hasYearning, yearningImageUrl = :yearningImageUrl, updatedAt = :updatedAt, updatedBy = :updatedBy'
+      : 'SET entityType = :entityType, imageVersion = :imageVersion, updatedAt = :updatedAt, updatedBy = :updatedBy';
+  const expressionAttributeValues =
+    imageType === 'yearning'
+      ? {
+          ':entityType': {
+            S: 'character'
+          },
+          ':hasYearning': {
+            BOOL: true
+          },
+          ':yearningImageUrl': {
+            S: makeCharacterYearningImageUrl(id, now)
+          },
+          ':updatedAt': {
+            S: now
+          },
+          ':updatedBy': {
+            S: actorId
+          }
+        }
+      : {
+          ':entityType': {
+            S: 'character'
+          },
+          ':imageVersion': {
+            S: now
+          },
+          ':updatedAt': {
+            S: now
+          },
+          ':updatedBy': {
+            S: actorId
+          }
+        };
 
   await ddbClient.send(
     new UpdateItemCommand({
@@ -658,27 +734,50 @@ async function touchCharacterImageVersion(actorId, id) {
           S: id
         }
       },
-      UpdateExpression:
-        'SET entityType = :entityType, imageVersion = :imageVersion, updatedAt = :updatedAt, updatedBy = :updatedBy',
-      ExpressionAttributeValues: {
-        ':entityType': {
-          S: 'character'
-        },
-        ':imageVersion': {
-          S: now
-        },
-        ':updatedAt': {
-          S: now
-        },
-        ':updatedBy': {
-          S: actorId
-        }
-      },
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
       ConditionExpression: 'attribute_exists(id)'
     })
   );
 
   return now;
+}
+
+export function makeCharacterYearningImageUrl(id, version) {
+  if (!CHARACTERS_CDN_BASE_URL) {
+    return null;
+  }
+
+  const url = `${CHARACTERS_CDN_BASE_URL}/characters/${encodeURIComponent(
+    id
+  )}/yearning-image`;
+  return version ? `${url}?v=${encodeURIComponent(version)}` : url;
+}
+
+function validateImageType(imageType) {
+  if (!['default', 'yearning'].includes(imageType)) {
+    throw new Error('Invalid image type.');
+  }
+}
+
+function normalizeOptionalBoolean(value) {
+  if (value === undefined || value === null || value === '') {
+    return false;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (value === 'true') {
+    return true;
+  }
+
+  if (value === 'false') {
+    return false;
+  }
+
+  throw new Error('Invalid hasYearning.');
 }
 
 function normalizeBaseUrl(value) {

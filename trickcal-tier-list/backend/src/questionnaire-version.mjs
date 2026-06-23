@@ -1,11 +1,13 @@
 import { QUESTIONNAIRE_VERSION } from './rankings-config.mjs';
 import { QUESTIONNAIRE_VERSION_V2 } from './rankings-config-v2.mjs';
+import { QUESTIONNAIRE_VERSION_V4 } from './rankings-config-v4.mjs';
 
 export const LEGACY_QUESTIONNAIRE_VERSION = QUESTIONNAIRE_VERSION;
-export const ACTIVE_QUESTIONNAIRE_VERSION = QUESTIONNAIRE_VERSION_V2;
+export const ACTIVE_QUESTIONNAIRE_VERSION = QUESTIONNAIRE_VERSION_V4;
 
 const SUPPORTED_QUESTIONNAIRE_VERSIONS = new Set([
   LEGACY_QUESTIONNAIRE_VERSION,
+  QUESTIONNAIRE_VERSION_V2,
   ACTIVE_QUESTIONNAIRE_VERSION
 ]);
 
@@ -21,5 +23,9 @@ export function resolveQuestionnaireVersion(value) {
 }
 
 export function isQuestionnaireVersionV2(value) {
-  return resolveQuestionnaireVersion(value) === ACTIVE_QUESTIONNAIRE_VERSION;
+  return resolveQuestionnaireVersion(value) === QUESTIONNAIRE_VERSION_V2;
+}
+
+export function isQuestionnaireVersionV4(value) {
+  return resolveQuestionnaireVersion(value) === QUESTIONNAIRE_VERSION_V4;
 }

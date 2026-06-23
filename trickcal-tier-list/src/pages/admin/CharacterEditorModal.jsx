@@ -8,6 +8,7 @@ import {
   Select,
   SimpleGrid,
   Stack,
+  Switch,
   Text,
   TextInput
 } from '@mantine/core';
@@ -71,8 +72,12 @@ export function CharacterEditorModal({
         ) : null}
 
         {character?.imageUrl ? (
+          <Image src={character.imageUrl} alt="" radius="md" h={160} fit="contain" />
+        ) : null}
+
+        {character?.hasYearning && character?.yearningImageUrl ? (
           <Image
-            src={character.imageUrl}
+            src={character.yearningImageUrl}
             alt=""
             radius="md"
             h={160}
@@ -148,6 +153,14 @@ export function CharacterEditorModal({
           />
         </SimpleGrid>
 
+        <Switch
+          label="Has Yearning"
+          checked={Boolean(formState.hasYearning)}
+          onChange={(event) =>
+            updateField('hasYearning', event.currentTarget.checked)
+          }
+        />
+
         <FileInput
           label="(Re)upload image"
           placeholder="Choose an image"
@@ -156,6 +169,17 @@ export function CharacterEditorModal({
           onChange={(file) => updateField('imageFile', file)}
           clearable
         />
+
+        {formState.hasYearning ? (
+          <FileInput
+            label="(Re)upload yearning image"
+            placeholder="Choose a yearning image"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            value={formState.yearningImageFile}
+            onChange={(file) => updateField('yearningImageFile', file)}
+            clearable
+          />
+        ) : null}
 
         {error ? (
           <Text c="red" size="sm">

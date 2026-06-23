@@ -1,3 +1,5 @@
+import { DEFAULT_QUESTIONNAIRE_VERSION } from './questionnaireVersion.js';
+
 export const TOP_NAV = [
   { key: 'home', label: 'Tier list', hash: '#/' },
   { key: 'contribute', label: 'Contribute', hash: '#/contribute' },
@@ -140,13 +142,91 @@ export function formatDate(value) {
 }
 
 export function getCharacterDisplayName(character) {
-  return (
+  const baseName =
+    character.baseName ||
     character.nameEn ||
     character.nameJa ||
     character.nameZh ||
     character.nameKo ||
-    character.id
-  );
+    character.id;
+
+  return character.isYearning ? `${baseName} (Y2)` : baseName;
+}
+
+export function buildCharacterVariantKey(characterId, isYearning = false) {
+  return `${characterId}#${isYearning ? 'yearning' : 'base'}`;
+}
+
+export function parseCharacterVariantKey(value = '') {
+  const normalized = String(value || '').trim();
+  if (!normalized) {
+    return {
+      characterId: '',
+      isYearning: false
+    };
+  }
+
+  if (normalized.endsWith('#yearning')) {
+    return {
+      characterId: normalized.slice(0, -'#yearning'.length),
+      isYearning: true
+    };
+  }
+
+  if (normalized.endsWith('#base')) {
+    return {
+      characterId: normalized.slice(0, -'#base'.length),
+      isYearning: false
+    };
+  }
+
+  return {
+    characterId: normalized,
+    isYearning: false
+  };
+}
+
+export function expandCharacterVariants(
+  characters,
+  questionnaireVersion = DEFAULT_QUESTIONNAIRE_VERSION
+) {
+  const isVariantAware = questionnaireVersion === '2026-06-22-v4';
+
+  return (characters || []).flatMap((character) => {
+    const baseVariant = {
+      ...character,
+      id: isVariantAware
+        ? buildCharacterVariantKey(character.id, false)
+        : character.id,
+      characterId: character.id,
+      characterVariantKey: isVariantAware
+        ? buildCharacterVariantKey(character.id, false)
+        : character.id,
+      isYearning: false,
+      baseName:
+        character.nameEn ||
+        character.nameJa ||
+        character.nameZh ||
+        character.nameKo ||
+        character.id
+    };
+
+    if (!isVariantAware || !character.hasYearning || !character.yearningImageUrl) {
+      return [baseVariant];
+    }
+
+    return [
+      baseVariant,
+      {
+        ...character,
+        id: buildCharacterVariantKey(character.id, true),
+        characterId: character.id,
+        characterVariantKey: buildCharacterVariantKey(character.id, true),
+        isYearning: true,
+        baseName: baseVariant.baseName
+      }
+    ];
+  });
 }
 
 export function getOptionLabel(options, value) {
@@ -165,7 +245,9 @@ export function parseCharacterForm(character) {
     role: character?.role || '',
     personality: character?.personality || '',
     rarity: character?.rarity ? String(character.rarity) : '',
-    imageFile: null
+    hasYearning: Boolean(character?.hasYearning),
+    imageFile: null,
+    yearningImageFile: null
   };
 }
 
@@ -178,7 +260,8 @@ export function buildCharacterPayload(formState) {
     position: formState.position,
     role: formState.role,
     personality: formState.personality,
-    rarity: Number.parseInt(formState.rarity, 10)
+    rarity: Number.parseInt(formState.rarity, 10),
+    hasYearning: Boolean(formState.hasYearning)
   };
 }
 

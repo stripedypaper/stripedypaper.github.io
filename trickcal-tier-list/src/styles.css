@@ -380,6 +380,32 @@ body::before {
   touch-action: manipulation;
 }
 
+.character-avatar {
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--character-avatar-size, 54px);
+  height: var(--character-avatar-size, 54px);
+}
+
+.character-avatar-overlay {
+  position: absolute;
+  top: -1rem;
+  right: -1.2rem;
+  animation: character-avatar-float 2.4s ease-in-out infinite;
+  pointer-events: none;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.3));
+}
+
+@keyframes character-avatar-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.2rem);
+  }
+}
+
 .tier-candidate:active {
   cursor: grabbing;
 }

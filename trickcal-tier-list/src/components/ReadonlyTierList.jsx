@@ -28,6 +28,16 @@ function sortCharacters(items, getScore) {
   });
 }
 
+function sortCharactersAlphabetically(items) {
+  return [...items].sort((left, right) =>
+    getCharacterDisplayName(left).localeCompare(
+      getCharacterDisplayName(right),
+      undefined,
+      { sensitivity: 'base' }
+    )
+  );
+}
+
 function buildBreakdownLines(character) {
   if (
     typeof character.mixedCrusadeScore === 'number' ||
@@ -159,7 +169,8 @@ export function ReadonlyTierList({
   characters,
   getScore = (character) => character.calculatedScore ?? 0,
   renderTooltipContent,
-  onCharacterClick
+  onCharacterClick,
+  extraBucket = null
 }) {
   const bucketItems = buckets.map((bucket) => ({
     ...bucket,
@@ -168,6 +179,9 @@ export function ReadonlyTierList({
       getScore
     )
   }));
+  const extraBucketItems = extraBucket
+    ? sortCharactersAlphabetically(extraBucket.items || [])
+    : [];
 
   return (
     <Stack gap="sm" className="tier-list notranslate" translate="no">
@@ -212,7 +226,11 @@ export function ReadonlyTierList({
             {bucket.items.length ? (
               bucket.items.map((character) => (
                 <CharacterChip
-                  key={character.characterId || character.id}
+                  key={
+                    character.characterVariantKey ||
+                    character.characterId ||
+                    character.id
+                  }
                   character={character}
                   renderTooltipContent={renderTooltipContent}
                   onCharacterClick={onCharacterClick}
@@ -226,6 +244,43 @@ export function ReadonlyTierList({
           </div>
         </Paper>
       ))}
+      {extraBucket && extraBucketItems.length ? (
+        <Paper className="tier-bucket" p="sm" radius="lg" withBorder>
+          <Group justify="space-between" align="center" mb="sm" wrap="nowrap">
+            <Group gap="sm" wrap="nowrap">
+              <Badge
+                color={extraBucket.color || 'gray'}
+                variant="filled"
+                size="lg"
+                className="tier-bucket-label"
+                radius="md"
+                translate="no"
+              >
+                {extraBucket.label}
+              </Badge>
+            </Group>
+            <Text c="dimmed" size="sm">
+              {extraBucketItems.length} character
+              {extraBucketItems.length === 1 ? '' : 's'}
+            </Text>
+          </Group>
+
+          <div className="tier-bucket-items">
+            {extraBucketItems.map((character) => (
+              <CharacterChip
+                key={
+                  character.characterVariantKey ||
+                  character.characterId ||
+                  character.id
+                }
+                character={character}
+                renderTooltipContent={renderTooltipContent}
+                onCharacterClick={onCharacterClick}
+              />
+            ))}
+          </div>
+        </Paper>
+      ) : null}
     </Stack>
   );
 }
