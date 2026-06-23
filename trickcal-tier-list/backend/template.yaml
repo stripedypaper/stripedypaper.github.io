@@ -27,8 +27,8 @@ Parameters:
 Globals:
   Function:
     Runtime: nodejs24.x
-    Timeout: 10
-    MemorySize: 128
+    Timeout: 29
+    MemorySize: 256
 
 Resources:
   UsersTable:
@@ -197,6 +197,107 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  RankingSubmissionsV2Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: questionnaireVersion
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: questionnaireVersion
+          KeyType: RANGE
+
+  UserCharacterScoresV2Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userVersionKey
+          AttributeType: S
+        - AttributeName: characterId
+          AttributeType: S
+        - AttributeName: versionCharacterKey
+          AttributeType: S
+        - AttributeName: submittedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userVersionKey
+          KeyType: HASH
+        - AttributeName: characterId
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: ScoresByVersionCharacterSubmittedAtIndex
+          KeySchema:
+            - AttributeName: versionCharacterKey
+              KeyType: HASH
+            - AttributeName: submittedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  UserFavoritesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: characterId
+          AttributeType: S
+        - AttributeName: updatedAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: FavoritesByCharacterIndex
+          KeySchema:
+            - AttributeName: characterId
+              KeyType: HASH
+            - AttributeName: updatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  CommunityCharacterStatsV2Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: versionCharacterKey
+          AttributeType: S
+        - AttributeName: questionnaireVersion
+          AttributeType: S
+        - AttributeName: characterId
+          AttributeType: S
+        - AttributeName: favoriteCount
+          AttributeType: N
+      KeySchema:
+        - AttributeName: versionCharacterKey
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: StatsByVersionCharacterIndex
+          KeySchema:
+            - AttributeName: questionnaireVersion
+              KeyType: HASH
+            - AttributeName: characterId
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: StatsByVersionFavoriteCountIndex
+          KeySchema:
+            - AttributeName: questionnaireVersion
+              KeyType: HASH
+            - AttributeName: favoriteCount
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
   CharactersImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -338,6 +439,14 @@ Resources:
             TableName: !Ref UserCharacterScoresTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CommunityCharacterStatsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RankingSubmissionsV2Table
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserCharacterScoresV2Table
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UserFavoritesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CommunityCharacterStatsV2Table
         - S3CrudPolicy:
             BucketName: !Ref CharactersImagesBucket
       Environment:
@@ -353,6 +462,10 @@ Resources:
           RANKING_SUBMISSIONS_TABLE_NAME: !Ref RankingSubmissionsTable
           USER_CHARACTER_SCORES_TABLE_NAME: !Ref UserCharacterScoresTable
           COMMUNITY_CHARACTER_STATS_TABLE_NAME: !Ref CommunityCharacterStatsTable
+          RANKING_SUBMISSIONS_V2_TABLE_NAME: !Ref RankingSubmissionsV2Table
+          USER_CHARACTER_SCORES_V2_TABLE_NAME: !Ref UserCharacterScoresV2Table
+          USER_FAVORITES_TABLE_NAME: !Ref UserFavoritesTable
+          COMMUNITY_CHARACTER_STATS_V2_TABLE_NAME: !Ref CommunityCharacterStatsV2Table
           CHARACTERS_IMAGES_BUCKET_NAME: !Ref CharactersImagesBucket
           CHARACTERS_CDN_BASE_URL: !Sub 'https://${CharactersImagesDistribution.DomainName}'
       Events:
@@ -481,6 +594,18 @@ Outputs:
   CommunityCharacterStatsTableName:
     Description: Store materialized community character statistics here.
     Value: !Ref CommunityCharacterStatsTable
+  RankingSubmissionsV2TableName:
+    Description: Store raw questionnaire submissions for versioned questionnaires here.
+    Value: !Ref RankingSubmissionsV2Table
+  UserCharacterScoresV2TableName:
+    Description: Store versioned per-user derived character scores here.
+    Value: !Ref UserCharacterScoresV2Table
+  UserFavoritesTableName:
+    Description: Store version-independent user favorite votes here.
+    Value: !Ref UserFavoritesTable
+  CommunityCharacterStatsV2TableName:
+    Description: Store materialized versioned community character statistics here.
+    Value: !Ref CommunityCharacterStatsV2Table
   CharactersCdnBaseUrl:
     Description: Use this value as the base URL for character images.
     Value: !Sub 'https://${CharactersImagesDistribution.DomainName}'

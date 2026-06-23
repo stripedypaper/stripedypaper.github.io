@@ -1,6 +1,7 @@
 import { Paper, Stack, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { ReadonlyTierList } from '../components/ReadonlyTierList.jsx';
+import { withQuestionnaireVersion } from '../lib/questionnaireVersion.js';
 import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
 
 function mergeCharacterScores(characters, derivedScores) {
@@ -49,9 +50,12 @@ async function fetchAllCharacters(apiBaseUrl) {
   return allCharacters;
 }
 
-async function fetchSharedSubmission(apiBaseUrl, userId) {
+async function fetchSharedSubmission(apiBaseUrl, userId, questionnaireVersion) {
   const response = await fetch(
-    `${apiBaseUrl}/rankings/${encodeURIComponent(userId)}`
+    `${apiBaseUrl}${withQuestionnaireVersion(
+      `/rankings/${encodeURIComponent(userId)}`,
+      questionnaireVersion
+    )}`
   );
 
   if (response.status === 404) {
@@ -66,7 +70,11 @@ async function fetchSharedSubmission(apiBaseUrl, userId) {
   return data.submission || null;
 }
 
-export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
+export function SharedTierListPage({
+  apiBaseUrl,
+  sharedUserId,
+  questionnaireVersion
+}) {
   const [characters, setCharacters] = useState([]);
   const [submission, setSubmission] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,7 +99,7 @@ export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
       try {
         const [nextCharacters, nextSubmission] = await Promise.all([
           fetchAllCharacters(apiBaseUrl),
-          fetchSharedSubmission(apiBaseUrl, sharedUserId)
+          fetchSharedSubmission(apiBaseUrl, sharedUserId, questionnaireVersion)
         ]);
 
         if (!active) {
@@ -120,7 +128,7 @@ export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, sharedUserId]);
+  }, [apiBaseUrl, questionnaireVersion, sharedUserId]);
 
   if (loading) {
     return (

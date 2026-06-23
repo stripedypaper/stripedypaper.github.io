@@ -146,6 +146,22 @@ body::before {
   white-space: nowrap;
 }
 
+.lineup-grid-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  padding-top: 0.15rem;
+}
+
+.lineup-grid-image {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+
 .lineup-grid {
   display: grid;
   grid-template-columns: repeat(var(--lineup-grid-columns), 0.66rem);
@@ -153,8 +169,6 @@ body::before {
   gap: 0.22rem;
   justify-content: end;
   align-content: start;
-  flex: 0 0 auto;
-  padding-top: 0.15rem;
 }
 
 .lineup-grid-cell {
@@ -167,6 +181,37 @@ body::before {
 .lineup-grid-cell-muted {
   filter: saturate(0.12) brightness(0.78);
   opacity: 0.5;
+}
+
+.lineup-grid-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--lineup-grid-columns), 0.82rem);
+  grid-auto-rows: 0.82rem;
+  gap: 0.22rem;
+  align-content: center;
+  justify-content: end;
+  align-self: center;
+}
+
+.lineup-grid-emoji-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.82rem;
+  height: 0.82rem;
+  font-size: 0.68rem;
+  line-height: 1;
+}
+
+.lineup-grid-emoji-single {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.65rem;
+  min-height: 1.65rem;
+  font-size: 1.35rem;
+  line-height: 1;
+  align-self: center;
 }
 
 .admin-nav-link {
@@ -376,6 +421,18 @@ body::before {
 
 .tier-candidate-label {
   max-width: 180px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .mantine-Button-root[disabled] {

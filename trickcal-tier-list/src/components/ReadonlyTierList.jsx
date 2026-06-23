@@ -1,35 +1,14 @@
-import {
-  Avatar,
-  Badge,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  Tooltip
-} from '@mantine/core';
+import { Badge, Group, Paper, Stack, Text, Tooltip } from '@mantine/core';
+import { ReadonlyCharacterChip } from './ReadonlyCharacterChip.jsx';
+import { ScoreTooltip } from './ScoreTooltip.jsx';
 import { getCharacterDisplayName } from '../lib/site.js';
 
-function getPersonalityAvatarColor(personality) {
-  switch (personality) {
-    case 'vivacious':
-      return '#ecdc84';
-    case 'mad':
-      return '#ec849d';
-    case 'composed':
-      return '#89beef';
-    case 'depressed':
-      return '#c684ec';
-    case 'innocent':
-      return '#91f2a8';
-    case 'resonance':
-      return '#ffffff';
-    default:
-      return '#5b4a74';
-  }
-}
-
 function formatScore(score) {
-  return typeof score === 'number' && score > 0 ? `+${score}` : '0';
+  if (typeof score !== 'number' || Number.isNaN(score)) {
+    return '0';
+  }
+
+  return score > 0 ? `+${Number(score.toFixed(2))}` : '0';
 }
 
 function sortCharacters(items, getScore) {
@@ -50,6 +29,36 @@ function sortCharacters(items, getScore) {
 }
 
 function buildBreakdownLines(character) {
+  if (
+    typeof character.mixedCrusadeScore === 'number' ||
+    typeof character.mixedFrontierScore === 'number'
+  ) {
+    const lines = [];
+
+    if (typeof character.monoScore === 'number') {
+      lines.push({
+        label: 'Mono score',
+        score: character.monoScore * 0.2
+      });
+    }
+
+    if (typeof character.mixedCrusadeScore === 'number') {
+      lines.push({
+        label: 'Mixed score',
+        score: character.mixedCrusadeScore * 0.5
+      });
+    }
+
+    if (typeof character.mixedFrontierScore === 'number') {
+      lines.push({
+        label: 'Raid score',
+        score: character.mixedFrontierScore * 0.3
+      });
+    }
+
+    return lines;
+  }
+
   const monoScore =
     typeof character.monoScore === 'number' ? character.monoScore : 0;
   const mixedScore =
@@ -76,34 +85,33 @@ function buildBreakdownLines(character) {
 }
 
 function getDefaultTooltipContent(character) {
+  if (
+    typeof character.mixedCrusadeScore === 'number' ||
+    typeof character.mixedFrontierScore === 'number'
+  ) {
+    return (
+      <ScoreTooltip
+        title={getCharacterDisplayName(character)}
+        score={character.calculatedScore ?? 0}
+        monoScore={character.monoScore ?? 0}
+        mixedScore={character.mixedCrusadeScore ?? 0}
+        raidScore={character.mixedFrontierScore ?? 0}
+      />
+    );
+  }
+
   const breakdown = buildBreakdownLines(character);
+  const breakdownByLabel = new Map(
+    breakdown.map((item) => [item.label, item.score ?? 0])
+  );
 
   return (
-    <Stack gap={6}>
-      <Text fw={700}>{getCharacterDisplayName(character)}</Text>
-      <Text size="sm">Total score: {character.calculatedScore ?? 0}</Text>
-      {breakdown.length ? (
-        breakdown.map((item) => (
-          <Group
-            key={item.label}
-            justify="space-between"
-            gap="md"
-            wrap="nowrap"
-          >
-            <Text size="sm" c="dimmed">
-              {item.label}
-            </Text>
-            <Text size="sm" fw={600}>
-              {formatScore(item.score)}
-            </Text>
-          </Group>
-        ))
-      ) : (
-        <Text size="sm" c="dimmed">
-          No contributing rankings.
-        </Text>
-      )}
-    </Stack>
+    <ScoreTooltip
+      title={getCharacterDisplayName(character)}
+      score={character.calculatedScore ?? 0}
+      monoScore={character.monoScore ?? 0}
+      mixedScore={character.mixedScore ?? 0}
+    />
   );
 }
 
@@ -123,35 +131,18 @@ function CharacterChip({ character, renderTooltipContent, onCharacterClick }) {
     >
       <div>
         <div
-          className={`tier-candidate readonly-tier-candidate${
-            onCharacterClick ? ' readonly-tier-candidate-clickable' : ''
-          }`}
           translate="no"
           onClick={
             onCharacterClick ? () => onCharacterClick(character) : undefined
           }
         >
-          <Avatar
-            src={character.imageUrl || undefined}
-            alt=""
-            radius="lg"
-            size={54}
-            style={{
-              backgroundColor: getPersonalityAvatarColor(character.personality),
-              color:
-                character.personality === 'resonance' ? '#171021' : undefined
-            }}
+          <ReadonlyCharacterChip
+            character={character}
+            secondaryText={secondaryText}
+            className={
+              onCharacterClick ? 'readonly-tier-candidate-clickable' : ''
+            }
           />
-          <div>
-            <Text size="sm" fw={600} className="tier-candidate-label">
-              {getCharacterDisplayName(character)}
-            </Text>
-            {secondaryText ? (
-              <Text size="xs" c="dimmed">
-                {secondaryText}
-              </Text>
-            ) : null}
-          </div>
         </div>
       </div>
     </Tooltip>

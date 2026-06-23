@@ -7,6 +7,7 @@ export const PERSONALITY_ORDER = [
 ];
 
 export const POSITION_ORDER = ['front', 'middle', 'back'];
+export const ROLE_ORDER = ['dps', 'support', 'tank'];
 
 export const PERSONALITY_LABELS = {
   depressed: 'Depressed',
@@ -22,6 +23,12 @@ export const POSITION_LABELS = {
   back: 'Back'
 };
 
+export const ROLE_LABELS = {
+  dps: 'DPS',
+  support: 'Support',
+  tank: 'Tank'
+};
+
 export const PERSONA_GRID_COLORS = {
   depressed: '#c684ec',
   vivacious: '#ecdc84',
@@ -30,17 +37,16 @@ export const PERSONA_GRID_COLORS = {
   mad: '#ec849d'
 };
 
-const POSITION_LINEUP_GRID = [
+const MIXED_CRUSADE_LINEUP_GRID = [
+  ['#ecdc84', '#89beef', '#ec849d'],
+  ['#91f2a8', '#c684ec', '#ecdc84']
+];
+
+const MIXED_FRONTIER_LINEUP_GRID = [
   ['#c684ec', '#ecdc84', '#89beef'],
   ['#91f2a8', '#ec849d', '#c684ec'],
   ['#89beef', '#91f2a8', '#ecdc84']
 ];
-
-const POSITION_HIGHLIGHT_COLUMNS = {
-  front: 2,
-  middle: 1,
-  back: 0
-};
 
 function normalizeAssignedPlacements(placements) {
   const assignedPlacements = {};
@@ -67,21 +73,27 @@ function getQuestionTiers(questionKind) {
       {
         id: 'top_6',
         label: 'Top 6',
-        score: 5,
+        score: 10,
         color: 'grape',
         minimum: 6,
         maximum: 6
       },
       {
         id: 'good_alternatives',
-        label: 'Good alternatives',
-        score: 4,
+        label: 'Best alternatives',
+        score: 8,
         color: 'blue'
+      },
+      {
+        id: 'good',
+        label: 'Good',
+        score: 6,
+        color: 'teal'
       },
       {
         id: 'usable',
         label: 'Usable',
-        score: 2,
+        score: 4,
         color: 'yellow'
       },
       { id: 'do_not_use', label: 'Do not use', score: 0, color: 'red' }
@@ -89,16 +101,18 @@ function getQuestionTiers(questionKind) {
   }
 
   return [
-    { id: 'exceptional', label: 'Exceptional', score: 5, color: 'grape' },
-    { id: 'strong', label: 'Strong', score: 4, color: 'blue' },
-    { id: 'good', label: 'Good', score: 3, color: 'green' },
-    { id: 'usable', label: 'Usable', score: 2, color: 'yellow' },
+    {
+      id: 'meta_defining',
+      label: 'Meta-defining',
+      score: 10,
+      color: 'grape'
+    },
+    { id: 'exceptional', label: 'Exceptional', score: 9, color: 'blue' },
+    { id: 'strong', label: 'Strong', score: 8, color: 'teal' },
+    { id: 'good', label: 'Good', score: 6, color: 'green' },
+    { id: 'usable', label: 'Usable', score: 4, color: 'yellow' },
     { id: 'do_not_use', label: 'Do not use', score: 0, color: 'red' }
   ];
-}
-
-function getNicheQuestionTiers() {
-  return [{ id: 'niche', label: 'Niche', score: 2, color: 'grape' }];
 }
 
 function getFavoriteQuestionTiers() {
@@ -131,7 +145,7 @@ export function buildQuestionGroups(characters) {
 
     groups.push({
       id: `ranking-a-${index + 1}`,
-      label: `Ranking A${index + 1}`,
+      label: `Ranking A${index + 1}: Mono`,
       kind: 'personality',
       personality,
       lineupGrid: {
@@ -145,37 +159,46 @@ export function buildQuestionGroups(characters) {
     });
   });
 
-  POSITION_ORDER.forEach((position, index) => {
-    const items = characters.filter(
-      (character) => character.position === position
-    );
-
+  ROLE_ORDER.forEach((role, index) => {
     groups.push({
       id: `ranking-b-${index + 1}`,
-      label: `Ranking B${index + 1}`,
-      kind: 'position',
-      position,
+      label: `Ranking B${index + 1}: Crusade (${ROLE_LABELS[role]})`,
+      kind: 'mixed-crusade',
+      role,
+      headerImageName: `class_${role}.webp`,
       lineupGrid: {
         columns: 3,
-        cells: POSITION_LINEUP_GRID,
-        highlightColumn: POSITION_HIGHLIGHT_COLUMNS[position]
+        cells: MIXED_CRUSADE_LINEUP_GRID,
+        trailingEmojiGrid: {
+          columns: 2,
+          items: ['🐻', '👻', '🐻', '👻']
+        }
       },
-      tiers: getQuestionTiers('position'),
-      items
+      tiers: getQuestionTiers('mixed'),
+      items: characters.filter((character) => character.role === role)
+    });
+  });
+
+  ROLE_ORDER.forEach((role, index) => {
+    groups.push({
+      id: `ranking-c-${index + 1}`,
+      label: `Ranking C${index + 1}: Frontier (${ROLE_LABELS[role]})`,
+      kind: 'mixed-frontier',
+      role,
+      headerImageName: `class_${role}.webp`,
+      lineupGrid: {
+        columns: 3,
+        cells: MIXED_FRONTIER_LINEUP_GRID,
+        trailingEmoji: '👾'
+      },
+      tiers: getQuestionTiers('mixed'),
+      items: characters.filter((character) => character.role === role)
     });
   });
 
   groups.push({
-    id: 'ranking-c-1',
-    label: 'Ranking C1',
-    kind: 'niche',
-    tiers: getNicheQuestionTiers(),
-    items: [...characters]
-  });
-
-  groups.push({
-    id: 'ranking-d-1',
-    label: 'Ranking D1',
+    id: 'ranking-f-1',
+    label: 'Ranking F: Favorite',
     kind: 'favorite',
     tiers: getFavoriteQuestionTiers(),
     items: [...characters]
@@ -185,7 +208,11 @@ export function buildQuestionGroups(characters) {
 }
 
 export function requiresCompleteAssignment(question) {
-  return question?.kind === 'personality' || question?.kind === 'position';
+  return (
+    question?.kind === 'personality' ||
+    question?.kind === 'mixed-crusade' ||
+    question?.kind === 'mixed-frontier'
+  );
 }
 
 export function listIncompleteRequiredQuestions(questionGroups, answers) {

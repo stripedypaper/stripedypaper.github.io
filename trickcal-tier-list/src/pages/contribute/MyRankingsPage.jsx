@@ -3,9 +3,9 @@ import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { LineupGrid } from '../../components/LineupGrid.jsx';
 import { TierList } from '../../components/TierList.jsx';
+import { getStaticImageUrl } from '../../lib/site.js';
 import {
   PERSONA_GRID_COLORS,
-  POSITION_LABELS,
   buildQuestionGroups,
   listIncompleteRequiredQuestions
 } from '../../lib/rankings.js';
@@ -172,7 +172,7 @@ export function MyRankingsPage({
       return (
         <Text mt="xs">
           For{' '}
-          <Text span fw={700} c={PERSONA_GRID_COLORS[question.personality]}>
+          <Text span fw={800} c={PERSONA_GRID_COLORS[question.personality]}>
             6-person restricted personality
           </Text>{' '}
           content, choose the apostles you would use in your ideal lineup.
@@ -181,14 +181,36 @@ export function MyRankingsPage({
       );
     }
 
-    if (question.kind === 'niche') {
+    if (question.kind === 'mixed-crusade') {
       return (
         <Text mt="xs">
-          Indicate any apostles which you think have niche usefulness or reason
-          to pull outside of the above rankings. For example: PvP, A-Club,
-          access to certain debuffs, cheesing certain stages, etc. Apostles who
-          already have score of 6 or higher will not receive a score increase
-          from this ranking.
+          For Crusade-like content focusing on wave-based combat versus multiple
+          enemies, but{' '}
+          <Text span fw={800}>
+            ignoring personality bonuses
+          </Text>
+          , rate the performance of{' '}
+          <Text span fw={800}>
+            {question.role.toUpperCase()} apostles
+          </Text>
+          . Assume all apostles are at 3 stars without Yearning/Aside.
+        </Text>
+      );
+    }
+
+    if (question.kind === 'mixed-frontier') {
+      return (
+        <Text mt="xs">
+          For Elias Frontier-like content focusing on raid-based combat versus a
+          single powerful enemy,{' '}
+          <Text span fw={800}>
+            ignoring personality bonuses
+          </Text>
+          , rate the performance of{' '}
+          <Text span fw={800}>
+            {question.role.toUpperCase()} apostles
+          </Text>
+          . Assume all apostles are at 3 stars without Yearning/Aside.
         </Text>
       );
     }
@@ -201,19 +223,25 @@ export function MyRankingsPage({
       );
     }
 
-    return (
-      <Text mt="xs">
-        For{' '}
-        <Text span fw={700}>
-          9-person content with no personality bonus
-        </Text>
-        , rate the apostles based on their performance relative to others in the{' '}
-        <Text span fw={700}>
-          {POSITION_LABELS[question.position] || question.position} position
-        </Text>
-        . Assume all apostles are at 3 stars without Yearning/Aside.
-      </Text>
-    );
+    return null;
+  }
+
+  function handleCopyFromCrusade(question) {
+    if (question.kind !== 'mixed-frontier') {
+      return;
+    }
+
+    const sourceQuestionId = question.id.replace('ranking-c-', 'ranking-b-');
+    const sourcePlacements = placementsByQuestion[sourceQuestionId] || {};
+    onChange(question.id, { ...sourcePlacements });
+    notifications.show({
+      title: 'Copied',
+      message: `Copied selections from ${question.label
+        .replace('Ranking C', 'Ranking B')
+        .replace('Frontier', 'Crusade')}.`,
+      color: 'grape',
+      autoClose: 2000
+    });
   }
 
   return (
@@ -321,15 +349,37 @@ export function MyRankingsPage({
                     </div>
                     {question.lineupGrid ? (
                       <LineupGrid
+                        imageUrl={
+                          question.headerImageName
+                            ? getStaticImageUrl(question.headerImageName)
+                            : ''
+                        }
+                        imageAlt={question.role || question.personality || ''}
                         columns={question.lineupGrid.columns}
                         cells={question.lineupGrid.cells}
                         highlightColumn={
                           question.lineupGrid.highlightColumn ?? null
                         }
+                        trailingEmojiGrid={
+                          question.lineupGrid.trailingEmojiGrid ?? null
+                        }
+                        trailingEmoji={question.lineupGrid.trailingEmoji ?? ''}
                       />
                     ) : null}
                   </Group>
                   {renderQuestionPrompt(question)}
+                  {question.kind === 'mixed-frontier' ? (
+                    <Button
+                      mt="sm"
+                      size="xs"
+                      variant="light"
+                      onClick={() => handleCopyFromCrusade(question)}
+                    >
+                      {question.label
+                        .replace('Ranking C', 'Copy from Ranking B')
+                        .replace('Frontier', 'Crusade')}
+                    </Button>
+                  ) : null}
                 </div>
 
                 <TierList
@@ -337,6 +387,8 @@ export function MyRankingsPage({
                   tiers={question.tiers}
                   items={question.items}
                   initialPlacements={placementsByQuestion[question.id] || {}}
+                  showLabels={false}
+                  showReset
                   onChange={(nextPlacements) =>
                     onChange(question.id, nextPlacements)
                   }

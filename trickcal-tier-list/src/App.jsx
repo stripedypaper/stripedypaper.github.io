@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage.jsx';
 import { SharedTierListPage } from './pages/SharedTierListPage.jsx';
 import { useRoute } from './hooks/useRoute.js';
 import { useSession } from './hooks/useSession.js';
+import { resolveQuestionnaireVersion } from './lib/questionnaireVersion.js';
 import {
   canManageCharacters,
   canViewAdminUsers,
@@ -21,11 +22,16 @@ function PageForRoute({
   canViewUsers,
   user,
   sessionLoading,
-  sharedUserId
+  sharedUserId,
+  questionnaireVersion
 }) {
   if (route === 'shared-tier-list') {
     return (
-      <SharedTierListPage apiBaseUrl={apiBaseUrl} sharedUserId={sharedUserId} />
+      <SharedTierListPage
+        apiBaseUrl={apiBaseUrl}
+        sharedUserId={sharedUserId}
+        questionnaireVersion={questionnaireVersion}
+      />
     );
   }
 
@@ -36,6 +42,7 @@ function PageForRoute({
         route={route}
         user={user}
         sessionLoading={sessionLoading}
+        questionnaireVersion={questionnaireVersion}
       />
     );
   }
@@ -49,16 +56,27 @@ function PageForRoute({
         canViewCharacters={canViewCharacters}
       />
     ) : (
-      <HomePage />
+      <HomePage
+        apiBaseUrl={apiBaseUrl}
+        questionnaireVersion={questionnaireVersion}
+      />
     );
   }
 
-  return <HomePage apiBaseUrl={apiBaseUrl} />;
+  return (
+    <HomePage
+      apiBaseUrl={apiBaseUrl}
+      questionnaireVersion={questionnaireVersion}
+    />
+  );
 }
 
 export function App() {
   const route = useRoute();
   const [apiBaseUrl, setApiBaseUrl] = useState(() => resolveApiBaseUrl());
+  const questionnaireVersion = resolveQuestionnaireVersion(
+    window.location.search
+  );
   const sharedUserId = getSharedTierListUserId(window.location.hash);
 
   useEffect(() => {
@@ -79,6 +97,13 @@ export function App() {
         }
 
         const data = await response.json();
+
+        if (active && typeof window !== 'undefined') {
+          window.TRICKCAL_CONFIG = {
+            ...(window.TRICKCAL_CONFIG || {}),
+            ...data
+          };
+        }
 
         if (
           active &&
@@ -142,6 +167,7 @@ export function App() {
             user={user}
             sessionLoading={loading}
             sharedUserId={sharedUserId}
+            questionnaireVersion={questionnaireVersion}
           />
         </Container>
       </AppShell.Main>

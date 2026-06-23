@@ -13,6 +13,7 @@ import {
   signSession
 } from './auth.mjs';
 import { getRankingSubmission, saveRankingSubmission } from './rankings.mjs';
+import { resolveQuestionnaireVersion } from './questionnaire-version.mjs';
 import { ensureUserRecord, listUsersPage, updateUserRecord } from './users.mjs';
 import {
   createCharacterImageUploadUrl,
@@ -60,7 +61,7 @@ export async function handler(event) {
     }
 
     if (method === 'GET' && path === '/community/characters') {
-      return getCommunityCharacters();
+      return getCommunityCharacters(event);
     }
 
     if (method === 'GET' && path === '/community/favorites') {
@@ -68,7 +69,7 @@ export async function handler(event) {
     }
 
     if (method === 'POST' && path === '/community/rebuild') {
-      return triggerCommunityRebuild();
+      return triggerCommunityRebuild(event);
     }
 
     if (method === 'GET' && path.startsWith('/rankings/')) {
@@ -291,7 +292,10 @@ async function getMyRankings(event) {
     return json(auth.statusCode, auth.body);
   }
 
-  const submission = await getRankingSubmission(auth.user.id);
+  const submission = await getRankingSubmission(
+    auth.user.id,
+    getQuestionnaireVersion(event)
+  );
   return json(200, { submission });
 }
 
@@ -306,7 +310,8 @@ async function putMyRankings(event) {
     const body = parseJsonBody(event);
     const result = await saveRankingSubmission(
       auth.user.id,
-      body.answers || body.placementsByQuestion || {}
+      body.answers || body.placementsByQuestion || {},
+      getQuestionnaireVersion(event)
     );
 
     return json(200, { submission: result.submission });
@@ -317,20 +322,27 @@ async function putMyRankings(event) {
   }
 }
 
-async function getCommunityCharacters() {
-  const result = await listCommunityCharacterStats();
+async function getCommunityCharacters(event) {
+  const result = await listCommunityCharacterStats(
+    getQuestionnaireVersion(event)
+  );
   return json(200, result);
 }
 
 async function getCommunityFavorites(event) {
   const limit = parseLimit(event.queryStringParameters?.limit);
-  const result = await listCommunityFavorites({ limit });
+  const result = await listCommunityFavorites({
+    limit,
+    questionnaireVersion: getQuestionnaireVersion(event)
+  });
   return json(200, result);
 }
 
-async function triggerCommunityRebuild() {
+async function triggerCommunityRebuild(event) {
   try {
-    const result = await triggerPublicCommunityRebuild();
+    const result = await triggerPublicCommunityRebuild(
+      getQuestionnaireVersion(event)
+    );
     return json(200, result);
   } catch (error) {
     if (error?.name === 'CommunityRebuildCooldownError') {
@@ -352,7 +364,10 @@ async function getSharedRankings(event) {
     return json(404, { error: 'Not found' });
   }
 
-  const submission = await getRankingSubmission(userId);
+  const submission = await getRankingSubmission(
+    userId,
+    getQuestionnaireVersion(event)
+  );
 
   if (!submission) {
     return json(404, { error: 'Not found' });
@@ -375,7 +390,9 @@ async function rebuildCommunity(event) {
     return json(auth.statusCode, auth.body);
   }
 
-  const result = await rebuildCommunityCharacterStats();
+  const result = await rebuildCommunityCharacterStats(
+    getQuestionnaireVersion(event)
+  );
   return json(200, result);
 }
 
@@ -683,6 +700,12 @@ function parseJsonBody(event) {
   } catch {
     throw new Error('Invalid JSON body.');
   }
+}
+
+function getQuestionnaireVersion(event) {
+  return resolveQuestionnaireVersion(
+    event?.queryStringParameters?.questionnaireVersion
+  );
 }
 
 function safeEqual(left, right) {

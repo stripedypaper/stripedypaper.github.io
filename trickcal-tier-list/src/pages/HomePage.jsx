@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Button,
   Group,
   Modal,
@@ -13,6 +12,9 @@ import { BarChart } from '@mantine/charts';
 import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useState } from 'react';
 import { ReadonlyTierList } from '../components/ReadonlyTierList.jsx';
+import { ReadonlyCharacterChip } from '../components/ReadonlyCharacterChip.jsx';
+import { ScoreTooltip } from '../components/ScoreTooltip.jsx';
+import { withQuestionnaireVersion } from '../lib/questionnaireVersion.js';
 import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
 import { getCharacterDisplayName } from '../lib/site.js';
 
@@ -20,24 +22,13 @@ function roundToTwo(value) {
   return Number((value || 0).toFixed(2));
 }
 
-function buildNumericDistributionData(distribution, start, end) {
-  const rows = [];
-
-  for (let value = start; value <= end; value += 1) {
-    rows.push({
-      label: String(value),
-      votes: distribution?.[String(value)] || 0
-    });
-  }
-
-  return rows;
-}
-
-function buildNicheDistributionData(distribution) {
-  return [
-    { label: 'false', votes: distribution?.false || 0 },
-    { label: 'true', votes: distribution?.true || 0 }
-  ];
+function buildSortedDistributionData(distribution) {
+  return Object.entries(distribution || {})
+    .map(([label, votes]) => ({
+      label,
+      votes
+    }))
+    .sort((left, right) => Number(left.label) - Number(right.label));
 }
 
 function CommunityChart({
@@ -83,7 +74,7 @@ function CharacterDetailsModal({ character, opened, onClose }) {
       centered
     >
       <Stack gap="md">
-        <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, md: 4 }} spacing="md">
           <Paper className="question-card" p="md" radius="lg" withBorder>
             <Stack gap={4}>
               <Text c="dimmed" size="sm">
@@ -117,10 +108,20 @@ function CharacterDetailsModal({ character, opened, onClose }) {
           <Paper className="question-card" p="md" radius="lg" withBorder>
             <Stack gap={4}>
               <Text c="dimmed" size="sm">
-                Mixed average
+                Mixed crusade average
               </Text>
               <Text fw={700} size="xl">
-                {roundToTwo(stats.mixed?.average || 0)}
+                {roundToTwo(stats.mixedCrusade?.average || 0)}
+              </Text>
+            </Stack>
+          </Paper>
+          <Paper className="question-card" p="md" radius="lg" withBorder>
+            <Stack gap={4}>
+              <Text c="dimmed" size="sm">
+                Mixed frontier average
+              </Text>
+              <Text fw={700} size="xl">
+                {roundToTwo(stats.mixedFrontier?.average || 0)}
               </Text>
             </Stack>
           </Paper>
@@ -129,32 +130,30 @@ function CharacterDetailsModal({ character, opened, onClose }) {
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
           <CommunityChart
             title="Calculated Score Vote Distribution"
-            data={buildNumericDistributionData(
-              stats.calculated?.distribution,
-              0,
-              10
-            )}
+            data={buildSortedDistributionData(stats.calculated?.distribution)}
             valueKey="votes"
             color="teal.6"
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
             title="Mono Score Vote Distribution (A1-A5)"
-            data={buildNumericDistributionData(stats.mono?.distribution, 0, 5)}
+            data={buildSortedDistributionData(stats.mono?.distribution)}
             valueKey="votes"
             color="yellow.6"
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Mixed Score Vote Distribution (B1-B3)"
-            data={buildNumericDistributionData(stats.mixed?.distribution, 0, 5)}
+            title="Mixed Crusade Score Vote Distribution"
+            data={buildSortedDistributionData(stats.mixedCrusade?.distribution)}
             valueKey="votes"
             color="lime.6"
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Niche Vote Distribution (C1)"
-            data={buildNicheDistributionData(stats.niche?.distribution)}
+            title="Mixed Frontier Score Vote Distribution"
+            data={buildSortedDistributionData(
+              stats.mixedFrontier?.distribution
+            )}
             valueKey="votes"
             color="red.6"
             valueFormatter={(value) => String(value)}
@@ -167,62 +166,29 @@ function CharacterDetailsModal({ character, opened, onClose }) {
 
 function renderCommunityTooltip(character) {
   return (
-    <Stack gap={6}>
-      <Text fw={700}>{getCharacterDisplayName(character)}</Text>
-      <Text size="sm">
-        Score: {roundToTwo(character.communityStats?.calculated?.average || 0)}
-      </Text>
-      <Text size="sm">
-        Mono score: {roundToTwo(character.communityStats?.mono?.average || 0)}
-      </Text>
-      <Text size="sm">
-        Mixed score: {roundToTwo(character.communityStats?.mixed?.average || 0)}
-      </Text>
-    </Stack>
+    <ScoreTooltip
+      title={getCharacterDisplayName(character)}
+      score={roundToTwo(character.communityStats?.calculated?.average || 0)}
+      monoScore={roundToTwo(character.communityStats?.mono?.average || 0)}
+      mixedScore={roundToTwo(
+        character.communityStats?.mixedCrusade?.average || 0
+      )}
+      raidScore={roundToTwo(
+        character.communityStats?.mixedFrontier?.average || 0
+      )}
+      mixedLabel="Mixed score"
+      raidLabel="Raid score"
+    />
   );
 }
 
-function renderFavoriteTooltip(character) {
-  return (
-    <Stack gap={6}>
-      <Text fw={700}>{getCharacterDisplayName(character)}</Text>
-      <Text size="sm">
-        Favorite votes: {character.communityStats?.favoriteCount || 0}
-      </Text>
-      <Text size="sm">
-        Score: {roundToTwo(character.communityStats?.calculated?.average || 0)}
-      </Text>
-      <Text size="sm">
-        Mono score: {roundToTwo(character.communityStats?.mono?.average || 0)}
-      </Text>
-      <Text size="sm">
-        Mixed score: {roundToTwo(character.communityStats?.mixed?.average || 0)}
-      </Text>
-    </Stack>
+async function fetchCommunityCharacters(apiBaseUrl, questionnaireVersion) {
+  const response = await fetch(
+    `${apiBaseUrl}${withQuestionnaireVersion(
+      '/community/characters',
+      questionnaireVersion
+    )}`
   );
-}
-
-function getPersonalityAvatarColor(personality) {
-  switch (personality) {
-    case 'vivacious':
-      return '#ecdc84';
-    case 'mad':
-      return '#ec849d';
-    case 'composed':
-      return '#89beef';
-    case 'depressed':
-      return '#c684ec';
-    case 'innocent':
-      return '#91f2a8';
-    case 'resonance':
-      return '#ffffff';
-    default:
-      return '#5b4a74';
-  }
-}
-
-async function fetchCommunityCharacters(apiBaseUrl) {
-  const response = await fetch(`${apiBaseUrl}/community/characters`);
 
   if (!response.ok) {
     throw new Error(
@@ -233,10 +199,16 @@ async function fetchCommunityCharacters(apiBaseUrl) {
   return response.json();
 }
 
-async function triggerCommunityRebuild(apiBaseUrl) {
-  const response = await fetch(`${apiBaseUrl}/community/rebuild`, {
-    method: 'POST'
-  });
+async function triggerCommunityRebuild(apiBaseUrl, questionnaireVersion) {
+  const response = await fetch(
+    `${apiBaseUrl}${withQuestionnaireVersion(
+      '/community/rebuild',
+      questionnaireVersion
+    )}`,
+    {
+      method: 'POST'
+    }
+  );
   const data = await response.json().catch(() => null);
 
   if (response.status === 429) {
@@ -256,7 +228,7 @@ async function triggerCommunityRebuild(apiBaseUrl) {
   return data;
 }
 
-export function HomePage({ apiBaseUrl }) {
+export function HomePage({ apiBaseUrl, questionnaireVersion }) {
   const [communityData, setCommunityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -280,7 +252,10 @@ export function HomePage({ apiBaseUrl }) {
       }
 
       try {
-        const data = await fetchCommunityCharacters(apiBaseUrl);
+        const data = await fetchCommunityCharacters(
+          apiBaseUrl,
+          questionnaireVersion
+        );
         if (!active) {
           return;
         }
@@ -306,7 +281,7 @@ export function HomePage({ apiBaseUrl }) {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, questionnaireVersion]);
 
   const characters = useMemo(
     () =>
@@ -359,8 +334,14 @@ export function HomePage({ apiBaseUrl }) {
     setRebuilding(true);
 
     try {
-      const rebuildResult = await triggerCommunityRebuild(apiBaseUrl);
-      const refreshed = await fetchCommunityCharacters(apiBaseUrl);
+      const rebuildResult = await triggerCommunityRebuild(
+        apiBaseUrl,
+        questionnaireVersion
+      );
+      const refreshed = await fetchCommunityCharacters(
+        apiBaseUrl,
+        questionnaireVersion
+      );
       setCommunityData(refreshed);
       notifications.show({
         title: 'Refreshed',
@@ -456,30 +437,7 @@ export function HomePage({ apiBaseUrl }) {
                   {favoriteCharacters.map((character) => (
                     <Table.Tr key={character.id}>
                       <Table.Td>
-                        <div className="tier-candidate readonly-tier-candidate">
-                          <Avatar
-                            src={character.imageUrl || undefined}
-                            alt=""
-                            radius="lg"
-                            size={54}
-                            style={{
-                              backgroundColor: getPersonalityAvatarColor(
-                                character.personality
-                              ),
-                              color:
-                                character.personality === 'resonance'
-                                  ? '#171021'
-                                  : undefined
-                            }}
-                          />
-                          <Text
-                            size="sm"
-                            fw={600}
-                            className="tier-candidate-label"
-                          >
-                            {getCharacterDisplayName(character)}
-                          </Text>
-                        </div>
+                        <ReadonlyCharacterChip character={character} />
                       </Table.Td>
                       <Table.Td>
                         {character.communityStats?.favoriteCount || 0}

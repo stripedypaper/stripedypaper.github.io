@@ -55,6 +55,24 @@ export function resolveApiBaseUrl() {
   return (envUrl || runtimeConfig?.apiBaseUrl || '').trim().replace(/\/$/, '');
 }
 
+export function resolveAssetsBaseUrl() {
+  const envUrl = import.meta.env.VITE_ASSETS_BASE_URL;
+  const runtimeConfig =
+    typeof window !== 'undefined' ? window.TRICKCAL_CONFIG : undefined;
+  return (envUrl || runtimeConfig?.assetsBaseUrl || '')
+    .trim()
+    .replace(/\/$/, '');
+}
+
+export function getStaticImageUrl(fileName) {
+  const assetsBaseUrl = resolveAssetsBaseUrl();
+  if (!assetsBaseUrl || !fileName) {
+    return '';
+  }
+
+  return `${assetsBaseUrl}/images/${encodeURIComponent(fileName)}`;
+}
+
 export function avatarUrl(user) {
   if (!user.avatar) {
     return 'https://cdn.discordapp.com/embed/avatars/0.png';

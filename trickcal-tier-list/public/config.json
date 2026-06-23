@@ -1,3 +1,4 @@
 {
-  "apiBaseUrl": "https://4v40gewhy4.execute-api.us-east-1.amazonaws.com"
+  "apiBaseUrl": "https://4v40gewhy4.execute-api.us-east-1.amazonaws.com",
+  "assetsBaseUrl": "https://d1jgmopx06g28o.cloudfront.net/ui"
 }

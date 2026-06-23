@@ -1,4 +1,12 @@
-import { Avatar, Badge, Group, Paper, Stack, Text } from '@mantine/core';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Group,
+  Paper,
+  Stack,
+  Text
+} from '@mantine/core';
 import { useEffect, useMemo, useState } from 'react';
 import { IconAlertCircle } from '@tabler/icons-react';
 
@@ -56,6 +64,7 @@ function useIsMobile() {
 function TierCandidate({
   item,
   bucketId,
+  showLabels,
   isMobile,
   isSelected,
   activeMobileItemId,
@@ -97,9 +106,13 @@ function TierCandidate({
           color: item.personality === 'resonance' ? '#171021' : undefined
         }}
       />
-      <Text size="sm" fw={600} className="tier-candidate-label">
-        {getItemLabel(item)}
-      </Text>
+      {showLabels ? (
+        <Text size="sm" fw={600} className="tier-candidate-label">
+          {getItemLabel(item)}
+        </Text>
+      ) : (
+        <span className="sr-only">{getItemLabel(item)}</span>
+      )}
     </div>
   );
 }
@@ -111,7 +124,8 @@ function TierBucket({
   activeMobileItemId,
   onDropItem,
   onSelectBucket,
-  onSelectItem
+  onSelectItem,
+  showLabels
 }) {
   const itemCount = items.length;
   const hasMinimumError =
@@ -185,6 +199,7 @@ function TierBucket({
                 key={item.id}
                 item={item}
                 bucketId={bucket.id}
+                showLabels={showLabels}
                 isMobile={isMobile}
                 isSelected={item.id === activeMobileItemId}
                 activeMobileItemId={activeMobileItemId}
@@ -204,7 +219,14 @@ function TierBucket({
   );
 }
 
-export function TierList({ tiers, items, initialPlacements, onChange }) {
+export function TierList({
+  tiers,
+  items,
+  initialPlacements,
+  onChange,
+  showLabels = true,
+  showReset = false
+}) {
   const [placements, setPlacements] = useState(() => initialPlacements || {});
   const [draggedItemId, setDraggedItemId] = useState('');
   const [activeMobileItemId, setActiveMobileItemId] = useState('');
@@ -326,6 +348,12 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
     setActiveMobileItemId('');
   }
 
+  function handleReset() {
+    setDraggedItemId('');
+    setActiveMobileItemId('');
+    emitChange({});
+  }
+
   const unassignedItems = buckets.get('unassigned') || [];
 
   return (
@@ -353,6 +381,7 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
               key={item.id}
               item={item}
               bucketId="unassigned"
+              showLabels={showLabels}
               isMobile={isMobile}
               isSelected={item.id === activeMobileItemId}
               activeMobileItemId={activeMobileItemId}
@@ -378,9 +407,18 @@ export function TierList({ tiers, items, initialPlacements, onChange }) {
             onDropItem={handleDrop}
             onSelectItem={handleMobileSelectItem}
             onSelectBucket={handleMobileSelectBucket}
+            showLabels={showLabels}
           />
         ))}
       </Stack>
+
+      {showReset ? (
+        <Group justify="flex-end">
+          <Button variant="subtle" color="gray" size="xs" onClick={handleReset}>
+            Reset
+          </Button>
+        </Group>
+      ) : null}
     </Stack>
   );
 }

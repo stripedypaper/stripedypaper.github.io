@@ -1,7 +1,7 @@
 export const SCORE_BUCKETS = [
   {
-    id: 'ss',
-    label: 'SS tier',
+    id: 's-plus',
+    label: 'S+ tier',
     color: 'grape',
     thresholdLabel: '9.5+',
     matches: (score) => score >= 9.5
@@ -17,15 +17,15 @@ export const SCORE_BUCKETS = [
     id: 'a',
     label: 'A tier',
     color: 'teal',
-    thresholdLabel: '7.5-8.49',
-    matches: (score) => score >= 7.5 && score < 8.5
+    thresholdLabel: '7.0-8.49',
+    matches: (score) => score >= 7.0 && score < 8.5
   },
   {
     id: 'b',
     label: 'B tier',
     color: 'green',
-    thresholdLabel: '5.5-7.49',
-    matches: (score) => score >= 5.5 && score < 7.5
+    thresholdLabel: '5.5-6.99',
+    matches: (score) => score >= 5.5 && score < 7.0
   },
   {
     id: 'c',

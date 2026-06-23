@@ -1,6 +1,7 @@
 import { Group } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
+import { withQuestionnaireVersion } from '../../lib/questionnaireVersion.js';
 import { ContributeSidebar } from '../../components/ContributeSidebar.jsx';
 import { MyRankingsPage } from './MyRankingsPage.jsx';
 import { MyTierListPage } from './MyTierListPage.jsx';
@@ -33,9 +34,9 @@ async function fetchAllCharacters(apiBaseUrl) {
   return allCharacters;
 }
 
-async function fetchMyRankings(apiBaseUrl) {
+async function fetchMyRankings(apiBaseUrl, questionnaireVersion) {
   const response = await fetch(
-    `${apiBaseUrl}/rankings/me`,
+    `${apiBaseUrl}${withQuestionnaireVersion('/rankings/me', questionnaireVersion)}`,
     buildAuthenticatedRequestInit()
   );
 
@@ -47,9 +48,9 @@ async function fetchMyRankings(apiBaseUrl) {
   return data.submission || null;
 }
 
-async function saveMyRankings(apiBaseUrl, answers) {
+async function saveMyRankings(apiBaseUrl, answers, questionnaireVersion) {
   const response = await fetch(
-    `${apiBaseUrl}/rankings/me`,
+    `${apiBaseUrl}${withQuestionnaireVersion('/rankings/me', questionnaireVersion)}`,
     buildAuthenticatedRequestInit({
       method: 'PUT',
       headers: {
@@ -70,7 +71,13 @@ async function saveMyRankings(apiBaseUrl, answers) {
   return data.submission || null;
 }
 
-export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
+export function ContributePage({
+  apiBaseUrl,
+  route,
+  user,
+  sessionLoading,
+  questionnaireVersion
+}) {
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -141,7 +148,10 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
       }
 
       try {
-        const nextSubmission = await fetchMyRankings(apiBaseUrl);
+        const nextSubmission = await fetchMyRankings(
+          apiBaseUrl,
+          questionnaireVersion
+        );
         if (!active) {
           return;
         }
@@ -165,7 +175,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, user?.id]);
+  }, [apiBaseUrl, questionnaireVersion, user?.id]);
 
   function handleQuestionChange(questionId, nextPlacements) {
     setPlacementsByQuestion((currentValue) => ({
@@ -177,7 +187,8 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
   async function handleSave() {
     const nextSubmission = await saveMyRankings(
       apiBaseUrl,
-      placementsByQuestion
+      placementsByQuestion,
+      questionnaireVersion
     );
     setSubmission(nextSubmission);
     setPlacementsByQuestion(nextSubmission?.answers || {});
@@ -200,6 +211,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
             submission={submission}
             user={user}
             sessionLoading={sessionLoading}
+            questionnaireVersion={questionnaireVersion}
           />
         ) : (
           <MyRankingsPage
@@ -213,6 +225,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
             submission={submission}
             onChange={handleQuestionChange}
             onSave={handleSave}
+            questionnaireVersion={questionnaireVersion}
           />
         )}
       </div>

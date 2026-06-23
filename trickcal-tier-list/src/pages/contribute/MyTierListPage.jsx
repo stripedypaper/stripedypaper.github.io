@@ -2,6 +2,7 @@ import { Button, Group, Paper, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconShare } from '@tabler/icons-react';
 import { ReadonlyTierList } from '../../components/ReadonlyTierList.jsx';
+import { DEFAULT_QUESTIONNAIRE_VERSION } from '../../lib/questionnaireVersion.js';
 import { SCORE_BUCKETS } from '../../lib/tierBuckets.js';
 
 function mergeCharacterScores(characters, derivedScores) {
@@ -30,11 +31,12 @@ export function MyTierListPage({
   rankingsLoading,
   submission,
   user,
-  sessionLoading
+  sessionLoading,
+  questionnaireVersion = DEFAULT_QUESTIONNAIRE_VERSION
 }) {
   const shareHref =
     user?.id && typeof window !== 'undefined'
-      ? `${window.location.origin}${window.location.pathname}${window.location.search}#/tier-list/${encodeURIComponent(user.id)}`
+      ? `${window.location.origin}${window.location.pathname}?questionnaireVersion=${encodeURIComponent(questionnaireVersion)}#/tier-list/${encodeURIComponent(user.id)}`
       : '';
 
   async function handleShare() {
