@@ -38,7 +38,8 @@ This repo contains a Vite/React frontend in `src/` and an AWS SAM backend in `ba
 ## Workflow
 
 - Keep changes focused and minimal.
-- Run `npm run lint` and `npm run build` before finishing frontend work.
+- Do not run `npm run lint` after every small change; the GitHub Action already enforces formatting.
+- Run `npm run lint` and `npm run build` before finishing frontend work when validation is actually needed.
 - Run `sam build` before finishing backend work.
 - Do not commit or push unless explicitly instructed.
 - Avoid checking in generated artifacts such as `dist/` or `node_modules/`.

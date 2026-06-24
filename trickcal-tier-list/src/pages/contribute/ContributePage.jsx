@@ -3,6 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
 import { fetchAllCharacters } from '../../lib/charactersApi.js';
 import {
+  clearAnonymousRankingsDraft,
+  clearRankingsDraft,
+  readRankingsDraft,
+  writeRankingsDraft
+} from '../../lib/rankingsDraft.js';
+import {
   buildQuestionGroups,
   sanitizePlacementsByQuestion
 } from '../../lib/rankings.js';
@@ -12,6 +18,19 @@ import { MyTierListPage } from './MyTierListPage.jsx';
 
 function serializeValue(value) {
   return JSON.stringify(value || {});
+}
+
+function buildSanitizedDraft(characters, nextPlacementsByQuestion) {
+  const nextOwnedYearningPlacements =
+    nextPlacementsByQuestion['ranking-y-1'] || {};
+  const nextQuestionGroups = buildQuestionGroups(characters, {
+    'ranking-y-1': nextOwnedYearningPlacements
+  });
+
+  return sanitizePlacementsByQuestion(
+    nextQuestionGroups,
+    nextPlacementsByQuestion
+  );
 }
 
 async function fetchMyRankings(apiBaseUrl) {
@@ -58,6 +77,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
   const [placementsByQuestion, setPlacementsByQuestion] = useState({});
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [submission, setSubmission] = useState(null);
+  const [draftReady, setDraftReady] = useState(false);
   const ownedYearningPlacements = placementsByQuestion['ranking-y-1'] || {};
   const ownedYearningPlacementsKey = serializeValue(ownedYearningPlacements);
   const questionGroups = useMemo(
@@ -117,29 +137,52 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
     let active = true;
 
     async function loadRankings() {
-      if (!apiBaseUrl || !user?.id || !characters.length) {
+      if (!apiBaseUrl || !characters.length || sessionLoading) {
         if (active) {
-          setPlacementsByQuestion({});
-          setSubmission(null);
           setRankingsLoading(false);
+          setDraftReady(false);
         }
         return;
       }
 
       if (active) {
-        setRankingsLoading(true);
+        setRankingsLoading(Boolean(user?.id));
+        setDraftReady(false);
       }
 
       try {
-        const nextSubmission = await fetchMyRankings(apiBaseUrl);
+        const nextSubmission = user?.id
+          ? await fetchMyRankings(apiBaseUrl)
+          : null;
         if (!active) {
           return;
         }
 
-        const sanitizedAnswers = sanitizePlacementsByQuestion(
-          buildQuestionGroups(characters, nextSubmission?.answers || {}),
+        const submissionQuestionGroups = buildQuestionGroups(
+          characters,
           nextSubmission?.answers || {}
         );
+        const sanitizedAnswers = sanitizePlacementsByQuestion(
+          submissionQuestionGroups,
+          nextSubmission?.answers || {}
+        );
+        const localDraft = readRankingsDraft(user?.id);
+        const localDraftQuestionGroups = buildQuestionGroups(
+          characters,
+          localDraft?.answers || {}
+        );
+        const sanitizedDraftAnswers = sanitizePlacementsByQuestion(
+          localDraftQuestionGroups,
+          localDraft?.answers || {}
+        );
+        const nextPlacements = localDraft
+          ? sanitizedDraftAnswers
+          : sanitizedAnswers;
+
+        if (user?.id && localDraft?.scope === 'anonymous') {
+          writeRankingsDraft(user.id, nextPlacements);
+          clearAnonymousRankingsDraft();
+        }
 
         setSubmission(
           nextSubmission
@@ -149,15 +192,26 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
               }
             : null
         );
-        setPlacementsByQuestion(sanitizedAnswers);
+        setPlacementsByQuestion(nextPlacements);
       } catch {
         if (active) {
+          const localDraft = readRankingsDraft(user?.id);
+          const draftQuestionGroups = buildQuestionGroups(
+            characters,
+            localDraft?.answers || {}
+          );
+          const sanitizedDraftAnswers = sanitizePlacementsByQuestion(
+            draftQuestionGroups,
+            localDraft?.answers || {}
+          );
+
           setSubmission(null);
-          setPlacementsByQuestion({});
+          setPlacementsByQuestion(localDraft ? sanitizedDraftAnswers : {});
         }
       } finally {
         if (active) {
           setRankingsLoading(false);
+          setDraftReady(true);
         }
       }
     }
@@ -167,7 +221,40 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
     return () => {
       active = false;
     };
-  }, [apiBaseUrl, characters, user?.id]);
+  }, [apiBaseUrl, characters, sessionLoading, user?.id]);
+
+  useEffect(() => {
+    if (!draftReady || !questionGroups.length || sessionLoading) {
+      return;
+    }
+
+    const sanitizedPlacements = sanitizePlacementsByQuestion(
+      questionGroups,
+      placementsByQuestion
+    );
+    const sanitizedSubmission = sanitizePlacementsByQuestion(
+      questionGroups,
+      submission?.answers || {}
+    );
+
+    if (
+      user?.id &&
+      serializeValue(sanitizedPlacements) ===
+        serializeValue(sanitizedSubmission)
+    ) {
+      clearRankingsDraft(user.id);
+      return;
+    }
+
+    writeRankingsDraft(user?.id, sanitizedPlacements);
+  }, [
+    draftReady,
+    placementsByQuestion,
+    questionGroups,
+    sessionLoading,
+    submission,
+    user?.id
+  ]);
 
   useEffect(() => {
     if (!questionGroups.length) {
@@ -204,10 +291,32 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
   }, [questionGroups]);
 
   function handleQuestionChange(questionId, nextPlacements) {
-    setPlacementsByQuestion((currentValue) => ({
-      ...currentValue,
-      [questionId]: nextPlacements
-    }));
+    setPlacementsByQuestion((currentValue) => {
+      const nextValue = {
+        ...currentValue,
+        [questionId]: nextPlacements
+      };
+      const sanitizedNextValue = buildSanitizedDraft(characters, nextValue);
+
+      if (draftReady && !sessionLoading) {
+        const sanitizedSubmission = buildSanitizedDraft(
+          characters,
+          submission?.answers || {}
+        );
+
+        if (
+          user?.id &&
+          serializeValue(sanitizedNextValue) ===
+            serializeValue(sanitizedSubmission)
+        ) {
+          clearRankingsDraft(user.id);
+        } else {
+          writeRankingsDraft(user?.id, sanitizedNextValue);
+        }
+      }
+
+      return sanitizedNextValue;
+    });
   }
 
   async function handleSave() {
@@ -228,6 +337,8 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
         : null
     );
     setPlacementsByQuestion(sanitizedAnswers);
+    clearRankingsDraft(user?.id);
+    clearAnonymousRankingsDraft();
     return nextSubmission;
   }
 
