@@ -24,21 +24,21 @@ export const SCORE_BUCKETS = [
     id: 'b',
     label: 'B tier',
     color: 'green',
-    thresholdLabel: '5.5-6.99',
-    matches: (score) => score >= 5.5 && score < 7.0
+    thresholdLabel: '5.0-6.99',
+    matches: (score) => score >= 5.0 && score < 7.0
   },
   {
     id: 'c',
     label: 'C tier',
     color: 'yellow',
-    thresholdLabel: '3.5-5.49',
-    matches: (score) => score >= 3.5 && score < 5.5
+    thresholdLabel: '3.0-4.99',
+    matches: (score) => score >= 3.0 && score < 5.0
   },
   {
     id: 'd',
     label: 'D tier',
     color: 'red',
-    thresholdLabel: '<3.5',
-    matches: (score) => score < 3.5
+    thresholdLabel: '<3.0',
+    matches: (score) => score < 3.0
   }
 ];
