@@ -8,6 +8,7 @@ import {
   PERSONA_GRID_COLORS,
   buildQuestionGroups,
   listIncompleteRequiredQuestions,
+  listTierEligibilityViolations,
   listYearningBelowBaseViolations,
   listQuestionsWithUnsatisfiedMinimums
 } from '../../lib/rankings.js';
@@ -106,6 +107,10 @@ export function MyRankingsPage({
     () => listYearningBelowBaseViolations(questionGroups, placementsByQuestion),
     [placementsByQuestion, questionGroups]
   );
+  const tierEligibilityViolations = useMemo(
+    () => listTierEligibilityViolations(questionGroups, placementsByQuestion),
+    [placementsByQuestion, questionGroups]
+  );
   const missingAssignmentsMessage =
     incompleteRequiredQuestions.length > 0
       ? `${incompleteRequiredQuestions
@@ -124,6 +129,10 @@ export function MyRankingsPage({
   const yearningValidationMessage =
     yearningBelowBaseViolations.length > 0
       ? `${yearningBelowBaseViolations[0].characterName} has its Yearning version rated below its base version in ${yearningBelowBaseViolations[0].question.label}.`
+      : '';
+  const tierEligibilityMessage =
+    tierEligibilityViolations.length > 0
+      ? `${tierEligibilityViolations[0].characterName} cannot be placed in ${tierEligibilityViolations[0].tier.label}; only Yearning variants may use that tier.`
       : '';
   const hasUnsavedChanges = currentSnapshot !== lastSavedSnapshot;
   const saveDisabled =
@@ -191,6 +200,17 @@ export function MyRankingsPage({
         color: 'red',
         title: 'Unable to save rankings',
         message: yearningValidationMessage
+      });
+      setSaveState('error');
+      setSaveMessage('');
+      return;
+    }
+
+    if (tierEligibilityMessage) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to save rankings',
+        message: tierEligibilityMessage
       });
       setSaveState('error');
       setSaveMessage('');
@@ -450,6 +470,11 @@ export function MyRankingsPage({
                   initialPlacements={placementsByQuestion[question.id] || {}}
                   showLabels={false}
                   showReset
+                  showScoringGuidelines={
+                    question.kind === 'personality' ||
+                    question.kind === 'mixed-crusade' ||
+                    question.kind === 'mixed-frontier'
+                  }
                   onChange={(nextPlacements) =>
                     onChange(question.id, nextPlacements)
                   }

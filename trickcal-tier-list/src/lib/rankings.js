@@ -75,36 +75,118 @@ function getQuestionTiers(questionKind) {
   if (questionKind === 'personality') {
     return [
       {
+        id: 'meta_defining_plus',
+        label: 'Meta-defining+',
+        score: 11,
+        color: 'grape',
+        gradient: { from: 'pink', to: 'violet', deg: 90 },
+        guidelineDescription:
+          "Non-Yearning apostles cannot be placed into this tier. The purpose of this tier is for apostles whose base form is already Meta-defining (10), but for which their Yearning still provides a substantial increase in power. For example, if you believe A and B are both Meta-defining (10) in their base form but A's Yearning provides a large boost to performance in a certain context while B's provides a moderate boost, place A's Yearning in Meta-defining+ (11) and B's Yearning in Meta-defining (10).",
+        yearningOnly: true
+      },
+      {
         id: 'meta_defining',
         label: 'Meta-defining',
         score: 10,
-        color: 'grape'
+        color: 'grape',
+        guidelineDescription:
+          'Apostles that you immediately add to your team without thinking about it. Irreplaceable in their role in the current state of the game and likely to remain so for the next 6 months or longer.'
       },
-      { id: 'exceptional', label: 'Exceptional', score: 9, color: 'blue' },
-      { id: 'strong', label: 'Strong', score: 8, color: 'teal' },
-      { id: 'good', label: 'Good', score: 6, color: 'green' },
+      {
+        id: 'exceptional',
+        label: 'Exceptional',
+        score: 9,
+        color: 'blue',
+        guidelineDescription:
+          'Apostles that can easily carry the team with their utility or strength. If you substituted one of these apostles for one in a lower tier, the team would become substantially worse. Unlikely to be power crept in the next 6 months.'
+      },
+      {
+        id: 'strong',
+        label: 'Strong',
+        score: 8,
+        color: 'teal',
+        guidelineDescription:
+          'Solid and reliable apostles that perform their role at a high level, but rarely carry the team without a lot of items or specific circumstances. Strong, but not so strong that it would be a disaster if replaced with a similar apostle from the Good category.'
+      },
+      {
+        id: 'good',
+        label: 'Good',
+        score: 6,
+        color: 'green',
+        guidelineDescription:
+          'Baseline for a "good" unit. Apostles that are outclassed by others in the same category but perform their role well nonetheless. Likely to be power-crept in the next 6 months.'
+      },
       {
         id: 'usable',
         label: 'Usable',
         score: 4,
-        color: 'yellow'
+        color: 'yellow',
+        guidelineDescription:
+          "Apostles that are functional but you generally wouldn't use if you owned anyone in the Good or higher tiers. Or, apostles who are weak in all areas but still have a niche such as a useful debuff (e.g. Festa for Frontier category)."
       },
-      { id: 'do_not_use', label: 'Do not use', score: 0, color: 'red' }
+      {
+        id: 'do_not_use',
+        label: 'Do not use',
+        score: 0,
+        color: 'red',
+        guidelineDescription:
+          'Outclassed in nearly every way. No niche or situational usefulness.'
+      }
     ];
   }
 
   return [
     {
+      id: 'meta_defining_plus',
+      label: 'Meta-defining+',
+      score: 11,
+      color: 'grape',
+      gradient: { from: 'pink', to: 'violet', deg: 90 },
+      guidelineDescription: 'Placeholder text for Meta-defining+.',
+      yearningOnly: true
+    },
+    {
       id: 'meta_defining',
       label: 'Meta-defining',
       score: 10,
-      color: 'grape'
+      color: 'grape',
+      guidelineDescription: 'Placeholder text for Meta-defining.'
     },
-    { id: 'exceptional', label: 'Exceptional', score: 9, color: 'blue' },
-    { id: 'strong', label: 'Strong', score: 8, color: 'teal' },
-    { id: 'good', label: 'Good', score: 6, color: 'green' },
-    { id: 'usable', label: 'Usable', score: 4, color: 'yellow' },
-    { id: 'do_not_use', label: 'Do not use', score: 0, color: 'red' }
+    {
+      id: 'exceptional',
+      label: 'Exceptional',
+      score: 9,
+      color: 'blue',
+      guidelineDescription: 'Placeholder text for Exceptional.'
+    },
+    {
+      id: 'strong',
+      label: 'Strong',
+      score: 8,
+      color: 'teal',
+      guidelineDescription: 'Placeholder text for Strong.'
+    },
+    {
+      id: 'good',
+      label: 'Good',
+      score: 6,
+      color: 'green',
+      guidelineDescription: 'Placeholder text for Good.'
+    },
+    {
+      id: 'usable',
+      label: 'Usable',
+      score: 4,
+      color: 'yellow',
+      guidelineDescription: 'Placeholder text for Usable.'
+    },
+    {
+      id: 'do_not_use',
+      label: 'Do not use',
+      score: 0,
+      color: 'red',
+      guidelineDescription: 'Placeholder text for Do not use.'
+    }
   ];
 }
 
@@ -272,6 +354,43 @@ export function listQuestionsWithUnsatisfiedMinimums(questionGroups, answers) {
         tier,
         assignedCount: countsByTierId[tier.id] || 0
       }));
+  });
+}
+
+export function listTierEligibilityViolations(questionGroups, answers) {
+  return questionGroups.flatMap((question) => {
+    const placements = normalizeAssignedPlacements(answers?.[question.id]);
+    if (!Object.keys(placements).length) {
+      return [];
+    }
+
+    const questionItemsById = new Map(
+      (question.items || []).map((item) => [item.id, item])
+    );
+    const tiersById = new Map(
+      (question.tiers || []).map((tier) => [tier.id, tier])
+    );
+
+    return Object.entries(placements).flatMap(([characterId, tierId]) => {
+      const character = questionItemsById.get(characterId);
+      const tier = tiersById.get(tierId);
+
+      if (!character || !tier?.yearningOnly || character.isYearning) {
+        return [];
+      }
+
+      return [
+        {
+          question,
+          tier,
+          characterName:
+            character.nameEn ||
+            character.name ||
+            character.characterId ||
+            character.id
+        }
+      ];
+    });
   });
 }
 

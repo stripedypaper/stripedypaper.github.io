@@ -329,6 +329,24 @@ body::before {
   min-height: 112px;
 }
 
+.tier-bucket-single {
+  border-radius: var(--mantine-radius-lg);
+}
+
+.tier-bucket-first {
+  border-radius: var(--mantine-radius-lg) var(--mantine-radius-lg) 0 0;
+}
+
+.tier-bucket-middle {
+  border-radius: 0;
+  border-top-width: 0;
+}
+
+.tier-bucket-last {
+  border-radius: 0 0 var(--mantine-radius-lg) var(--mantine-radius-lg);
+  border-top-width: 0;
+}
+
 .tier-bucket-row {
   align-items: flex-start;
 }
@@ -336,6 +354,7 @@ body::before {
 .tier-bucket-label {
   flex: 0 0 auto;
   white-space: nowrap;
+  cursor: inherit;
 }
 
 .tier-bucket-count {
@@ -344,6 +363,40 @@ body::before {
 
 .tier-bucket-score {
   letter-spacing: 0.04em;
+}
+
+.tier-bucket-header-button {
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 0.15rem 0.2rem;
+  margin: -0.15rem -0.2rem;
+  transition: background-color 120ms ease;
+}
+
+.tier-bucket-header-button:hover,
+.tier-bucket-header-button:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tier-bucket-header-button-disabled {
+  cursor: default;
+}
+
+.tier-bucket-header-button-disabled:hover,
+.tier-bucket-header-button-disabled:focus-visible {
+  background: transparent;
+}
+
+.tier-bucket-guidelines-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-dimmed);
 }
 
 .tier-bucket-error-icon {
@@ -357,7 +410,6 @@ body::before {
   gap: 0.5rem;
   align-items: flex-start;
   min-width: 0;
-  min-height: 80px;
 }
 
 .tier-candidate-grid {

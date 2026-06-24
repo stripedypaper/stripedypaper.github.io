@@ -11,6 +11,7 @@ export const PERSONALITY_ORDER_V4 = [
 export const ROLE_ORDER_V4 = ['dps', 'support', 'tank'];
 
 export const PERSONALITY_TIERS_V4 = [
+  { id: 'meta_defining_plus', score: 11, yearningOnly: true },
   { id: 'meta_defining', score: 10 },
   { id: 'exceptional', score: 9 },
   { id: 'strong', score: 8 },
@@ -20,6 +21,7 @@ export const PERSONALITY_TIERS_V4 = [
 ];
 
 export const MIXED_META_TIERS_V4 = [
+  { id: 'meta_defining_plus', score: 11, yearningOnly: true },
   { id: 'meta_defining', score: 10 },
   { id: 'exceptional', score: 9 },
   { id: 'strong', score: 8 },

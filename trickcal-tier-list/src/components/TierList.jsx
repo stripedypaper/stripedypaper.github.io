@@ -1,6 +1,7 @@
-import { Badge, Button, Group, Paper, Stack, Text } from '@mantine/core';
+import { Badge, Button, Group, Modal, Paper, Stack, Text } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useState } from 'react';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconQuestionMark } from '@tabler/icons-react';
 import { CharacterAvatar } from './CharacterAvatar.jsx';
 import { getCharacterDisplayName } from '../lib/site.js';
 
@@ -86,12 +87,14 @@ function TierCandidate({
 function TierBucket({
   bucket,
   items,
+  className = '',
   isMobile,
   activeMobileItemId,
   onDropItem,
   onSelectBucket,
   onSelectItem,
-  showLabels
+  showLabels,
+  onOpenGuidelines
 }) {
   const itemCount = items.length;
   const hasMinimumError =
@@ -102,30 +105,64 @@ function TierBucket({
       : typeof bucket.minimum === 'number'
         ? bucket.minimum
         : null;
+  const guidelinesDisabled = isMobile && Boolean(activeMobileItemId);
 
   const handleClick = () => {
     if (isMobile && activeMobileItemId) {
       onSelectBucket(bucket.id);
     }
   };
+  const headerInteractive = typeof onOpenGuidelines === 'function';
 
   return (
     <Paper
       className={`tier-bucket${
         isMobile && activeMobileItemId ? ' tier-bucket-mobile-target' : ''
-      }`}
+      }${className ? ` ${className}` : ''}`}
       p="sm"
-      radius="lg"
+      radius={0}
       withBorder
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => onDropItem(event, bucket.id)}
       onClick={handleClick}
     >
       <Group justify="space-between" align="center" mb="sm" wrap="nowrap">
-        <Group gap="sm" wrap="nowrap">
+        <Group
+          gap="sm"
+          wrap="nowrap"
+          className={`${headerInteractive ? 'tier-bucket-header-button' : ''}${
+            guidelinesDisabled ? ' tier-bucket-header-button-disabled' : ''
+          }`}
+          onClick={(event) => {
+            if (!headerInteractive) {
+              return;
+            }
+            event.stopPropagation();
+            if (guidelinesDisabled) {
+              return;
+            }
+            onOpenGuidelines?.();
+          }}
+          role={headerInteractive && !guidelinesDisabled ? 'button' : undefined}
+          tabIndex={headerInteractive && !guidelinesDisabled ? 0 : undefined}
+          onKeyDown={(event) => {
+            if (!headerInteractive) {
+              return;
+            }
+            if (guidelinesDisabled) {
+              return;
+            }
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              event.stopPropagation();
+              onOpenGuidelines?.();
+            }
+          }}
+        >
           <Badge
             color={bucket.color || 'grape'}
-            variant="filled"
+            variant={bucket.gradient ? 'gradient' : 'filled'}
+            gradient={bucket.gradient}
             size="lg"
             className="tier-bucket-label"
             radius="md"
@@ -137,6 +174,11 @@ function TierBucket({
             <Text size="sm" fw={700} c="dimmed" className="tier-bucket-score">
               Score: {bucket.score > 0 ? `+${bucket.score}` : '0'}
             </Text>
+          ) : null}
+          {headerInteractive ? (
+            <span aria-hidden="true" className="tier-bucket-guidelines-icon">
+              <IconQuestionMark size={12} stroke={2.4} />
+            </span>
           ) : null}
         </Group>
 
@@ -191,11 +233,13 @@ export function TierList({
   initialPlacements,
   onChange,
   showLabels = true,
-  showReset = false
+  showReset = false,
+  showScoringGuidelines = false
 }) {
   const [placements, setPlacements] = useState(() => initialPlacements || {});
   const [draggedItemId, setDraggedItemId] = useState('');
   const [activeMobileItemId, setActiveMobileItemId] = useState('');
+  const [guidelinesOpened, setGuidelinesOpened] = useState(false);
   const isMobile = useIsMobile();
 
   const itemsById = useMemo(() => {
@@ -261,9 +305,14 @@ export function TierList({
   function canPlaceItemInBucket(itemId, bucketId) {
     const targetTier = tiersById.get(bucketId);
     const currentBucketId = placements[itemId] || 'unassigned';
+    const item = itemsById.get(itemId);
 
     if (currentBucketId === bucketId || !targetTier) {
       return true;
+    }
+
+    if (targetTier.yearningOnly && !item?.isYearning) {
+      return false;
     }
 
     if (
@@ -276,6 +325,19 @@ export function TierList({
     return true;
   }
 
+  function showPlacementError(itemId, bucketId) {
+    const targetTier = tiersById.get(bucketId);
+    const item = itemsById.get(itemId);
+
+    if (targetTier?.yearningOnly && !item?.isYearning) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to place apostle',
+        message: `Only Yearning apostles can be placed into ${targetTier.label}.`
+      });
+    }
+  }
+
   function handleDrop(event, bucketId) {
     event.preventDefault();
     const itemId = event.dataTransfer.getData('text/plain') || draggedItemId;
@@ -284,6 +346,7 @@ export function TierList({
     }
 
     if (!canPlaceItemInBucket(itemId, bucketId)) {
+      showPlacementError(itemId, bucketId);
       return;
     }
 
@@ -307,6 +370,7 @@ export function TierList({
     }
 
     if (!canPlaceItemInBucket(activeMobileItemId, bucketId)) {
+      showPlacementError(activeMobileItemId, bucketId);
       return;
     }
 
@@ -323,68 +387,128 @@ export function TierList({
   const unassignedItems = buckets.get('unassigned') || [];
 
   return (
-    <Stack gap="md" className="tier-list notranslate" translate="no">
-      <Paper
-        className="tier-pool"
-        p="md"
-        radius="lg"
-        withBorder
-        onDragOver={(event) => event.preventDefault()}
-        onDrop={(event) => handleDrop(event, 'unassigned')}
-      >
-        <Group justify="space-between" mb="sm">
-          <Text fw={700} translate="no">
-            Not added
-          </Text>
-          <Text c="dimmed" size="sm">
-            {unassignedItems.length} character
-            {unassignedItems.length === 1 ? '' : 's'}
-          </Text>
-        </Group>
-        <div className="tier-candidate-grid">
-          {unassignedItems.map((item) => (
-            <TierCandidate
-              key={item.id}
-              item={item}
-              bucketId="unassigned"
-              showLabels={showLabels}
+    <>
+      <Stack gap="md" className="tier-list notranslate" translate="no">
+        <Stack gap={0}>
+          {tiers.map((tier) => (
+            <TierBucket
+              key={tier.id}
+              bucket={{
+                ...tier,
+                onDragStart: handleDragStart
+              }}
+              items={buckets.get(tier.id) || []}
+              className={
+                tiers.length === 1
+                  ? 'tier-bucket-single'
+                  : tier.id === tiers[0].id
+                    ? 'tier-bucket-first'
+                    : tier.id === tiers[tiers.length - 1].id
+                      ? 'tier-bucket-last'
+                      : 'tier-bucket-middle'
+              }
               isMobile={isMobile}
-              isSelected={item.id === activeMobileItemId}
               activeMobileItemId={activeMobileItemId}
-              onDragStart={handleDragStart}
-              onSelect={handleMobileSelectItem}
+              onDropItem={handleDrop}
+              onSelectItem={handleMobileSelectItem}
               onSelectBucket={handleMobileSelectBucket}
+              showLabels={showLabels}
+              onOpenGuidelines={
+                showScoringGuidelines
+                  ? () => setGuidelinesOpened(true)
+                  : undefined
+              }
             />
           ))}
-        </div>
-      </Paper>
+        </Stack>
 
-      <Stack gap="sm">
-        {tiers.map((tier) => (
-          <TierBucket
-            key={tier.id}
-            bucket={{
-              ...tier,
-              onDragStart: handleDragStart
-            }}
-            items={buckets.get(tier.id) || []}
-            isMobile={isMobile}
-            activeMobileItemId={activeMobileItemId}
-            onDropItem={handleDrop}
-            onSelectItem={handleMobileSelectItem}
-            onSelectBucket={handleMobileSelectBucket}
-            showLabels={showLabels}
-          />
-        ))}
+        <Paper
+          className="tier-pool"
+          p="md"
+          radius="lg"
+          withBorder
+          onDragOver={(event) => event.preventDefault()}
+          onDrop={(event) => handleDrop(event, 'unassigned')}
+        >
+          <Group justify="space-between" mb="sm">
+            <Text fw={700} translate="no">
+              Not added
+            </Text>
+            <Text c="dimmed" size="sm">
+              {unassignedItems.length} character
+              {unassignedItems.length === 1 ? '' : 's'}
+            </Text>
+          </Group>
+          <div className="tier-candidate-grid">
+            {unassignedItems.map((item) => (
+              <TierCandidate
+                key={item.id}
+                item={item}
+                bucketId="unassigned"
+                showLabels={showLabels}
+                isMobile={isMobile}
+                isSelected={item.id === activeMobileItemId}
+                activeMobileItemId={activeMobileItemId}
+                onDragStart={handleDragStart}
+                onSelect={handleMobileSelectItem}
+                onSelectBucket={handleMobileSelectBucket}
+              />
+            ))}
+          </div>
+        </Paper>
+
+        {showReset ? (
+          <Group justify="flex-end">
+            <Button
+              variant="subtle"
+              color="gray"
+              size="xs"
+              onClick={handleReset}
+            >
+              Reset
+            </Button>
+          </Group>
+        ) : null}
       </Stack>
 
-      {showReset ? (
-        <Group justify="flex-end">
-          <Button variant="subtle" color="gray" size="xs" onClick={handleReset}>
-            Reset
-          </Button>
-        </Group>
-      ) : null}
-    </Stack>
+      <Modal
+        opened={showScoringGuidelines && guidelinesOpened}
+        onClose={() => setGuidelinesOpened(false)}
+        title="Scoring Guidelines"
+        centered
+        size="lg"
+      >
+        <Stack gap="sm">
+          {[...tiers].reverse().map((tier) => (
+            <Paper key={tier.id} p="sm" radius="md" withBorder>
+              <Stack gap={6}>
+                <Group gap="sm" wrap="nowrap">
+                  <Badge
+                    color={tier.color || 'grape'}
+                    variant={tier.gradient ? 'gradient' : 'filled'}
+                    gradient={tier.gradient}
+                    size="lg"
+                    className="tier-bucket-label"
+                    radius="md"
+                  >
+                    {tier.label}
+                  </Badge>
+                  {tier.showScore !== false &&
+                  typeof tier.score === 'number' ? (
+                    <Text size="sm" fw={700} c="dimmed">
+                      Score: {tier.score > 0 ? `+${tier.score}` : '0'}
+                    </Text>
+                  ) : null}
+                </Group>
+                <Text size="sm" c="dimmed">
+                  {tier.guidelineDescription ||
+                    'Placeholder description text for this tier.'}
+                </Text>
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
+      </Modal>
+    </>
   );
 }

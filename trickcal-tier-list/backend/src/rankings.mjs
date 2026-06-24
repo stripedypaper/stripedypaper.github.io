@@ -323,6 +323,12 @@ function validateAnswers({
         throw new Error(`Invalid tier for ${question.id}.`);
       }
 
+      if (tier.yearningOnly && !candidate.isYearning) {
+        throw new Error(
+          `Only Yearning variants may be placed in ${question.id} ${tierId}.`
+        );
+      }
+
       const nextCount = (bucketCounts.get(tierId) || 0) + 1;
       if (typeof tier.maximum === 'number' && nextCount > tier.maximum) {
         throw new Error(`Too many characters in ${question.id} ${tierId}.`);
