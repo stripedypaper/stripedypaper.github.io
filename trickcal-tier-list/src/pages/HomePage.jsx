@@ -34,13 +34,50 @@ function buildSortedDistributionData(distribution) {
     .sort((left, right) => Number(left.label) - Number(right.label));
 }
 
+function buildCalculatedHistogramData(distribution) {
+  const entries = Object.entries(distribution || {}).map(([label, votes]) => ({
+    score: Number(label),
+    votes
+  }));
+  const bins = [];
+
+  for (let lowerBound = 9.5; lowerBound >= 0; lowerBound -= 0.5) {
+    const roundedLowerBound = Number(lowerBound.toFixed(1));
+    const upperBound =
+      roundedLowerBound === 9.5 ? Infinity : roundedLowerBound + 0.49;
+    const label =
+      roundedLowerBound === 9.5
+        ? '9.5+'
+        : `${roundedLowerBound.toFixed(1)}-${upperBound.toFixed(2)}`;
+
+    bins.push({
+      label,
+      sortValue: roundedLowerBound,
+      votes: entries.reduce((total, entry) => {
+        if (
+          entry.score >= roundedLowerBound &&
+          (roundedLowerBound === 9.5 || entry.score <= upperBound)
+        ) {
+          return total + entry.votes;
+        }
+
+        return total;
+      }, 0)
+    });
+  }
+
+  return bins.sort((left, right) => left.sortValue - right.sortValue);
+}
+
 function CommunityChart({
   title,
   data,
   valueKey,
   color,
   valueFormatter,
-  yMax
+  yMax,
+  xAxisProps,
+  chartProps
 }) {
   return (
     <Paper className="question-card" p="md" radius="lg" withBorder>
@@ -54,7 +91,9 @@ function CommunityChart({
           tickLine="y"
           gridAxis="y"
           valueFormatter={valueFormatter}
+          xAxisProps={xAxisProps}
           yAxisProps={yMax !== undefined ? { domain: [0, yMax] } : undefined}
+          {...chartProps}
         />
       </Stack>
     </Paper>
@@ -131,6 +170,29 @@ function CharacterDetailsModal({ character, opened, onClose }) {
         </SimpleGrid>
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
+          <CommunityChart
+            title="Calculated Score Vote Histogram"
+            data={buildCalculatedHistogramData(stats.calculated?.distribution)}
+            valueKey="votes"
+            color="grape.6"
+            valueFormatter={(value) => String(value)}
+            xAxisProps={{
+              angle: -90,
+              textAnchor: 'end',
+              tickMargin: 12,
+              interval: 0
+            }}
+            chartProps={{
+              h: 210,
+              xAxisProps: {
+                angle: -90,
+                textAnchor: 'end',
+                tickMargin: 12,
+                interval: 0,
+                height: 70
+              }
+            }}
+          />
           <CommunityChart
             title="Calculated Score Vote Distribution"
             data={buildSortedDistributionData(stats.calculated?.distribution)}
