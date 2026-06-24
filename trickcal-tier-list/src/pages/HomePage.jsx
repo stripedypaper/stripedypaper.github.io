@@ -230,9 +230,12 @@ function CharacterDetailsModal({ character, opened, onClose }) {
 }
 
 function renderCommunityTooltip(character) {
+  const voteCount = character.communityStats?.calculated?.count || 0;
+
   return (
     <ScoreTooltip
       title={getCharacterDisplayName(character)}
+      subtitle={`${voteCount} ${voteCount === 1 ? 'vote' : 'votes'}`}
       score={roundToTwo(character.communityStats?.calculated?.average || 0)}
       monoScore={roundToTwo(character.communityStats?.mono?.average || 0)}
       mixedScore={roundToTwo(

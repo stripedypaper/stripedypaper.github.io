@@ -155,7 +155,7 @@ export function buildQuestionGroups(characters, answers = {}) {
 
   groups.push({
     id: OWNED_YEARNING_QUESTION_ID_V4,
-    label: 'Ranking Y1: Owned Yearnings',
+    label: 'Owned Yearnings',
     kind: 'owned-yearning',
     tiers: getOwnedYearningQuestionTiers(),
     items: candidates.filter((candidate) => candidate.isYearning)

@@ -12,6 +12,7 @@ function formatContribution(value, weightKey) {
 
 export function ScoreTooltip({
   title,
+  subtitle,
   score,
   monoScore,
   mixedScore,
@@ -23,6 +24,11 @@ export function ScoreTooltip({
   return (
     <Stack gap={6}>
       <Text fw={700}>{title}</Text>
+      {subtitle ? (
+        <Text size="sm" c="dimmed">
+          {subtitle}
+        </Text>
+      ) : null}
       <Text size="sm">
         {monoLabel}:{' '}
         <Text span c="dimmed">

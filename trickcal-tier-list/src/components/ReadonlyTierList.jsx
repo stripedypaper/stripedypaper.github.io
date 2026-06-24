@@ -1,4 +1,5 @@
 import { Badge, Group, Paper, Stack, Text, Tooltip } from '@mantine/core';
+import { useMemo, useState } from 'react';
 import { ReadonlyCharacterChip } from './ReadonlyCharacterChip.jsx';
 import { ScoreTooltip } from './ScoreTooltip.jsx';
 import { getCharacterDisplayName } from '../lib/site.js';
@@ -130,7 +131,27 @@ function getDefaultTooltipContent(character) {
   );
 }
 
-function CharacterChip({ character, renderTooltipContent, onCharacterClick }) {
+function getBaseCharacterId(character) {
+  if (character.baseCharacterId) {
+    return character.baseCharacterId;
+  }
+
+  if (character.characterId) {
+    return character.characterId;
+  }
+
+  return String(character.id || '')
+    .replace(/#base$/, '')
+    .replace(/#yearning$/, '');
+}
+
+function CharacterChip({
+  character,
+  renderTooltipContent,
+  onCharacterClick,
+  highlighted,
+  onHoverChange
+}) {
   const label = (renderTooltipContent || getDefaultTooltipContent)(character);
   const secondaryText = character.secondaryText || '';
 
@@ -147,6 +168,8 @@ function CharacterChip({ character, renderTooltipContent, onCharacterClick }) {
       <div>
         <div
           translate="no"
+          onMouseEnter={() => onHoverChange?.(character, true)}
+          onMouseLeave={() => onHoverChange?.(character, false)}
           onClick={
             onCharacterClick ? () => onCharacterClick(character) : undefined
           }
@@ -154,9 +177,12 @@ function CharacterChip({ character, renderTooltipContent, onCharacterClick }) {
           <ReadonlyCharacterChip
             character={character}
             secondaryText={secondaryText}
-            className={
-              onCharacterClick ? 'readonly-tier-candidate-clickable' : ''
-            }
+            className={[
+              onCharacterClick ? 'readonly-tier-candidate-clickable' : '',
+              highlighted ? 'readonly-tier-candidate-highlighted' : ''
+            ]
+              .filter(Boolean)
+              .join(' ')}
           />
         </div>
       </div>
@@ -172,6 +198,7 @@ export function ReadonlyTierList({
   onCharacterClick,
   extraBucket = null
 }) {
+  const [hoveredBaseCharacterId, setHoveredBaseCharacterId] = useState('');
   const bucketItems = buckets.map((bucket) => ({
     ...bucket,
     items: sortCharacters(
@@ -182,6 +209,29 @@ export function ReadonlyTierList({
   const extraBucketItems = extraBucket
     ? sortCharactersAlphabetically(extraBucket.items || [])
     : [];
+  const pairedBaseCharacterIds = useMemo(() => {
+    const counts = new Map();
+
+    [...characters, ...extraBucketItems].forEach((character) => {
+      const baseCharacterId = getBaseCharacterId(character);
+      counts.set(baseCharacterId, (counts.get(baseCharacterId) || 0) + 1);
+    });
+
+    return new Set(
+      [...counts.entries()]
+        .filter(([, count]) => count > 1)
+        .map(([baseCharacterId]) => baseCharacterId)
+    );
+  }, [characters, extraBucketItems]);
+
+  function handleHoverChange(character, isHovered) {
+    const baseCharacterId = getBaseCharacterId(character);
+    if (!pairedBaseCharacterIds.has(baseCharacterId)) {
+      return;
+    }
+
+    setHoveredBaseCharacterId(isHovered ? baseCharacterId : '');
+  }
 
   return (
     <Stack gap="sm" className="tier-list notranslate" translate="no">
@@ -234,6 +284,10 @@ export function ReadonlyTierList({
                   character={character}
                   renderTooltipContent={renderTooltipContent}
                   onCharacterClick={onCharacterClick}
+                  highlighted={
+                    hoveredBaseCharacterId === getBaseCharacterId(character)
+                  }
+                  onHoverChange={handleHoverChange}
                 />
               ))
             ) : (
@@ -276,6 +330,10 @@ export function ReadonlyTierList({
                 character={character}
                 renderTooltipContent={renderTooltipContent}
                 onCharacterClick={onCharacterClick}
+                highlighted={
+                  hoveredBaseCharacterId === getBaseCharacterId(character)
+                }
+                onHoverChange={handleHoverChange}
               />
             ))}
           </div>

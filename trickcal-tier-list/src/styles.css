@@ -428,6 +428,12 @@ body::before {
   transform: translateY(-1px);
 }
 
+.readonly-tier-candidate-highlighted {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(190, 155, 255, 0.42);
+  transform: translateY(-1px);
+}
+
 .readonly-tier-tooltip {
   background: var(--surface-strong);
   color: var(--text);
