@@ -355,7 +355,56 @@ function validateAnswers({
     normalizedAnswers[question.id] = placements;
   }
 
+  assertYearningNotBelowBase({
+    answers: normalizedAnswers,
+    candidates,
+    questions
+  });
+
   return normalizedAnswers;
+}
+
+function assertYearningNotBelowBase({ answers, candidates, questions }) {
+  const candidatesById = new Map(
+    candidates.map((candidate) => [candidate.id, candidate])
+  );
+
+  for (const question of questions) {
+    const placements = answers?.[question.id];
+    if (!placements || typeof placements !== 'object') {
+      continue;
+    }
+
+    const tierScores = new Map(
+      (question.tiers || []).map((tier) => [tier.id, tier.score ?? null])
+    );
+
+    for (const [characterId, yearningTierId] of Object.entries(placements)) {
+      const candidate = candidatesById.get(characterId);
+      if (!candidate?.isYearning) {
+        continue;
+      }
+
+      const baseCharacterId = `${candidate.characterId || normalizeBaseCharacterId(characterId)}#base`;
+      const baseTierId = placements[baseCharacterId];
+      if (!baseTierId) {
+        continue;
+      }
+
+      const yearningScore = tierScores.get(yearningTierId);
+      const baseScore = tierScores.get(baseTierId);
+
+      if (
+        typeof yearningScore === 'number' &&
+        typeof baseScore === 'number' &&
+        yearningScore < baseScore
+      ) {
+        throw new Error(
+          `Yearning version cannot be rated below base version in ${question.id}.`
+        );
+      }
+    }
+  }
 }
 
 function deriveCharacterScoresModern(

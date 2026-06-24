@@ -275,6 +275,56 @@ export function listQuestionsWithUnsatisfiedMinimums(questionGroups, answers) {
   });
 }
 
+export function listYearningBelowBaseViolations(questionGroups, answers) {
+  return questionGroups.flatMap((question) => {
+    const placements = normalizeAssignedPlacements(answers?.[question.id]);
+    if (!Object.keys(placements).length) {
+      return [];
+    }
+
+    const tierScores = new Map(
+      (question.tiers || []).map((tier) => [tier.id, tier.score ?? null])
+    );
+    const placementsByCharacterId = new Map(Object.entries(placements));
+
+    return (question.items || [])
+      .filter((item) => item?.isYearning)
+      .flatMap((item) => {
+        const yearningTierId = placementsByCharacterId.get(item.id);
+        if (!yearningTierId) {
+          return [];
+        }
+
+        const baseCharacterId = `${item.characterId || item.id.replace(/#yearning$/, '')}#base`;
+        const baseTierId = placementsByCharacterId.get(baseCharacterId);
+        if (!baseTierId) {
+          return [];
+        }
+
+        const yearningScore = tierScores.get(yearningTierId);
+        const baseScore = tierScores.get(baseTierId);
+
+        if (
+          typeof yearningScore !== 'number' ||
+          typeof baseScore !== 'number' ||
+          yearningScore >= baseScore
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            question,
+            baseCharacterId,
+            yearningCharacterId: item.id,
+            characterName:
+              item.nameEn || item.name || item.characterId || item.id
+          }
+        ];
+      });
+  });
+}
+
 export function sanitizePlacementsByQuestion(questionGroups, answers) {
   const sanitized = {};
 

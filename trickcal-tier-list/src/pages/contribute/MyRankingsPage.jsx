@@ -8,6 +8,7 @@ import {
   PERSONA_GRID_COLORS,
   buildQuestionGroups,
   listIncompleteRequiredQuestions,
+  listYearningBelowBaseViolations,
   listQuestionsWithUnsatisfiedMinimums
 } from '../../lib/rankings.js';
 
@@ -101,6 +102,10 @@ export function MyRankingsPage({
       ),
     [placementsByQuestion, questionGroups]
   );
+  const yearningBelowBaseViolations = useMemo(
+    () => listYearningBelowBaseViolations(questionGroups, placementsByQuestion),
+    [placementsByQuestion, questionGroups]
+  );
   const missingAssignmentsMessage =
     incompleteRequiredQuestions.length > 0
       ? `${incompleteRequiredQuestions
@@ -115,6 +120,10 @@ export function MyRankingsPage({
               `${question.label} ${tier.label} must have at least ${tier.minimum} apostles (${assignedCount}/${tier.minimum}).`
           )
           .join(' ')
+      : '';
+  const yearningValidationMessage =
+    yearningBelowBaseViolations.length > 0
+      ? `${yearningBelowBaseViolations[0].characterName} has its Yearning version rated below its base version in ${yearningBelowBaseViolations[0].question.label}.`
       : '';
   const hasUnsavedChanges = currentSnapshot !== lastSavedSnapshot;
   const saveDisabled =
@@ -171,6 +180,17 @@ export function MyRankingsPage({
         color: 'red',
         title: 'Unable to save rankings',
         message: minimumRequirementsMessage
+      });
+      setSaveState('error');
+      setSaveMessage('');
+      return;
+    }
+
+    if (yearningValidationMessage) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to save rankings',
+        message: yearningValidationMessage
       });
       setSaveState('error');
       setSaveMessage('');
