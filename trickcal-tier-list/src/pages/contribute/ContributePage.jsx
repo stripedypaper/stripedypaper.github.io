@@ -78,6 +78,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
   const [rankingsLoading, setRankingsLoading] = useState(false);
   const [submission, setSubmission] = useState(null);
   const [draftReady, setDraftReady] = useState(false);
+  const [hasLocalDraft, setHasLocalDraft] = useState(false);
   const ownedYearningPlacements = placementsByQuestion['ranking-y-1'] || {};
   const ownedYearningPlacementsKey = serializeValue(ownedYearningPlacements);
   const questionGroups = useMemo(
@@ -141,6 +142,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
         if (active) {
           setRankingsLoading(false);
           setDraftReady(false);
+          setHasLocalDraft(false);
         }
         return;
       }
@@ -193,6 +195,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
             : null
         );
         setPlacementsByQuestion(nextPlacements);
+        setHasLocalDraft(Boolean(localDraft));
       } catch {
         if (active) {
           const localDraft = readRankingsDraft(user?.id);
@@ -207,6 +210,7 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
 
           setSubmission(null);
           setPlacementsByQuestion(localDraft ? sanitizedDraftAnswers : {});
+          setHasLocalDraft(Boolean(localDraft));
         }
       } finally {
         if (active) {
@@ -243,10 +247,12 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
         serializeValue(sanitizedSubmission)
     ) {
       clearRankingsDraft(user.id);
+      setHasLocalDraft(false);
       return;
     }
 
     writeRankingsDraft(user?.id, sanitizedPlacements);
+    setHasLocalDraft(true);
   }, [
     draftReady,
     placementsByQuestion,
@@ -310,8 +316,10 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
             serializeValue(sanitizedSubmission)
         ) {
           clearRankingsDraft(user.id);
+          setHasLocalDraft(false);
         } else {
           writeRankingsDraft(user?.id, sanitizedNextValue);
+          setHasLocalDraft(true);
         }
       }
 
@@ -339,7 +347,20 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
     setPlacementsByQuestion(sanitizedAnswers);
     clearRankingsDraft(user?.id);
     clearAnonymousRankingsDraft();
+    setHasLocalDraft(false);
     return nextSubmission;
+  }
+
+  function handleDiscardDraft() {
+    const resetAnswers = sanitizePlacementsByQuestion(
+      questionGroups,
+      submission?.answers || {}
+    );
+
+    clearRankingsDraft(user?.id);
+    clearAnonymousRankingsDraft();
+    setHasLocalDraft(false);
+    setPlacementsByQuestion(resetAnswers);
   }
 
   const routeKey = route === 'contribute-tier-list' ? 'tier-list' : 'rankings';
@@ -369,7 +390,9 @@ export function ContributePage({ apiBaseUrl, route, user, sessionLoading }) {
             rankingsLoading={rankingsLoading}
             placementsByQuestion={placementsByQuestion}
             submission={submission}
+            hasLocalDraft={hasLocalDraft}
             onChange={handleQuestionChange}
+            onDiscardDraft={handleDiscardDraft}
             onSave={handleSave}
           />
         )}

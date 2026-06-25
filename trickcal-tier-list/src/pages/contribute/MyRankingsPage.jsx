@@ -67,7 +67,9 @@ export function MyRankingsPage({
   rankingsLoading,
   placementsByQuestion,
   submission,
+  hasLocalDraft,
   onChange,
+  onDiscardDraft,
   onSave
 }) {
   const [saveState, setSaveState] = useState('idle');
@@ -358,13 +360,25 @@ export function MyRankingsPage({
             ) : null}
           </div>
 
-          <Button
-            onClick={handleSave}
-            loading={saveState === 'saving' || rankingsLoading}
-            disabled={saveDisabled}
-          >
-            Save rankings
-          </Button>
+          <Group gap="sm">
+            {hasLocalDraft ? (
+              <Button
+                variant="subtle"
+                color="gray"
+                onClick={onDiscardDraft}
+                disabled={saveState === 'saving' || rankingsLoading}
+              >
+                Discard draft
+              </Button>
+            ) : null}
+            <Button
+              onClick={handleSave}
+              loading={saveState === 'saving' || rankingsLoading}
+              disabled={saveDisabled}
+            >
+              Save rankings
+            </Button>
+          </Group>
         </Group>
       </div>
 
@@ -385,6 +399,16 @@ export function MyRankingsPage({
                 >
                   Last saved {formatSavedAt(lastSavedAt)}
                 </Text>
+              ) : null}
+              {hasLocalDraft ? (
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  onClick={onDiscardDraft}
+                  disabled={saveState === 'saving' || rankingsLoading}
+                >
+                  Discard draft
+                </Button>
               ) : null}
               <Button
                 onClick={handleSave}
