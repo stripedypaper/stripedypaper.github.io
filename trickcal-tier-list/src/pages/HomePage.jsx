@@ -201,7 +201,7 @@ function CharacterDetailsModal({ character, opened, onClose }) {
             valueFormatter={(value) => String(value)}
           />
           <CommunityChart
-            title="Mono Score Vote Distribution (A1-A5)"
+            title="Mono Score Vote Distribution"
             data={buildSortedDistributionData(stats.mono?.distribution)}
             valueKey="votes"
             color="yellow.6"
@@ -365,7 +365,7 @@ export function HomePage({ apiBaseUrl }) {
     () => addCommunitySecondaryText(communityData?.characters || []),
     [communityData]
   );
-  const { visibleCharacters, unratedYearnings } = useMemo(
+  const { visibleCharacters, unratedCharacters } = useMemo(
     () =>
       buildReadonlyTierListDisplay({
         allCharacters: communityData?.characters || [],
@@ -466,12 +466,12 @@ export function HomePage({ apiBaseUrl }) {
           showYearning={showYearning}
           onShowYearningChange={setShowYearning}
           characters={visibleCharacters}
+          unratedCharacters={unratedCharacters}
           getScore={(character) =>
             character.communityStats?.calculated?.average || 0
           }
           renderTooltipContent={renderCommunityTooltip}
           onCharacterClick={setSelectedCharacter}
-          unratedYearnings={unratedYearnings}
         />
 
         <Stack gap="sm">

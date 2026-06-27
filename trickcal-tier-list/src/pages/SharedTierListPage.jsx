@@ -39,7 +39,7 @@ export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
     () => mergeCharacterScores(characters, derivedScores),
     [characters, derivedScores]
   );
-  const { visibleCharacters, unratedYearnings } = useMemo(
+  const { visibleCharacters, unratedCharacters } = useMemo(
     () =>
       buildReadonlyTierListDisplay({
         allCharacters: characters,
@@ -142,7 +142,7 @@ export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
         showYearning={showYearning}
         onShowYearningChange={setShowYearning}
         characters={visibleCharacters}
-        unratedYearnings={unratedYearnings}
+        unratedCharacters={unratedCharacters}
       />
     </Stack>
   );

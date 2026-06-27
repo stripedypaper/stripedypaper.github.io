@@ -52,24 +52,21 @@ export function buildReadonlyTierListDisplay({
       (character) => character.characterVariantKey || character.id
     )
   );
-
+  const ratedCharacters = scoredCharacters.filter((character) =>
+    isCharacterRated(character, ratedVariantKeys)
+  );
   const visibleCharacters = showYearning
-    ? scoredCharacters.filter(
-        (character) =>
-          !character.isYearning || isCharacterRated(character, ratedVariantKeys)
-      )
-    : scoredCharacters.filter((character) => !character.isYearning);
-
-  const unratedYearnings = showYearning
-    ? allVariants.filter(
-        (character) =>
-          character.isYearning && !isCharacterRated(character, ratedVariantKeys)
-      )
-    : [];
+    ? ratedCharacters
+    : ratedCharacters.filter((character) => !character.isYearning);
+  const unratedCharacters = allVariants.filter(
+    (character) =>
+      (!character.isYearning || showYearning) &&
+      !isCharacterRated(character, ratedVariantKeys)
+  );
 
   return {
     visibleCharacters,
-    unratedYearnings
+    unratedCharacters
   };
 }
 

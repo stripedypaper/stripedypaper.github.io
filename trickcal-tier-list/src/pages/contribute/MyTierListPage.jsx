@@ -30,7 +30,7 @@ export function MyTierListPage({
     () => mergeCharacterScores(characters, derivedScores),
     [characters, derivedScores]
   );
-  const { visibleCharacters, unratedYearnings } = useMemo(
+  const { visibleCharacters, unratedCharacters } = useMemo(
     () =>
       buildReadonlyTierListDisplay({
         allCharacters: characters,
@@ -107,7 +107,7 @@ export function MyTierListPage({
         showYearning={showYearning}
         onShowYearningChange={setShowYearning}
         characters={visibleCharacters}
-        unratedYearnings={unratedYearnings}
+        unratedCharacters={unratedCharacters}
       />
     </Stack>
   );

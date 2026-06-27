@@ -172,7 +172,7 @@ function TierBucket({
           </Badge>
           {bucket.showScore !== false && typeof bucket.score === 'number' ? (
             <Text size="sm" fw={700} c="dimmed" className="tier-bucket-score">
-              Score: {bucket.score > 0 ? `+${bucket.score}` : '0'}
+              Score: {bucket.score}
             </Text>
           ) : null}
           {headerInteractive ? (
@@ -496,7 +496,7 @@ export function TierList({
                   {tier.showScore !== false &&
                   typeof tier.score === 'number' ? (
                     <Text size="sm" fw={700} c="dimmed">
-                      Score: {tier.score > 0 ? `+${tier.score}` : '0'}
+                      Score: {tier.score}
                     </Text>
                   ) : null}
                 </Group>

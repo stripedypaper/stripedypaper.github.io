@@ -196,7 +196,7 @@ export function ReadonlyTierList({
   getScore = (character) => character.calculatedScore ?? 0,
   renderTooltipContent,
   onCharacterClick,
-  extraBucket = null
+  extraBuckets = []
 }) {
   const [hoveredBaseCharacterId, setHoveredBaseCharacterId] = useState('');
   const bucketItems = buckets.map((bucket) => ({
@@ -206,13 +206,19 @@ export function ReadonlyTierList({
       getScore
     )
   }));
-  const extraBucketItems = extraBucket
-    ? sortCharactersAlphabetically(extraBucket.items || [])
-    : [];
+  const resolvedExtraBuckets = (extraBuckets || [])
+    .map((bucket) => ({
+      ...bucket,
+      items: sortCharactersAlphabetically(bucket.items || [])
+    }))
+    .filter((bucket) => bucket.items.length > 0);
   const pairedBaseCharacterIds = useMemo(() => {
     const counts = new Map();
 
-    [...characters, ...extraBucketItems].forEach((character) => {
+    [
+      ...characters,
+      ...resolvedExtraBuckets.flatMap((bucket) => bucket.items || [])
+    ].forEach((character) => {
       const baseCharacterId = getBaseCharacterId(character);
       counts.set(baseCharacterId, (counts.get(baseCharacterId) || 0) + 1);
     });
@@ -222,7 +228,7 @@ export function ReadonlyTierList({
         .filter(([, count]) => count > 1)
         .map(([baseCharacterId]) => baseCharacterId)
     );
-  }, [characters, extraBucketItems]);
+  }, [characters, resolvedExtraBuckets]);
 
   function handleHoverChange(character, isHovered) {
     const baseCharacterId = getBaseCharacterId(character);
@@ -298,8 +304,14 @@ export function ReadonlyTierList({
           </div>
         </Paper>
       ))}
-      {extraBucket && extraBucketItems.length ? (
-        <Paper className="tier-bucket" p="sm" radius="lg" withBorder>
+      {resolvedExtraBuckets.map((extraBucket) => (
+        <Paper
+          key={extraBucket.id}
+          className="tier-bucket"
+          p="sm"
+          radius="lg"
+          withBorder
+        >
           <Group justify="space-between" align="center" mb="sm" wrap="nowrap">
             <Group gap="sm" wrap="nowrap">
               <Badge
@@ -314,13 +326,13 @@ export function ReadonlyTierList({
               </Badge>
             </Group>
             <Text c="dimmed" size="sm">
-              {extraBucketItems.length} character
-              {extraBucketItems.length === 1 ? '' : 's'}
+              {extraBucket.items.length} character
+              {extraBucket.items.length === 1 ? '' : 's'}
             </Text>
           </Group>
 
           <div className="tier-bucket-items">
-            {extraBucketItems.map((character) => (
+            {extraBucket.items.map((character) => (
               <CharacterChip
                 key={
                   character.characterVariantKey ||
@@ -338,7 +350,7 @@ export function ReadonlyTierList({
             ))}
           </div>
         </Paper>
-      ) : null}
+      ))}
     </Stack>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AppShell, Container } from '@mantine/core';
+import { AppShell, Container, Text } from '@mantine/core';
 import { TopNavbar } from './components/TopNavbar.jsx';
 import { AdminPage } from './pages/admin/AdminPage.jsx';
 import { ContributePage } from './pages/contribute/ContributePage.jsx';
@@ -151,6 +151,17 @@ export function App() {
             sharedUserId={sharedUserId}
           />
         </Container>
+        <footer className="site-footer">
+          <Container size="xl" className="site-footer-inner">
+            <Text size="sm" c="dimmed">
+              Created by boardwalkhotel. To send feedback, visit the{' '}
+              <a href="https://discord.gg/4Q2uFsjq2X" target="_blank">
+                Trickcal official discord
+              </a>{' '}
+              and find the Community Tier List thread in #game-guides.
+            </Text>
+          </Container>
+        </footer>
       </AppShell.Main>
     </AppShell>
   );

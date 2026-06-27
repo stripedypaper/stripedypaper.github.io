@@ -9,7 +9,7 @@ export function ReadonlyTierListSection({
   getScore,
   renderTooltipContent,
   onCharacterClick,
-  unratedYearnings = []
+  unratedCharacters = []
 }) {
   return (
     <Stack gap="lg">
@@ -25,16 +25,14 @@ export function ReadonlyTierListSection({
         getScore={getScore}
         renderTooltipContent={renderTooltipContent}
         onCharacterClick={onCharacterClick}
-        extraBucket={
-          showYearning
-            ? {
-                id: 'unrated-yearnings',
-                label: 'Unrated Yearnings',
-                color: 'gray',
-                items: unratedYearnings
-              }
-            : null
-        }
+        extraBuckets={[
+          {
+            id: 'not-yet-rated',
+            label: 'Not yet rated',
+            color: 'gray',
+            items: unratedCharacters
+          }
+        ]}
       />
     </Stack>
   );
