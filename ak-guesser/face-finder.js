@@ -24,29 +24,27 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     function init() {
         vm.isLoading = true
         vm.lang = 'zh_CN'
-        var repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
-        var branch = vm.lang == 'zh_CN' ? 'master' : 'main'
-        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
+        var dataRepo = 'ArknightsAssets/ArknightsGamedata'
+        var langFolder = {zh_CN:'cn', en_US:'en', ja_JP:'jp', ko_KR:'kr'}[vm.lang]
+        return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/character_table.json`, function(json) {
             charactersCN = json;
             console.log('charactersCN', Object.keys(charactersCN).length, charactersCN)
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/skin_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/skin_table.json`, function(json) {
                 skinsCN = json;
                 console.log('skinsCN', Object.keys(skinsCN.charSkins).length, skinsCN)
             })
         })
         .then(function() {
             vm.lang = 'en_US'
-            repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
-            branch = vm.lang == 'zh_CN' ? 'master' : 'main'
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/character_table.json`, function(json) {
                 charactersEN = json;
                 console.log('charactersEN', Object.keys(charactersEN).length, charactersEN)
             })
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/skin_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/skin_table.json`, function(json) {
                 skinsEN = json;
                 console.log('skinsEN', Object.keys(skinsEN.charSkins).length, skinsEN)
             })
@@ -82,7 +80,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             } else {
                 skin.searchableName = `${characterName} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             }
-            skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
+            skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets2/refs/heads/cn/assets/dyn/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
             skin.charInfo = charactersCN[skin.charId]
             // console.log(skin)
             vm.skins.push(skin)
