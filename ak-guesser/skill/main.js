@@ -87,25 +87,25 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
     }
 
     function init() {
-        const repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
-        const branch = vm.lang == 'zh_CN' ? 'master' : 'main'
+        const dataRepo = 'ArknightsAssets/ArknightsGamedata'
+        const langFolder = {zh_CN:'cn', en_US:'en', ja_JP:'jp', ko_KR:'kr'}[vm.lang]
         setImageDimension()
         window.addEventListener('resize', function(event) {
             setImageDimension()
         }, true)
         applyTheme()
-        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/skill_table.json`, function(json) {
+        return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/skill_table.json`, function(json) {
             skills = json;
             log(skills);
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/character_table.json`, function(json) {
                 characters = json;
                 log(characters);
             })
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/char_patch_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/char_patch_table.json`, function(json) {
                 characters = _.merge(characters, json.patchChars)
                 log(characters);
                 log(_.groupBy(characters, 'profession'))
@@ -252,7 +252,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
                 skillIconId: key,
                 searchableName,
                 description: processSkillDesc(_.last(skill.levels), charName),
-                url: encodeURI(`https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/skills/${filename}`),
+                url: encodeURI(`https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets2/refs/heads/cn/assets/dyn/arts/skills/${filename}`),
             })
         })
         console.log(_.sortBy(vm.assets, 'searchableName'))
