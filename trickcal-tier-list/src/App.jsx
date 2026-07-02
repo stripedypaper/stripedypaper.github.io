@@ -156,18 +156,18 @@ export function App() {
             sharedUserId={sharedUserId}
           />
         </Container>
-        <footer className="site-footer">
-          <Container size="xl" className="site-footer-inner">
-            <Text size="sm" c="dimmed">
-              Created by boardwalkhotel. To send feedback, visit the{' '}
-              <a href="https://discord.gg/4Q2uFsjq2X" target="_blank">
-                Trickcal official discord
-              </a>{' '}
-              and find the Community Tier List thread in #game-guides.
-            </Text>
-          </Container>
-        </footer>
       </AppShell.Main>
+      <footer className="site-footer">
+        <Container size="xl" className="site-footer-inner">
+          <Text size="sm">
+            Created by boardwalkhotel. To send feedback, visit the{' '}
+            <a href="https://discord.gg/4Q2uFsjq2X" target="_blank">
+              Trickcal official discord
+            </a>{' '}
+            and find the Community Tier List thread in #game-guides.
+          </Text>
+        </Container>
+      </footer>
     </AppShell>
   );
 }
