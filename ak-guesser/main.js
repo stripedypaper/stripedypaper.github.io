@@ -113,19 +113,19 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
         translate.setLang(vm.lang)
         vm.translate = translate.translate
 
-        const repo = vm.lang == 'zh_CN' ? 'ArknightsGameData' : 'ArknightsGameData_Yostar'
-        const branch = vm.lang == 'zh_CN' ? 'master' : 'main'
+        const dataRepo = 'ArknightsAssets/ArknightsGamedata'
+        const langFolder = {zh_CN:'cn', en_US:'en', ja_JP:'jp', ko_KR:'kr'}[vm.lang]
         setImageDimension()
         window.addEventListener('resize', function(event) {
             setImageDimension()
         }, true)
         applyTheme()
-        return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/character_table.json`, function(json) {
+        return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/character_table.json`, function(json) {
             characters = json;
             log(characters);
         })
         .then(function() {
-            return $.getJSON(`https://raw.githubusercontent.com/Kengxxiao/${repo}/${branch}/${vm.lang}/gamedata/excel/skin_table.json`, function(json) {
+            return $.getJSON(`https://raw.githubusercontent.com/${dataRepo}/master/${langFolder}/gamedata/excel/skin_table.json`, function(json) {
                 skins = json;
                 log(skins);
             })
@@ -233,7 +233,7 @@ angular.module('app', ['ngRoute', 'ui.bootstrap', 'ui.bootstrap.tpls'])
             }
             skin.searchableName = `${characterNameFixed} (${skinGroupIdFriendlyName[skinGroupId] || skinName})`
             skin.searchIndex = `${characterNameFixed.replace(/ /g, '_')} ${isSkin ? 'ZZ' : 'AA'} ${skinGroupIdFriendlyName[skinGroupId] || skinName}`
-            skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets/refs/heads/cn/assets/torappu/dynamicassets/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
+            skin.url = `https://raw.githubusercontent.com/ArknightsAssets/ArknightsAssets2/refs/heads/cn/assets/dyn/arts/characters/${skin.tmplId || skin.charId}/${portraitIdFixed}.png`;
             skin.charInfo = characters[skin.charId]
             // console.log(skin)
             vm.skins.push(skin)
