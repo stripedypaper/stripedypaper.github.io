@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AppShell, Container, Text } from '@mantine/core';
 import { TopNavbar } from './components/TopNavbar.jsx';
+import { ChangelogPage } from './pages/ChangelogPage.jsx';
 import { AdminPage } from './pages/admin/AdminPage.jsx';
 import { ContributePage } from './pages/contribute/ContributePage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
@@ -51,6 +52,10 @@ function PageForRoute({
     ) : (
       <HomePage apiBaseUrl={apiBaseUrl} />
     );
+  }
+
+  if (route === 'changelog') {
+    return <ChangelogPage />;
   }
 
   return <HomePage apiBaseUrl={apiBaseUrl} />;

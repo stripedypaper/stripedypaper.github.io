@@ -4,8 +4,21 @@ function roundToTwo(value) {
   return Number((value || 0).toFixed(2));
 }
 
+function normalizeCharacterVariants(characters) {
+  const values = characters || [];
+
+  const alreadyExpanded = values.some(
+    (character) =>
+      Boolean(character?.characterVariantKey) ||
+      String(character?.id || '').endsWith('#base') ||
+      String(character?.id || '').endsWith('#yearning')
+  );
+
+  return alreadyExpanded ? values : expandCharacterVariants(values);
+}
+
 export function mergeCharacterScores(characters, derivedScores) {
-  const variants = expandCharacterVariants(characters);
+  const variants = normalizeCharacterVariants(characters);
   const charactersById = new Map(
     variants.map((character) => [
       character.characterVariantKey || character.id,
@@ -46,7 +59,7 @@ export function buildReadonlyTierListDisplay({
   showYearning,
   isCharacterRated
 }) {
-  const allVariants = expandCharacterVariants(allCharacters);
+  const allVariants = normalizeCharacterVariants(allCharacters);
   const ratedVariantKeys = new Set(
     scoredCharacters.map(
       (character) => character.characterVariantKey || character.id

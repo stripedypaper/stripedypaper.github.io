@@ -1,6 +1,7 @@
 export const TOP_NAV = [
   { key: 'home', label: 'Tier list', hash: '#/' },
   { key: 'contribute', label: 'Contribute', hash: '#/contribute' },
+  { key: 'changelog', label: 'Changelog', hash: '#/changelog' },
   { key: 'admin', label: 'Admin', hash: '#/admin/characters' }
 ];
 
@@ -110,6 +111,10 @@ export function getRouteFromHash(hash) {
 
   if (normalizedHash.startsWith('#/contribute')) {
     return 'contribute-rankings';
+  }
+
+  if (normalizedHash.startsWith('#/changelog')) {
+    return 'changelog';
   }
 
   if (normalizedHash.startsWith('#/tier-list/')) {
