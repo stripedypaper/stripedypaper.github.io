@@ -244,6 +244,35 @@ body::before {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
+.audit-events-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.audit-events-table th:nth-child(1),
+.audit-events-table td:nth-child(1) {
+  width: 180px;
+}
+
+.audit-events-table th:nth-child(2),
+.audit-events-table td:nth-child(2) {
+  width: 180px;
+}
+
+.audit-events-table th:nth-child(3),
+.audit-events-table td:nth-child(3) {
+  width: 190px;
+}
+
+.audit-events-metadata {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-dim);
+  font-family:
+    'SFMono-Regular', 'Cascadia Mono', 'Consolas', 'Liberation Mono', monospace;
+}
+
 .users-table thead th,
 .characters-table thead th {
   color: var(--text-dim);

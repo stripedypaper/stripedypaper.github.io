@@ -4,10 +4,13 @@ import {
   GetItemCommand,
   PutItemCommand,
   QueryCommand,
-  ScanCommand
+  UpdateItemCommand
 } from '@aws-sdk/client-dynamodb';
 
 const USER_FAVORITES_TABLE_NAME = process.env.USER_FAVORITES_TABLE_NAME;
+const CHARACTER_FAVORITE_COUNTS_TABLE_NAME =
+  process.env.CHARACTER_FAVORITE_COUNTS_TABLE_NAME;
+const FAVORITE_COUNT_ENTITY_TYPE = 'characterFavoriteCount';
 
 const ddbClient = new DynamoDBClient({});
 
@@ -28,6 +31,13 @@ export async function saveUserFavoriteCharacterId(
     return;
   }
 
+  const existingFavoriteCharacterId =
+    await getCurrentFavoriteCharacterId(userId);
+
+  if ((existingFavoriteCharacterId || '') === (favoriteCharacterId || '')) {
+    return;
+  }
+
   if (!favoriteCharacterId) {
     await ddbClient.send(
       new DeleteItemCommand({
@@ -37,6 +47,11 @@ export async function saveUserFavoriteCharacterId(
         }
       })
     );
+
+    if (existingFavoriteCharacterId) {
+      await adjustFavoriteCount(existingFavoriteCharacterId, -1, updatedAt);
+    }
+
     return;
   }
 
@@ -50,6 +65,12 @@ export async function saveUserFavoriteCharacterId(
       }
     })
   );
+
+  if (existingFavoriteCharacterId) {
+    await adjustFavoriteCount(existingFavoriteCharacterId, -1, updatedAt);
+  }
+
+  await adjustFavoriteCount(favoriteCharacterId, 1, updatedAt);
 }
 
 export async function countCharacterFavorites(characterId) {
@@ -57,18 +78,88 @@ export async function countCharacterFavorites(characterId) {
     return 0;
   }
 
-  return (await listCurrentFavoriteUserIds(characterId)).length;
+  if (!CHARACTER_FAVORITE_COUNTS_TABLE_NAME) {
+    return (await listCurrentFavoriteUserIds(characterId)).length;
+  }
+
+  const response = await ddbClient.send(
+    new GetItemCommand({
+      TableName: CHARACTER_FAVORITE_COUNTS_TABLE_NAME,
+      Key: {
+        characterId: { S: characterId }
+      }
+    })
+  );
+
+  return response.Item?.favoriteCount?.N
+    ? Number(response.Item.favoriteCount.N)
+    : 0;
 }
 
 export async function listFavoriteCountsByCharacter() {
-  const currentFavoritesByUserId = await listCurrentFavoritesByUserId();
   const countsByCharacterId = new Map();
 
-  for (const currentCharacterId of currentFavoritesByUserId.values()) {
-    incrementFavoriteCount(countsByCharacterId, currentCharacterId);
+  if (!CHARACTER_FAVORITE_COUNTS_TABLE_NAME) {
+    return countsByCharacterId;
   }
 
+  let exclusiveStartKey;
+
+  do {
+    const response = await ddbClient.send(
+      new QueryCommand({
+        TableName: CHARACTER_FAVORITE_COUNTS_TABLE_NAME,
+        IndexName: 'FavoriteCountsByCountIndex',
+        KeyConditionExpression: 'entityType = :entityType',
+        ExpressionAttributeValues: {
+          ':entityType': { S: FAVORITE_COUNT_ENTITY_TYPE }
+        },
+        ScanIndexForward: false,
+        ExclusiveStartKey: exclusiveStartKey
+      })
+    );
+
+    for (const item of response.Items || []) {
+      const characterId = item.characterId?.S || '';
+      const favoriteCount = item.favoriteCount?.N
+        ? Number(item.favoriteCount.N)
+        : 0;
+
+      if (characterId) {
+        countsByCharacterId.set(characterId, favoriteCount);
+      }
+    }
+
+    exclusiveStartKey = response.LastEvaluatedKey;
+  } while (exclusiveStartKey);
+
   return countsByCharacterId;
+}
+
+export async function listTopFavoriteCounts(limit = 10) {
+  if (!CHARACTER_FAVORITE_COUNTS_TABLE_NAME || limit <= 0) {
+    return [];
+  }
+
+  const response = await ddbClient.send(
+    new QueryCommand({
+      TableName: CHARACTER_FAVORITE_COUNTS_TABLE_NAME,
+      IndexName: 'FavoriteCountsByCountIndex',
+      KeyConditionExpression: 'entityType = :entityType',
+      ExpressionAttributeValues: {
+        ':entityType': { S: FAVORITE_COUNT_ENTITY_TYPE }
+      },
+      ScanIndexForward: false,
+      Limit: limit
+    })
+  );
+
+  return (response.Items || [])
+    .map((item) => ({
+      characterId: item.characterId?.S || '',
+      favoriteCount: item.favoriteCount?.N ? Number(item.favoriteCount.N) : 0
+    }))
+    .filter((item) => item.characterId && item.favoriteCount > 0);
 }
 
 async function getCurrentFavoriteCharacterId(userId) {
@@ -120,45 +211,24 @@ async function listCurrentFavoriteUserIds(characterId) {
   return userIds;
 }
 
-async function listCurrentFavoritesByUserId() {
-  if (!USER_FAVORITES_TABLE_NAME) {
-    return new Map();
-  }
-
-  const favoritesByUserId = new Map();
-  let exclusiveStartKey;
-
-  do {
-    const response = await ddbClient.send(
-      new ScanCommand({
-        TableName: USER_FAVORITES_TABLE_NAME,
-        ProjectionExpression: 'userId, characterId',
-        ExclusiveStartKey: exclusiveStartKey
-      })
-    );
-
-    for (const item of response.Items || []) {
-      const userId = item.userId?.S || '';
-      const characterId = item.characterId?.S || '';
-
-      if (userId && characterId) {
-        favoritesByUserId.set(userId, characterId);
-      }
-    }
-
-    exclusiveStartKey = response.LastEvaluatedKey;
-  } while (exclusiveStartKey);
-
-  return favoritesByUserId;
-}
-
-function incrementFavoriteCount(countsByCharacterId, characterId) {
-  if (!characterId) {
+async function adjustFavoriteCount(characterId, delta, updatedAt) {
+  if (!CHARACTER_FAVORITE_COUNTS_TABLE_NAME || !characterId || !delta) {
     return;
   }
 
-  countsByCharacterId.set(
-    characterId,
-    (countsByCharacterId.get(characterId) || 0) + 1
+  await ddbClient.send(
+    new UpdateItemCommand({
+      TableName: CHARACTER_FAVORITE_COUNTS_TABLE_NAME,
+      Key: {
+        characterId: { S: characterId }
+      },
+      UpdateExpression:
+        'SET entityType = :entityType, updatedAt = :updatedAt ADD favoriteCount :delta',
+      ExpressionAttributeValues: {
+        ':entityType': { S: FAVORITE_COUNT_ENTITY_TYPE },
+        ':updatedAt': { S: updatedAt || new Date().toISOString() },
+        ':delta': { N: String(delta) }
+      }
+    })
   );
 }

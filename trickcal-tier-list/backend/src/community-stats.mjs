@@ -4,8 +4,8 @@ import {
   PutItemCommand,
   QueryCommand
 } from '@aws-sdk/client-dynamodb';
-import { listAllCharacters } from './characters.mjs';
-import { listFavoriteCountsByCharacter } from './favorites.mjs';
+import { getCharactersByIds, listAllCharacters } from './characters.mjs';
+import { listTopFavoriteCounts } from './favorites.mjs';
 import {
   ACTIVE_QUESTIONNAIRE_VERSION,
   resolveQuestionnaireVersion
@@ -183,25 +183,32 @@ async function listCommunityFavoritesV4({
   limit = 10,
   questionnaireVersion = ACTIVE_QUESTIONNAIRE_VERSION
 } = {}) {
-  const characters = await listAllCharacters();
-  const counts = await listFavoriteCountsByCharacter();
+  const favoriteCounts = await listTopFavoriteCounts(limit);
+  const characters = await getCharactersByIds(
+    favoriteCounts.map((item) => item.characterId)
+  );
+  const charactersById = new Map(
+    characters.map((character) => [character.id, character])
+  );
 
   return {
     questionnaireVersion,
-    characters: [...characters]
-      .map((character) => ({
-        ...character,
-        communityStats: {
-          favoriteCount: counts.get(character.id) || 0
+    characters: favoriteCounts
+      .map((item) => {
+        const character = charactersById.get(item.characterId);
+
+        if (!character) {
+          return null;
         }
-      }))
-      .filter((character) => (character.communityStats.favoriteCount || 0) > 0)
-      .sort(
-        (left, right) =>
-          (right.communityStats.favoriteCount || 0) -
-          (left.communityStats.favoriteCount || 0)
-      )
-      .slice(0, limit)
+
+        return {
+          ...character,
+          communityStats: {
+            favoriteCount: item.favoriteCount
+          }
+        };
+      })
+      .filter(Boolean)
   };
 }
 

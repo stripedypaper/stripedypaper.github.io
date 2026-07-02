@@ -5,6 +5,7 @@ import {
   rebuildCommunityCharacterStats,
   triggerPublicCommunityRebuild
 } from './community-stats.mjs';
+import { listAuditEventsPage, recordAuditEvent } from './audit-events.mjs';
 import {
   getAuthContext,
   requireAuthenticatedUser,
@@ -21,6 +22,12 @@ import {
   listCharactersPage,
   updateCharacterRecord
 } from './characters.mjs';
+import {
+  createChangelogEntry,
+  deleteChangelogEntry,
+  listChangelogEntries,
+  updateChangelogEntry
+} from './changelog.mjs';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 const STATE_COOKIE = 'trickcal_oauth_state';
@@ -68,6 +75,10 @@ export async function handler(event) {
       return getCommunityFavorites(event);
     }
 
+    if (method === 'GET' && path === '/changelog') {
+      return getChangelog(event);
+    }
+
     if (method === 'POST' && path === '/community/rebuild') {
       return triggerCommunityRebuild(event);
     }
@@ -84,12 +95,28 @@ export async function handler(event) {
       return listUsers(event);
     }
 
+    if (method === 'GET' && path === '/admin/audit-events') {
+      return listAuditEvents(event);
+    }
+
     if (method === 'PUT' && path.startsWith('/admin/users/')) {
       return updateUser(event);
     }
 
     if (method === 'POST' && path === '/admin/community/rebuild') {
       return rebuildCommunity(event);
+    }
+
+    if (method === 'POST' && path === '/admin/changelog') {
+      return createChangelog(event);
+    }
+
+    if (path.startsWith('/admin/changelog/') && method === 'PUT') {
+      return updateChangelog(event);
+    }
+
+    if (path.startsWith('/admin/changelog/') && method === 'DELETE') {
+      return removeChangelog(event);
     }
 
     if (method === 'GET' && path === '/admin/characters') {
@@ -200,12 +227,31 @@ async function callback(event) {
 
   const token = await exchangeCode(code);
   const user = await fetchDiscordUser(token.access_token);
-  await ensureUserRecord({
+  const ensuredUser = await ensureUserRecord({
     id: user.id,
     username: user.username,
     global_name: user.global_name,
     avatar: user.avatar
   });
+  if (ensuredUser?.created) {
+    await recordAuditEvent({
+      category: 'user.created',
+      actor: user.id,
+      metadata: {
+        discordId: user.id,
+        username: user.username || ''
+      }
+    });
+  } else if (ensuredUser?.usernameUpdated) {
+    await recordAuditEvent({
+      category: 'user.usernameUpdated',
+      actor: user.id,
+      metadata: {
+        discordId: user.id,
+        username: user.username || ''
+      }
+    });
+  }
   const session = signSession({
     user: {
       id: user.id,
@@ -261,6 +307,20 @@ async function listUsers(event) {
   return json(200, result);
 }
 
+async function listAuditEvents(event) {
+  const auth = await requireManagerOrAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  const limit = parseLimit(event.queryStringParameters?.limit);
+  const cursor = event.queryStringParameters?.cursor || null;
+  const result = await listAuditEventsPage({ limit, cursor });
+
+  return json(200, result);
+}
+
 async function updateUser(event) {
   const auth = await requireAdminUser(event);
 
@@ -276,6 +336,16 @@ async function updateUser(event) {
     if (!user) {
       return json(404, { error: 'Not found' });
     }
+
+    await recordAuditEvent({
+      category: 'user.updated',
+      actor: auth.user.id,
+      metadata: {
+        discordId,
+        role: user.role,
+        isCurator: user.isCurator
+      }
+    });
 
     return json(200, user);
   } catch (error) {
@@ -314,6 +384,16 @@ async function putMyRankings(event) {
       getQuestionnaireVersion(event)
     );
 
+    await recordAuditEvent({
+      category: 'rankings.submitted',
+      actor: auth.user.id,
+      metadata: {
+        questionnaireVersion: getQuestionnaireVersion(event),
+        questionCount: Object.keys(result.submission?.answers || {}).length,
+        scoredCharacterCount: (result.submission?.derivedScores || []).length
+      }
+    });
+
     return json(200, { submission: result.submission });
   } catch (error) {
     return json(400, {
@@ -338,11 +418,25 @@ async function getCommunityFavorites(event) {
   return json(200, result);
 }
 
+async function getChangelog(event) {
+  const result = await listChangelogEntries();
+  return json(200, result);
+}
+
 async function triggerCommunityRebuild(event) {
   try {
     const result = await triggerPublicCommunityRebuild(
       getQuestionnaireVersion(event)
     );
+    await recordAuditEvent({
+      category: 'community.rebuildRequestedPublic',
+      actor: 'public',
+      metadata: {
+        questionnaireVersion: getQuestionnaireVersion(event),
+        computedAt: result.computedAt,
+        charactersProcessed: result.charactersProcessed
+      }
+    });
     return json(200, result);
   } catch (error) {
     if (error?.name === 'CommunityRebuildCooldownError') {
@@ -393,7 +487,106 @@ async function rebuildCommunity(event) {
   const result = await rebuildCommunityCharacterStats(
     getQuestionnaireVersion(event)
   );
+  await recordAuditEvent({
+    category: 'community.rebuildRequestedAdmin',
+    actor: auth.user.id,
+    metadata: {
+      questionnaireVersion: getQuestionnaireVersion(event),
+      computedAt: result.computedAt,
+      charactersProcessed: result.charactersProcessed
+    }
+  });
   return json(200, result);
+}
+
+async function createChangelog(event) {
+  const auth = await requireManagerOrAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const body = parseJsonBody(event);
+    const entry = await createChangelogEntry(auth.user.id, body);
+
+    await recordAuditEvent({
+      category: 'changelog.created',
+      actor: auth.user.id,
+      metadata: {
+        changelogId: entry.id
+      }
+    });
+
+    return json(201, entry);
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
+}
+
+async function updateChangelog(event) {
+  const auth = await requireManagerOrAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const id = getChangelogIdFromPath(event.rawPath);
+    const body = parseJsonBody(event);
+    const entry = await updateChangelogEntry(auth.user.id, id, body);
+
+    if (!entry) {
+      return json(404, { error: 'Not found' });
+    }
+
+    await recordAuditEvent({
+      category: 'changelog.updated',
+      actor: auth.user.id,
+      metadata: {
+        changelogId: entry.id
+      }
+    });
+
+    return json(200, entry);
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
+}
+
+async function removeChangelog(event) {
+  const auth = await requireManagerOrAdminUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const id = getChangelogIdFromPath(event.rawPath);
+    const entry = await deleteChangelogEntry(id);
+
+    if (!entry) {
+      return json(404, { error: 'Not found' });
+    }
+
+    await recordAuditEvent({
+      category: 'changelog.deleted',
+      actor: auth.user.id,
+      metadata: {
+        changelogId: entry.id
+      }
+    });
+
+    return json(200, { ok: true });
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
 }
 
 async function listCharacters(event) {
@@ -422,6 +615,18 @@ async function createCharacter(event) {
     const body = parseJsonBody(event);
     const character = await createCharacterRecord(auth.user.id, body);
 
+    await recordAuditEvent({
+      category: 'character.created',
+      actor: auth.user.id,
+      metadata: {
+        characterId: character.id,
+        nameEn: character.nameEn || '',
+        role: character.role,
+        position: character.position,
+        personality: character.personality
+      }
+    });
+
     return json(201, character);
   } catch (error) {
     return json(400, {
@@ -445,6 +650,19 @@ async function updateCharacter(event) {
     if (!character) {
       return json(404, { error: 'Not found' });
     }
+
+    await recordAuditEvent({
+      category: 'character.updated',
+      actor: auth.user.id,
+      metadata: {
+        characterId: id,
+        nameEn: character.nameEn || '',
+        role: character.role,
+        position: character.position,
+        personality: character.personality,
+        hasYearning: character.hasYearning
+      }
+    });
 
     return json(200, character);
   } catch (error) {
@@ -470,6 +688,16 @@ async function createCharacterImageUpload(event) {
       body.contentType,
       body.imageType || 'default'
     );
+
+    await recordAuditEvent({
+      category: 'character.imageUploadRequested',
+      actor: auth.user.id,
+      metadata: {
+        characterId: id,
+        imageType: body.imageType || 'default',
+        contentType: body.contentType || ''
+      }
+    });
 
     return json(200, upload);
   } catch (error) {
@@ -674,6 +902,11 @@ function getRankingUserIdFromPath(path) {
 }
 
 function getUserIdFromPath(path) {
+  const parts = path.split('/').filter(Boolean);
+  return parts[2] || '';
+}
+
+function getChangelogIdFromPath(path) {
   const parts = path.split('/').filter(Boolean);
   return parts[2] || '';
 }

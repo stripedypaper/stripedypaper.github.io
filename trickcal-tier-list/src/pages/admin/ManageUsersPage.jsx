@@ -71,15 +71,7 @@ export function ManageUsersPage({ apiBaseUrl }) {
           return;
         }
 
-        const pageUsers = Array.isArray(data.users) ? [...data.users] : [];
-        pageUsers.sort((left, right) => {
-          return (
-            new Date(right.createdAt).getTime() -
-            new Date(left.createdAt).getTime()
-          );
-        });
-
-        setUsers(pageUsers);
+        setUsers(Array.isArray(data.users) ? data.users : []);
         setNextCursor(data.nextCursor || null);
       } catch (fetchError) {
         if (active) {

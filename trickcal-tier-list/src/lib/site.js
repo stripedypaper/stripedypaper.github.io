@@ -23,7 +23,8 @@ export const CONTRIBUTE_NAV = [
 export const ADMIN_NAV = [
   { key: 'users', label: 'Manage Users', hash: '#/admin/users' },
   { key: 'characters', label: 'Manage Characters', hash: '#/admin/characters' },
-  { key: 'community', label: 'Community Stats', hash: '#/admin/community' }
+  { key: 'community', label: 'Community Stats', hash: '#/admin/community' },
+  { key: 'events', label: 'Audit Events', hash: '#/admin/events' }
 ];
 
 export const PAGE_SIZE = 10;
@@ -101,6 +102,10 @@ export function getRouteFromHash(hash) {
     return 'admin-community';
   }
 
+  if (normalizedHash.startsWith('#/admin/events')) {
+    return 'admin-events';
+  }
+
   if (normalizedHash.startsWith('#/admin')) {
     return 'admin-users';
   }
@@ -142,6 +147,39 @@ export function formatDate(value) {
   }
 
   return new Date(value).toLocaleString();
+}
+
+export function formatCalendarDate(value) {
+  const normalized = normalizeCalendarDate(value);
+  if (!normalized) {
+    return '—';
+  }
+
+  const date = new Date(`${normalized}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return normalized;
+  }
+
+  return date.toLocaleDateString();
+}
+
+export function normalizeCalendarDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '';
+  }
+
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) {
+    return match[1];
+  }
+
+  const timestamp = Date.parse(raw);
+  if (Number.isNaN(timestamp)) {
+    return '';
+  }
+
+  return new Date(timestamp).toISOString().slice(0, 10);
 }
 
 export function getCharacterDisplayName(character) {

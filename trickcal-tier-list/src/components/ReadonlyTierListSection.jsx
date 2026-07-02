@@ -9,10 +9,12 @@ export function ReadonlyTierListSection({
   getScore,
   renderTooltipContent,
   onCharacterClick,
-  unratedCharacters = []
+  unratedCharacters = [],
+  beforeToggleContent = null
 }) {
   return (
     <Stack gap="lg">
+      {beforeToggleContent}
       <Switch
         checked={showYearning}
         onChange={(event) => onShowYearningChange(event.currentTarget.checked)}

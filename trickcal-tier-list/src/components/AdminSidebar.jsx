@@ -42,6 +42,13 @@ export function AdminSidebar({ route, canViewUsers, canViewCharacters }) {
         ) : null}
         {canViewUsers ? (
           <AdminNavLink
+            label={ADMIN_NAV[3].label}
+            href={ADMIN_NAV[3].hash}
+            active={route === 'admin-events'}
+          />
+        ) : null}
+        {canViewUsers ? (
+          <AdminNavLink
             label={ADMIN_NAV[0].label}
             href={ADMIN_NAV[0].hash}
             active={route === 'admin-users'}

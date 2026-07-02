@@ -33,7 +33,7 @@ export function ManageCharactersPage({ apiBaseUrl }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
-  const [filterType, setFilterType] = useState('');
+  const [filterType, setFilterType] = useState('name');
   const [filterValue, setFilterValue] = useState('');
   const [modalOpened, setModalOpened] = useState(false);
   const [modalMode, setModalMode] = useState('create');
@@ -158,7 +158,7 @@ export function ManageCharactersPage({ apiBaseUrl }) {
   }
 
   function clearFilters() {
-    setFilterType('');
+    setFilterType('name');
     setFilterValue('');
     resetPaging();
   }

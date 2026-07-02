@@ -38,9 +38,61 @@ Resources:
       AttributeDefinitions:
         - AttributeName: discordId
           AttributeType: S
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: updatedAt
+          AttributeType: S
       KeySchema:
         - AttributeName: discordId
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: UsersByUpdatedAtIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: updatedAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+  AuditEventsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: partitionKey
+          AttributeType: S
+        - AttributeName: eventKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: partitionKey
+          KeyType: HASH
+        - AttributeName: eventKey
+          KeyType: RANGE
+
+  ChangelogTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ChangelogByCreatedAtIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
   CharactersTableV2:
     Type: AWS::DynamoDB::Table
@@ -264,6 +316,30 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  CharacterFavoriteCountsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: characterId
+          AttributeType: S
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: favoriteCount
+          AttributeType: N
+      KeySchema:
+        - AttributeName: characterId
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: FavoriteCountsByCountIndex
+          KeySchema:
+            - AttributeName: entityType
+              KeyType: HASH
+            - AttributeName: favoriteCount
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
   CommunityCharacterStatsV2Table:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -472,6 +548,7 @@ Resources:
           - GET
           - POST
           - PUT
+          - DELETE
           - OPTIONS
         AllowCredentials: true
 
@@ -483,6 +560,10 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AuditEventsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChangelogTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CharactersTableV2
         - DynamoDBCrudPolicy:
@@ -497,6 +578,8 @@ Resources:
             TableName: !Ref UserCharacterScoresV2Table
         - DynamoDBCrudPolicy:
             TableName: !Ref UserFavoritesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CharacterFavoriteCountsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref CommunityCharacterStatsV2Table
         - DynamoDBCrudPolicy:
@@ -514,6 +597,8 @@ Resources:
           LOCAL_FRONTEND_ORIGIN: !Ref LocalFrontendOrigin
           COOKIE_SECRET: !Ref CookieSecret
           USERS_TABLE_NAME: !Ref UsersTable
+          AUDIT_EVENTS_TABLE_NAME: !Ref AuditEventsTable
+          CHANGELOG_TABLE_NAME: !Ref ChangelogTable
           CHARACTERS_TABLE_NAME: !Ref CharactersTableV2
           RANKING_SUBMISSIONS_TABLE_NAME: !Ref RankingSubmissionsTable
           USER_CHARACTER_SCORES_TABLE_NAME: !Ref UserCharacterScoresTable
@@ -521,6 +606,7 @@ Resources:
           RANKING_SUBMISSIONS_V2_TABLE_NAME: !Ref RankingSubmissionsV2Table
           USER_CHARACTER_SCORES_V2_TABLE_NAME: !Ref UserCharacterScoresV2Table
           USER_FAVORITES_TABLE_NAME: !Ref UserFavoritesTable
+          CHARACTER_FAVORITE_COUNTS_TABLE_NAME: !Ref CharacterFavoriteCountsTable
           COMMUNITY_CHARACTER_STATS_V2_TABLE_NAME: !Ref CommunityCharacterStatsV2Table
           USER_CHARACTER_SCORES_V4_TABLE_NAME: !Ref UserCharacterScoresV4Table
           COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME: !Ref CommunityCharacterStatsV4Table
@@ -575,6 +661,12 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /community/favorites
             Method: GET
+        GetChangelog:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /changelog
+            Method: GET
         TriggerCommunityRebuild:
           Type: HttpApi
           Properties:
@@ -593,6 +685,12 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /admin/users
             Method: GET
+        ListAuditEvents:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/audit-events
+            Method: GET
         UpdateUser:
           Type: HttpApi
           Properties:
@@ -605,6 +703,24 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /admin/community/rebuild
             Method: POST
+        CreateChangelog:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/changelog
+            Method: POST
+        UpdateChangelog:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/changelog/{id}
+            Method: PUT
+        DeleteChangelog:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /admin/changelog/{id}
+            Method: DELETE
         ListCharacters:
           Type: HttpApi
           Properties:
@@ -640,6 +756,12 @@ Outputs:
   UsersTableName:
     Description: Store Discord user records here.
     Value: !Ref UsersTable
+  AuditEventsTableName:
+    Description: Store audit events here.
+    Value: !Ref AuditEventsTable
+  ChangelogTableName:
+    Description: Store changelog entries here.
+    Value: !Ref ChangelogTable
   CharactersTableName:
     Description: Store character records here.
     Value: !Ref CharactersTableV2
@@ -661,6 +783,9 @@ Outputs:
   UserFavoritesTableName:
     Description: Store version-independent user favorite votes here.
     Value: !Ref UserFavoritesTable
+  CharacterFavoriteCountsTableName:
+    Description: Store materialized favorite counts by character here.
+    Value: !Ref CharacterFavoriteCountsTable
   CommunityCharacterStatsV2TableName:
     Description: Store materialized versioned community character statistics here.
     Value: !Ref CommunityCharacterStatsV2Table

@@ -55,10 +55,10 @@ function PageForRoute({
   }
 
   if (route === 'changelog') {
-    return <ChangelogPage />;
+    return <ChangelogPage apiBaseUrl={apiBaseUrl} user={user} />;
   }
 
-  return <HomePage apiBaseUrl={apiBaseUrl} />;
+  return <HomePage apiBaseUrl={apiBaseUrl} user={user} />;
 }
 
 export function App() {
@@ -120,7 +120,10 @@ export function App() {
       loading ||
       !route.startsWith('admin') ||
       (route === 'admin-characters' && canViewCharacters) ||
-      ((route === 'admin-users' || route === 'admin-community') && canViewUsers)
+      ((route === 'admin-users' ||
+        route === 'admin-community' ||
+        route === 'admin-events') &&
+        canViewUsers)
     ) {
       return;
     }

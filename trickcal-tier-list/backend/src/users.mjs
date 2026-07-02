@@ -2,11 +2,12 @@ import {
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
-  ScanCommand,
+  QueryCommand,
   UpdateItemCommand
 } from '@aws-sdk/client-dynamodb';
 
 const USERS_TABLE_NAME = process.env.USERS_TABLE_NAME;
+const USERS_ENTITY_TYPE = 'user';
 
 const ddbClient = new DynamoDBClient({});
 
@@ -39,14 +40,18 @@ export async function ensureUserRecord(discordUser) {
   }
 
   const now = new Date().toISOString();
+  const existingUser = await getUserRecord(discordUser.id);
 
-  try {
+  if (!existingUser) {
     await ddbClient.send(
       new PutItemCommand({
         TableName: USERS_TABLE_NAME,
         Item: {
           discordId: {
             S: discordUser.id
+          },
+          entityType: {
+            S: USERS_ENTITY_TYPE
           },
           role: {
             S: USER_ROLE
@@ -70,11 +75,16 @@ export async function ensureUserRecord(discordUser) {
         ConditionExpression: 'attribute_not_exists(discordId)'
       })
     );
-  } catch (error) {
-    if (error?.name !== 'ConditionalCheckFailedException') {
-      throw error;
-    }
+
+    return {
+      user: await getUserRecord(discordUser.id),
+      created: true,
+      usernameUpdated: false
+    };
   }
+
+  const nextUsername = discordUser.username || '';
+  const usernameUpdated = existingUser.username !== nextUsername;
 
   await ddbClient.send(
     new UpdateItemCommand({
@@ -84,17 +94,24 @@ export async function ensureUserRecord(discordUser) {
           S: discordUser.id
         }
       },
-      UpdateExpression: 'SET username = :username',
+      UpdateExpression: 'SET entityType = :entityType, username = :username',
       ExpressionAttributeValues: {
+        ':entityType': {
+          S: USERS_ENTITY_TYPE
+        },
         ':username': {
-          S: discordUser.username || ''
+          S: nextUsername
         }
       },
       ConditionExpression: 'attribute_exists(discordId)'
     })
   );
 
-  return getUserRecord(discordUser.id);
+  return {
+    user: await getUserRecord(discordUser.id),
+    created: false,
+    usernameUpdated
+  };
 }
 
 export async function listUsersPage({ limit = 20, cursor = null } = {}) {
@@ -105,22 +122,21 @@ export async function listUsersPage({ limit = 20, cursor = null } = {}) {
     };
   }
 
-  const scanInput = {
-    TableName: USERS_TABLE_NAME,
-    Limit: limit,
-    ProjectionExpression:
-      'discordId, #role, username, isCurator, createdAt, updatedAt, updatedBy',
-    ExpressionAttributeNames: {
-      '#role': 'role'
-    }
-  };
-
-  const exclusiveStartKey = decodeCursor(cursor);
-  if (exclusiveStartKey) {
-    scanInput.ExclusiveStartKey = exclusiveStartKey;
-  }
-
-  const response = await ddbClient.send(new ScanCommand(scanInput));
+  const response = await ddbClient.send(
+    new QueryCommand({
+      TableName: USERS_TABLE_NAME,
+      IndexName: 'UsersByUpdatedAtIndex',
+      KeyConditionExpression: 'entityType = :entityType',
+      ExpressionAttributeValues: {
+        ':entityType': {
+          S: USERS_ENTITY_TYPE
+        }
+      },
+      Limit: limit,
+      ScanIndexForward: false,
+      ExclusiveStartKey: decodeCursor(cursor)
+    })
+  );
 
   return {
     users: (response.Items || []).map(parseUserRecord),
@@ -154,11 +170,14 @@ export async function updateUserRecord(actorId, discordId, updates) {
         }
       },
       UpdateExpression:
-        'SET #role = :role, isCurator = :isCurator, updatedAt = :updatedAt, updatedBy = :updatedBy',
+        'SET entityType = :entityType, #role = :role, isCurator = :isCurator, updatedAt = :updatedAt, updatedBy = :updatedBy',
       ExpressionAttributeNames: {
         '#role': 'role'
       },
       ExpressionAttributeValues: {
+        ':entityType': {
+          S: USERS_ENTITY_TYPE
+        },
         ':role': {
           S: role
         },

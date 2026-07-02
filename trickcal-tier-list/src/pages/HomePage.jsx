@@ -14,7 +14,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { ReadonlyTierListSection } from '../components/ReadonlyTierListSection.jsx';
 import { ReadonlyCharacterChip } from '../components/ReadonlyCharacterChip.jsx';
 import { ScoreTooltip } from '../components/ScoreTooltip.jsx';
-import { formatDate, getCharacterDisplayName } from '../lib/site.js';
+import {
+  formatCalendarDate,
+  formatDate,
+  getCharacterDisplayName
+} from '../lib/site.js';
+import { fetchChangelogEntries } from '../lib/changelogApi.js';
 import {
   addCommunitySecondaryText,
   buildReadonlyTierListDisplay,
@@ -310,6 +315,7 @@ export function HomePage({ apiBaseUrl }) {
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [rebuilding, setRebuilding] = useState(false);
   const [favoriteData, setFavoriteData] = useState(null);
+  const [latestChangelogEntry, setLatestChangelogEntry] = useState(null);
   const [showYearning, setShowYearning] = useState(false);
 
   useEffect(() => {
@@ -329,9 +335,10 @@ export function HomePage({ apiBaseUrl }) {
       }
 
       try {
-        const [data, favorites] = await Promise.all([
+        const [data, favorites, changelogResult] = await Promise.all([
           fetchCommunityCharacters(apiBaseUrl),
-          fetchCommunityFavorites(apiBaseUrl)
+          fetchCommunityFavorites(apiBaseUrl),
+          fetchChangelogEntries(apiBaseUrl).catch(() => null)
         ]);
         if (!active) {
           return;
@@ -339,6 +346,10 @@ export function HomePage({ apiBaseUrl }) {
 
         setCommunityData(data);
         setFavoriteData(favorites);
+        const changelogEntries = Array.isArray(changelogResult?.entries)
+          ? changelogResult.entries
+          : [];
+        setLatestChangelogEntry(changelogEntries[0] || null);
       } catch (loadError) {
         if (active) {
           setError(
@@ -453,7 +464,7 @@ export function HomePage({ apiBaseUrl }) {
               Community Tier List
             </Text>
             <Text c="dimmed" size="sm" mt={4}>
-              Last updated {formatDate(communityData?.computedAt)}.
+              Last refreshed {formatDate(communityData?.computedAt)}.
             </Text>
           </div>
 
@@ -472,6 +483,20 @@ export function HomePage({ apiBaseUrl }) {
           }
           renderTooltipContent={renderCommunityTooltip}
           onCharacterClick={setSelectedCharacter}
+          beforeToggleContent={
+            latestChangelogEntry ? (
+              <Paper className="question-card" p="md" radius="lg" withBorder>
+                <Stack gap="xs">
+                  <Text fw={700} size="sm">
+                    {formatCalendarDate(latestChangelogEntry.createdAt)}
+                  </Text>
+                  <Text c="dimmed" size="sm">
+                    {latestChangelogEntry.description}
+                  </Text>
+                </Stack>
+              </Paper>
+            ) : null
+          }
         />
 
         <Stack gap="sm">

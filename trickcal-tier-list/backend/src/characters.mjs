@@ -1,4 +1,5 @@
 import {
+  BatchGetItemCommand,
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
@@ -110,6 +111,35 @@ export async function listAllCharacters() {
   } while (cursor);
 
   return characters;
+}
+
+export async function getCharactersByIds(ids) {
+  if (!CHARACTERS_TABLE_NAME) {
+    return [];
+  }
+
+  const uniqueIds = [...new Set((ids || []).filter(Boolean))];
+  if (!uniqueIds.length) {
+    return [];
+  }
+
+  const response = await ddbClient.send(
+    new BatchGetItemCommand({
+      RequestItems: {
+        [CHARACTERS_TABLE_NAME]: {
+          Keys: uniqueIds.map((id) => ({
+            id: {
+              S: id
+            }
+          }))
+        }
+      }
+    })
+  );
+
+  return (response.Responses?.[CHARACTERS_TABLE_NAME] || []).map(
+    parseCharacterRecord
+  );
 }
 
 function buildSingleFilterQueryInput({
