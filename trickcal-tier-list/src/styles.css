@@ -90,6 +90,10 @@ body::before {
   align-items: center;
 }
 
+.navbar-curator-badge {
+  flex: 0 0 auto;
+}
+
 .user-menu-dropdown {
   background: var(--surface-strong);
   border: 1px solid var(--border);

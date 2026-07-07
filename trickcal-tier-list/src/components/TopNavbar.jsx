@@ -1,6 +1,7 @@
 import {
   AppShell,
   Avatar,
+  Badge,
   Button,
   Container,
   Group,
@@ -64,41 +65,53 @@ export function TopNavbar({ route, user, loading, loginHref, onLogout }) {
             {loading ? (
               <Loader size="sm" color="grape" />
             ) : user ? (
-              <Menu
-                trigger="hover"
-                openDelay={80}
-                closeDelay={120}
-                withinPortal
-                position="bottom-end"
-                offset={10}
-              >
-                <Menu.Target>
-                  <Group gap="sm" className="user-menu-trigger" wrap="nowrap">
-                    <Avatar
-                      src={avatarUrl(user)}
-                      alt=""
-                      size="md"
-                      radius="xl"
-                    />
-                  </Group>
-                </Menu.Target>
+              <Group gap="sm" wrap="nowrap">
+                {user.isCurator ? (
+                  <Badge
+                    size="md"
+                    variant="light"
+                    color="red"
+                    className="navbar-curator-badge"
+                  >
+                    Curator
+                  </Badge>
+                ) : null}
+                <Menu
+                  trigger="hover"
+                  openDelay={80}
+                  closeDelay={120}
+                  withinPortal
+                  position="bottom-end"
+                  offset={10}
+                >
+                  <Menu.Target>
+                    <Group gap="sm" className="user-menu-trigger" wrap="nowrap">
+                      <Avatar
+                        src={avatarUrl(user)}
+                        alt=""
+                        size="md"
+                        radius="xl"
+                      />
+                    </Group>
+                  </Menu.Target>
 
-                <Menu.Dropdown className="user-menu-dropdown">
-                  <Menu.Label>Discord</Menu.Label>
-                  <Menu.Item
-                    leftSection={<IconCopy size={14} />}
-                    onClick={handleCopyId}
-                  >
-                    Copy ID
-                  </Menu.Item>
-                  <Menu.Item
-                    leftSection={<IconLogout size={14} />}
-                    onClick={onLogout}
-                  >
-                    Logout
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
+                  <Menu.Dropdown className="user-menu-dropdown">
+                    <Menu.Label>Discord</Menu.Label>
+                    <Menu.Item
+                      leftSection={<IconCopy size={14} />}
+                      onClick={handleCopyId}
+                    >
+                      Copy ID
+                    </Menu.Item>
+                    <Menu.Item
+                      leftSection={<IconLogout size={14} />}
+                      onClick={onLogout}
+                    >
+                      Logout
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Group>
             ) : (
               <Button
                 component="a"
