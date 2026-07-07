@@ -56,7 +56,8 @@ export function ManageCommunityPage({ apiBaseUrl }) {
             Community Stats
           </Text>
           <Text c="dimmed" size="sm" mt={4}>
-            Rebuilds the materialized community tier-list aggregates on demand.
+            Refresh the materialized community tier-list aggregates on demand
+            (same as public facing button except no cooldown).
           </Text>
         </div>
 
