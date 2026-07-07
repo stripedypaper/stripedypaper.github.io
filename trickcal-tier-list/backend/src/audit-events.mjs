@@ -13,6 +13,7 @@ const ddbClient = new DynamoDBClient({});
 export async function recordAuditEvent({
   category,
   actor,
+  actorUsername,
   time,
   metadata = {}
 }) {
@@ -20,6 +21,7 @@ export async function recordAuditEvent({
 
   const eventTime = normalizeAuditTime(time);
   const normalizedActor = normalizeActor(actor);
+  const normalizedActorUsername = normalizeActorUsername(actorUsername);
   const normalizedMetadata = normalizeMetadata(metadata);
 
   await ddbClient.send(
@@ -30,6 +32,7 @@ export async function recordAuditEvent({
         eventKey: { S: `${eventTime}#${crypto.randomUUID()}` },
         category: { S: normalizeRequiredString(category, 'category') },
         actor: { S: normalizedActor },
+        actorUsername: { S: normalizedActorUsername },
         time: { S: eventTime },
         metadata: toAttributeValue(normalizedMetadata)
       }
@@ -39,6 +42,7 @@ export async function recordAuditEvent({
   return {
     category,
     actor: normalizedActor,
+    actorUsername: normalizedActorUsername,
     time: eventTime,
     metadata: normalizedMetadata
   };
@@ -72,6 +76,7 @@ function parseAuditEvent(item) {
   return {
     category: item.category?.S || '',
     actor: item.actor?.S || '',
+    actorUsername: item.actorUsername?.S || '',
     time: item.time?.S || '',
     metadata: fromAttributeValue(item.metadata)
   };
@@ -79,6 +84,10 @@ function parseAuditEvent(item) {
 
 function normalizeActor(value) {
   return value ? String(value).trim() : 'system';
+}
+
+function normalizeActorUsername(value) {
+  return value ? String(value).trim() : '';
 }
 
 function normalizeAuditTime(value) {

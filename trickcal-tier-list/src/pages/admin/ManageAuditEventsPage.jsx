@@ -26,6 +26,18 @@ function formatMetadata(metadata) {
   return JSON.stringify(metadata, null, 2);
 }
 
+function formatActor(item) {
+  if (item.actorUsername && item.actor) {
+    return `${item.actorUsername} (${item.actor})`;
+  }
+
+  if (item.actorUsername) {
+    return item.actorUsername;
+  }
+
+  return item.actor || '—';
+}
+
 export function ManageAuditEventsPage({ apiBaseUrl }) {
   const [cursorStack, setCursorStack] = useState([null]);
   const [events, setEvents] = useState([]);
@@ -190,7 +202,7 @@ export function ManageAuditEventsPage({ apiBaseUrl }) {
                       </Badge>
                     </Table.Td>
                     <Table.Td className="mono-cell">
-                      {item.actor || '—'}
+                      {formatActor(item)}
                     </Table.Td>
                     <Table.Td>{formatDate(item.time)}</Table.Td>
                     <Table.Td>

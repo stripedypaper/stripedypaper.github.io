@@ -237,6 +237,7 @@ async function callback(event) {
     await recordAuditEvent({
       category: 'user.created',
       actor: user.id,
+      actorUsername: user.username || '',
       metadata: {
         discordId: user.id,
         username: user.username || ''
@@ -246,6 +247,7 @@ async function callback(event) {
     await recordAuditEvent({
       category: 'user.usernameUpdated',
       actor: user.id,
+      actorUsername: user.username || '',
       metadata: {
         discordId: user.id,
         username: user.username || ''
@@ -340,6 +342,7 @@ async function updateUser(event) {
     await recordAuditEvent({
       category: 'user.updated',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         discordId,
         role: user.role,
@@ -387,6 +390,7 @@ async function putMyRankings(event) {
     await recordAuditEvent({
       category: 'rankings.submitted',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         questionnaireVersion: getQuestionnaireVersion(event),
         questionCount: Object.keys(result.submission?.answers || {}).length,
@@ -425,12 +429,16 @@ async function getChangelog(event) {
 
 async function triggerCommunityRebuild(event) {
   try {
+    const authContext = await getAuthContext(event);
     const result = await triggerPublicCommunityRebuild(
       getQuestionnaireVersion(event)
     );
     await recordAuditEvent({
       category: 'community.rebuildRequestedPublic',
-      actor: 'public',
+      actor: authContext.isAuthenticated ? authContext.user.id : 'public',
+      actorUsername: authContext.isAuthenticated
+        ? authContext.user.username || ''
+        : '',
       metadata: {
         questionnaireVersion: getQuestionnaireVersion(event),
         computedAt: result.computedAt,
@@ -490,6 +498,7 @@ async function rebuildCommunity(event) {
   await recordAuditEvent({
     category: 'community.rebuildRequestedAdmin',
     actor: auth.user.id,
+    actorUsername: auth.user.username || '',
     metadata: {
       questionnaireVersion: getQuestionnaireVersion(event),
       computedAt: result.computedAt,
@@ -513,6 +522,7 @@ async function createChangelog(event) {
     await recordAuditEvent({
       category: 'changelog.created',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         changelogId: entry.id
       }
@@ -545,6 +555,7 @@ async function updateChangelog(event) {
     await recordAuditEvent({
       category: 'changelog.updated',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         changelogId: entry.id
       }
@@ -576,6 +587,7 @@ async function removeChangelog(event) {
     await recordAuditEvent({
       category: 'changelog.deleted',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         changelogId: entry.id
       }
@@ -618,6 +630,7 @@ async function createCharacter(event) {
     await recordAuditEvent({
       category: 'character.created',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         characterId: character.id,
         nameEn: character.nameEn || '',
@@ -654,6 +667,7 @@ async function updateCharacter(event) {
     await recordAuditEvent({
       category: 'character.updated',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         characterId: id,
         nameEn: character.nameEn || '',
@@ -692,6 +706,7 @@ async function createCharacterImageUpload(event) {
     await recordAuditEvent({
       category: 'character.imageUploadRequested',
       actor: auth.user.id,
+      actorUsername: auth.user.username || '',
       metadata: {
         characterId: id,
         imageType: body.imageType || 'default',
