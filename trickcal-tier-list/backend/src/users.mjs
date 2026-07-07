@@ -1,4 +1,5 @@
 import {
+  BatchGetItemCommand,
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
@@ -32,6 +33,41 @@ export async function getUserRecord(discordId) {
   );
 
   return response.Item ? parseUserRecord(response.Item) : null;
+}
+
+export async function getUserRecordsByIds(discordIds) {
+  if (!USERS_TABLE_NAME) {
+    return new Map();
+  }
+
+  const uniqueIds = [...new Set((discordIds || []).filter(Boolean))];
+  const recordsById = new Map();
+
+  for (let index = 0; index < uniqueIds.length; index += 100) {
+    const chunk = uniqueIds.slice(index, index + 100);
+    const response = await ddbClient.send(
+      new BatchGetItemCommand({
+        RequestItems: {
+          [USERS_TABLE_NAME]: {
+            Keys: chunk.map((discordId) => ({
+              discordId: {
+                S: discordId
+              }
+            }))
+          }
+        }
+      })
+    );
+
+    for (const item of response.Responses?.[USERS_TABLE_NAME] || []) {
+      const record = parseUserRecord(item);
+      if (record.discordId) {
+        recordsById.set(record.discordId, record);
+      }
+    }
+  }
+
+  return recordsById;
 }
 
 export async function ensureUserRecord(discordUser) {

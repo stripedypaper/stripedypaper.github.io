@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { getCharactersByIds, listAllCharacters } from './characters.mjs';
 import { listTopFavoriteCounts } from './favorites.mjs';
+import { getUserRecordsByIds } from './users.mjs';
 import {
   ACTIVE_QUESTIONNAIRE_VERSION,
   resolveQuestionnaireVersion
@@ -58,6 +59,7 @@ async function rebuildCommunityCharacterStatsV4(questionnaireVersion) {
   assertV4CommunityStatsConfigured();
 
   const characters = buildScoreCandidates(await listAllCharacters());
+  const userRecordCache = new Map();
   const computedAt = new Date().toISOString();
   const windowStartDate = new Date(
     Date.now() - COMMUNITY_WINDOW_DAYS * 24 * 60 * 60 * 1000
@@ -71,6 +73,10 @@ async function rebuildCommunityCharacterStatsV4(questionnaireVersion) {
         character.characterVariantKey,
         windowStart
       );
+      const curatorScores = await filterCuratorScores(
+        recentScores,
+        userRecordCache
+      );
 
       return buildCharacterStatsItemV4({
         questionnaireVersion,
@@ -79,7 +85,8 @@ async function rebuildCommunityCharacterStatsV4(questionnaireVersion) {
         isYearning: character.isYearning,
         computedAt,
         windowStart,
-        recentScores
+        recentScores,
+        curatorScores
       });
     })
   );
@@ -254,7 +261,8 @@ function buildCharacterStatsItemV4({
   isYearning,
   computedAt,
   windowStart,
-  recentScores
+  recentScores,
+  curatorScores
 }) {
   const mono = buildScoreAggregate(
     recentScores.map((score) => score.monoScore)
@@ -267,6 +275,18 @@ function buildCharacterStatsItemV4({
   );
   const calculated = buildScoreAggregate(
     recentScores.map((score) => score.calculatedScore)
+  );
+  const curatorMono = buildScoreAggregate(
+    curatorScores.map((score) => score.monoScore)
+  );
+  const curatorMixedCrusade = buildScoreAggregate(
+    curatorScores.map((score) => score.mixedCrusadeScore)
+  );
+  const curatorMixedFrontier = buildScoreAggregate(
+    curatorScores.map((score) => score.mixedFrontierScore)
+  );
+  const curatorCalculated = buildScoreAggregate(
+    curatorScores.map((score) => score.calculatedScore)
   );
 
   return {
@@ -295,7 +315,25 @@ function buildCharacterStatsItemV4({
     mixedFrontierDistribution: toNumberMapAttribute(mixedFrontier.distribution),
     calculatedCount: { N: String(calculated.count) },
     calculatedAverage: { N: String(calculated.average) },
-    calculatedDistribution: toNumberMapAttribute(calculated.distribution)
+    calculatedDistribution: toNumberMapAttribute(calculated.distribution),
+    curatorMonoCount: { N: String(curatorMono.count) },
+    curatorMonoAverage: { N: String(curatorMono.average) },
+    curatorMonoDistribution: toNumberMapAttribute(curatorMono.distribution),
+    curatorMixedCrusadeCount: { N: String(curatorMixedCrusade.count) },
+    curatorMixedCrusadeAverage: { N: String(curatorMixedCrusade.average) },
+    curatorMixedCrusadeDistribution: toNumberMapAttribute(
+      curatorMixedCrusade.distribution
+    ),
+    curatorMixedFrontierCount: { N: String(curatorMixedFrontier.count) },
+    curatorMixedFrontierAverage: { N: String(curatorMixedFrontier.average) },
+    curatorMixedFrontierDistribution: toNumberMapAttribute(
+      curatorMixedFrontier.distribution
+    ),
+    curatorCalculatedCount: { N: String(curatorCalculated.count) },
+    curatorCalculatedAverage: { N: String(curatorCalculated.average) },
+    curatorCalculatedDistribution: toNumberMapAttribute(
+      curatorCalculated.distribution
+    )
   };
 }
 
@@ -431,19 +469,60 @@ function parseCommunityStatsV4(item) {
       count: item.calculatedCount?.N ? Number(item.calculatedCount.N) : 0,
       average: item.calculatedAverage?.N ? Number(item.calculatedAverage.N) : 0,
       distribution: parseNumberMap(item.calculatedDistribution)
+    },
+    curator: {
+      mono: {
+        count: item.curatorMonoCount?.N ? Number(item.curatorMonoCount.N) : 0,
+        average: item.curatorMonoAverage?.N
+          ? Number(item.curatorMonoAverage.N)
+          : 0,
+        distribution: parseNumberMap(item.curatorMonoDistribution)
+      },
+      mixedCrusade: {
+        count: item.curatorMixedCrusadeCount?.N
+          ? Number(item.curatorMixedCrusadeCount.N)
+          : 0,
+        average: item.curatorMixedCrusadeAverage?.N
+          ? Number(item.curatorMixedCrusadeAverage.N)
+          : 0,
+        distribution: parseNumberMap(item.curatorMixedCrusadeDistribution)
+      },
+      mixedFrontier: {
+        count: item.curatorMixedFrontierCount?.N
+          ? Number(item.curatorMixedFrontierCount.N)
+          : 0,
+        average: item.curatorMixedFrontierAverage?.N
+          ? Number(item.curatorMixedFrontierAverage.N)
+          : 0,
+        distribution: parseNumberMap(item.curatorMixedFrontierDistribution)
+      },
+      calculated: {
+        count: item.curatorCalculatedCount?.N
+          ? Number(item.curatorCalculatedCount.N)
+          : 0,
+        average: item.curatorCalculatedAverage?.N
+          ? Number(item.curatorCalculatedAverage.N)
+          : 0,
+        distribution: parseNumberMap(item.curatorCalculatedDistribution)
+      }
     }
   };
 }
 
 function parseUserCharacterScoreV4(item) {
+  const monoScore = parseOptionalNumber(item.monoScore);
+  const mixedCrusadeScore = parseOptionalNumber(item.mixedCrusadeScore);
+  const mixedFrontierScore = parseOptionalNumber(item.mixedFrontierScore);
+
   return {
-    monoScore: parseOptionalNumber(item.monoScore),
-    mixedCrusadeScore: parseOptionalNumber(item.mixedCrusadeScore),
-    mixedFrontierScore: parseOptionalNumber(item.mixedFrontierScore),
+    userId: parseUserIdFromUserVersionKey(item.userVersionKey?.S || ''),
+    monoScore,
+    mixedCrusadeScore,
+    mixedFrontierScore,
     calculatedScore: calculateQuestionnaireV2Score({
-      monoScore: parseOptionalNumber(item.monoScore),
-      mixedCrusadeScore: parseOptionalNumber(item.mixedCrusadeScore),
-      mixedFrontierScore: parseOptionalNumber(item.mixedFrontierScore)
+      monoScore,
+      mixedCrusadeScore,
+      mixedFrontierScore
     })
   };
 }
@@ -552,8 +631,59 @@ function makeEmptyCommunityStats(characterId, questionnaireVersion) {
       count: 0,
       average: 0,
       distribution: {}
+    },
+    curator: {
+      mono: {
+        count: 0,
+        average: 0,
+        distribution: {}
+      },
+      mixedCrusade: {
+        count: 0,
+        average: 0,
+        distribution: {}
+      },
+      mixedFrontier: {
+        count: 0,
+        average: 0,
+        distribution: {}
+      },
+      calculated: {
+        count: 0,
+        average: 0,
+        distribution: {}
+      }
     }
   };
+}
+
+async function filterCuratorScores(recentScores, userRecordCache) {
+  const userIds = [
+    ...new Set(recentScores.map((score) => score.userId).filter(Boolean))
+  ];
+  const missingUserIds = userIds.filter(
+    (userId) => !userRecordCache.has(userId)
+  );
+
+  if (missingUserIds.length) {
+    const fetchedUsers = await getUserRecordsByIds(missingUserIds);
+    for (const userId of missingUserIds) {
+      userRecordCache.set(userId, fetchedUsers.get(userId) || null);
+    }
+  }
+
+  return recentScores.filter(
+    (score) => score.userId && userRecordCache.get(score.userId)?.isCurator
+  );
+}
+
+function parseUserIdFromUserVersionKey(value) {
+  if (!value) {
+    return '';
+  }
+
+  const separatorIndex = value.indexOf('#');
+  return separatorIndex >= 0 ? value.slice(separatorIndex + 1) : value;
 }
 
 function buildVersionCharacterVariantKey(

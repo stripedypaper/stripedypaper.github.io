@@ -5,6 +5,8 @@ import { SCORE_BUCKETS } from '../lib/tierBuckets.js';
 export function ReadonlyTierListSection({
   showYearning,
   onShowYearningChange,
+  showCuratorsOnly = false,
+  onShowCuratorsOnlyChange,
   characters,
   getScore,
   renderTooltipContent,
@@ -20,6 +22,15 @@ export function ReadonlyTierListSection({
         onChange={(event) => onShowYearningChange(event.currentTarget.checked)}
         label="Show Yearning"
       />
+      {onShowCuratorsOnlyChange ? (
+        <Switch
+          checked={showCuratorsOnly}
+          onChange={(event) =>
+            onShowCuratorsOnlyChange(event.currentTarget.checked)
+          }
+          label="Include curator scores only"
+        />
+      ) : null}
 
       <ReadonlyTierList
         buckets={SCORE_BUCKETS}

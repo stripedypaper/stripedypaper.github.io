@@ -23,7 +23,8 @@ import { fetchChangelogEntries } from '../lib/changelogApi.js';
 import {
   addCommunitySecondaryText,
   buildReadonlyTierListDisplay,
-  hasCommunityRating
+  hasCommunityRating,
+  hasCuratorCommunityRating
 } from '../lib/readonlyTierList.js';
 
 function roundToTwo(value) {
@@ -105,12 +106,19 @@ function CommunityChart({
   );
 }
 
-function CharacterDetailsModal({ character, opened, onClose }) {
+function CharacterDetailsModal({
+  character,
+  opened,
+  onClose,
+  showCuratorsOnly
+}) {
   if (!character) {
     return null;
   }
 
-  const stats = character.communityStats || {};
+  const stats = showCuratorsOnly
+    ? character.communityStats?.curator || {}
+    : character.communityStats || {};
 
   return (
     <Modal
@@ -235,20 +243,36 @@ function CharacterDetailsModal({ character, opened, onClose }) {
 }
 
 function renderCommunityTooltip(character) {
-  const voteCount = character.communityStats?.calculated?.count || 0;
+  const stats = character.communityStats || {};
+  const voteCount = stats.calculated?.count || 0;
 
   return (
     <ScoreTooltip
       title={getCharacterDisplayName(character)}
       subtitle={`${voteCount} ${voteCount === 1 ? 'vote' : 'votes'}`}
-      score={roundToTwo(character.communityStats?.calculated?.average || 0)}
-      monoScore={roundToTwo(character.communityStats?.mono?.average || 0)}
-      mixedScore={roundToTwo(
-        character.communityStats?.mixedCrusade?.average || 0
-      )}
-      raidScore={roundToTwo(
-        character.communityStats?.mixedFrontier?.average || 0
-      )}
+      score={roundToTwo(stats.calculated?.average || 0)}
+      monoScore={roundToTwo(stats.mono?.average || 0)}
+      mixedScore={roundToTwo(stats.mixedCrusade?.average || 0)}
+      raidScore={roundToTwo(stats.mixedFrontier?.average || 0)}
+      monoLabel="Mono"
+      mixedLabel="Crusade"
+      raidLabel="Raid"
+    />
+  );
+}
+
+function renderCuratorTooltip(character) {
+  const stats = character.communityStats?.curator || {};
+  const voteCount = stats.calculated?.count || 0;
+
+  return (
+    <ScoreTooltip
+      title={getCharacterDisplayName(character)}
+      subtitle={`${voteCount} ${voteCount === 1 ? 'vote' : 'votes'}`}
+      score={roundToTwo(stats.calculated?.average || 0)}
+      monoScore={roundToTwo(stats.mono?.average || 0)}
+      mixedScore={roundToTwo(stats.mixedCrusade?.average || 0)}
+      raidScore={roundToTwo(stats.mixedFrontier?.average || 0)}
       monoLabel="Mono"
       mixedLabel="Crusade"
       raidLabel="Raid"
@@ -316,6 +340,7 @@ export function HomePage({ apiBaseUrl }) {
   const [rebuilding, setRebuilding] = useState(false);
   const [favoriteData, setFavoriteData] = useState(null);
   const [latestChangelogEntry, setLatestChangelogEntry] = useState(null);
+  const [showCuratorsOnly, setShowCuratorsOnly] = useState(false);
   const [showYearning, setShowYearning] = useState(false);
 
   useEffect(() => {
@@ -376,15 +401,31 @@ export function HomePage({ apiBaseUrl }) {
     () => addCommunitySecondaryText(communityData?.characters || []),
     [communityData]
   );
+  const displayedCharacters = useMemo(
+    () =>
+      showCuratorsOnly
+        ? (communityData?.characters || []).map((character) => ({
+            ...character,
+            secondaryText: String(
+              roundToTwo(
+                character.communityStats?.curator?.calculated?.average || 0
+              )
+            )
+          }))
+        : characters,
+    [characters, communityData, showCuratorsOnly]
+  );
   const { visibleCharacters, unratedCharacters } = useMemo(
     () =>
       buildReadonlyTierListDisplay({
         allCharacters: communityData?.characters || [],
-        scoredCharacters: characters,
+        scoredCharacters: displayedCharacters,
         showYearning,
-        isCharacterRated: hasCommunityRating
+        isCharacterRated: showCuratorsOnly
+          ? hasCuratorCommunityRating
+          : hasCommunityRating
       }),
-    [characters, communityData, showYearning]
+    [communityData, displayedCharacters, showCuratorsOnly, showYearning]
   );
   const favoriteCharacters = useMemo(
     () =>
@@ -474,14 +515,20 @@ export function HomePage({ apiBaseUrl }) {
         </Group>
 
         <ReadonlyTierListSection
+          showCuratorsOnly={showCuratorsOnly}
+          onShowCuratorsOnlyChange={setShowCuratorsOnly}
           showYearning={showYearning}
           onShowYearningChange={setShowYearning}
           characters={visibleCharacters}
           unratedCharacters={unratedCharacters}
           getScore={(character) =>
-            character.communityStats?.calculated?.average || 0
+            showCuratorsOnly
+              ? character.communityStats?.curator?.calculated?.average || 0
+              : character.communityStats?.calculated?.average || 0
           }
-          renderTooltipContent={renderCommunityTooltip}
+          renderTooltipContent={
+            showCuratorsOnly ? renderCuratorTooltip : renderCommunityTooltip
+          }
           onCharacterClick={setSelectedCharacter}
           beforeToggleContent={
             latestChangelogEntry ? (
@@ -543,6 +590,7 @@ export function HomePage({ apiBaseUrl }) {
       <CharacterDetailsModal
         character={selectedCharacter}
         opened={Boolean(selectedCharacter)}
+        showCuratorsOnly={showCuratorsOnly}
         onClose={() => setSelectedCharacter(null)}
       />
     </>

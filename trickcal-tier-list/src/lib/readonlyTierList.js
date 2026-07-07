@@ -90,3 +90,7 @@ export function hasRatedVariant(character, ratedVariantKeys) {
 export function hasCommunityRating(character) {
   return (character.communityStats?.calculated?.count || 0) > 0;
 }
+
+export function hasCuratorCommunityRating(character) {
+  return (character.communityStats?.curator?.calculated?.count || 0) > 0;
+}
