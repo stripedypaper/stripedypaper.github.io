@@ -1,4 +1,4 @@
-import { Avatar } from '@mantine/core';
+import { Avatar, Badge } from '@mantine/core';
 
 function getPersonalityAvatarColor(personality) {
   switch (personality) {
@@ -52,6 +52,17 @@ export function CharacterAvatar({
           size={size}
           className="character-avatar-overlay"
         />
+      ) : null}
+      {character?.showNewBadge ? (
+        <Badge
+          size="xs"
+          variant="filled"
+          color="grape"
+          radius={0}
+          className="character-avatar-new-badge"
+        >
+          New
+        </Badge>
       ) : null}
     </div>
   );

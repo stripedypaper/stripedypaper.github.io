@@ -481,6 +481,43 @@ body::before {
   flex: 0 0 auto;
   width: var(--character-avatar-size, 54px);
   height: var(--character-avatar-size, 54px);
+  overflow: visible;
+}
+
+.character-avatar-new-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  padding-left: 0.15rem !important;
+  padding-right: 0.15rem !important;
+  z-index: 2;
+  padding-inline: 0.38rem;
+  pointer-events: none;
+  white-space: nowrap;
+  background: var(--mantine-color-red-2);
+  color: var(--mantine-color-red-9);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  animation: home-new-badge-pulse 1s ease-in-out infinite;
+  color: var(--mantine-color-white);
+  line-height: 15px;
+}
+
+.character-avatar-new-badge span {
+  text-overflow: unset;
+}
+
+@keyframes home-new-badge-pulse {
+  0%,
+  30%,
+  70%,
+  100% {
+    background: var(--mantine-color-pink-8);
+  }
+
+  50% {
+    background: var(--mantine-color-pink-4);
+  }
 }
 
 .character-avatar-overlay {

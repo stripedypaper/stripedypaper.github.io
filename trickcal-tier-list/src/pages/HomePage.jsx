@@ -31,6 +31,21 @@ function roundToTwo(value) {
   return Number((value || 0).toFixed(2));
 }
 
+const NEW_CHARACTER_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
+
+function isRecentlyAddedCharacter(createdAt) {
+  if (!createdAt) {
+    return false;
+  }
+
+  const createdAtMs = new Date(createdAt).getTime();
+  if (Number.isNaN(createdAtMs)) {
+    return false;
+  }
+
+  return Date.now() - createdAtMs < NEW_CHARACTER_WINDOW_MS;
+}
+
 function buildSortedDistributionData(distribution) {
   return Object.entries(distribution || {})
     .map(([label, votes]) => ({
@@ -397,14 +412,22 @@ export function HomePage({ apiBaseUrl }) {
     };
   }, [apiBaseUrl]);
 
-  const characters = useMemo(
-    () => addCommunitySecondaryText(communityData?.characters || []),
+  const homePageCharacters = useMemo(
+    () =>
+      (communityData?.characters || []).map((character) => ({
+        ...character,
+        showNewBadge: isRecentlyAddedCharacter(character.createdAt)
+      })),
     [communityData]
+  );
+  const characters = useMemo(
+    () => addCommunitySecondaryText(homePageCharacters),
+    [homePageCharacters]
   );
   const displayedCharacters = useMemo(
     () =>
       showCuratorsOnly
-        ? (communityData?.characters || []).map((character) => ({
+        ? homePageCharacters.map((character) => ({
             ...character,
             secondaryText: String(
               roundToTwo(
@@ -413,19 +436,19 @@ export function HomePage({ apiBaseUrl }) {
             )
           }))
         : characters,
-    [characters, communityData, showCuratorsOnly]
+    [characters, homePageCharacters, showCuratorsOnly]
   );
   const { visibleCharacters, unratedCharacters } = useMemo(
     () =>
       buildReadonlyTierListDisplay({
-        allCharacters: communityData?.characters || [],
+        allCharacters: homePageCharacters,
         scoredCharacters: displayedCharacters,
         showYearning,
         isCharacterRated: showCuratorsOnly
           ? hasCuratorCommunityRating
           : hasCommunityRating
       }),
-    [communityData, displayedCharacters, showCuratorsOnly, showYearning]
+    [displayedCharacters, homePageCharacters, showCuratorsOnly, showYearning]
   );
   const favoriteCharacters = useMemo(
     () =>
