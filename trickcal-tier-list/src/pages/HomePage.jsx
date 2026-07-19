@@ -21,7 +21,6 @@ import { ScoreTooltip } from '../components/ScoreTooltip.jsx';
 import {
   formatCalendarDate,
   formatDate,
-  getStaticImageUrl,
   getCharacterDisplayName
 } from '../lib/site.js';
 import { fetchChangelogEntries } from '../lib/changelogApi.js';
@@ -491,17 +490,17 @@ export function HomePage({ apiBaseUrl }) {
       {
         value: 'front',
         label: 'Front',
-        imageUrl: getStaticImageUrl('position_front.webp')
+        imageName: 'position_front.webp'
       },
       {
         value: 'middle',
         label: 'Middle',
-        imageUrl: getStaticImageUrl('position_middle.webp')
+        imageName: 'position_middle.webp'
       },
       {
         value: 'back',
         label: 'Back',
-        imageUrl: getStaticImageUrl('position_back.webp')
+        imageName: 'position_back.webp'
       }
     ],
     []
@@ -512,17 +511,17 @@ export function HomePage({ apiBaseUrl }) {
       {
         value: 'dps',
         label: 'DPS',
-        imageUrl: getStaticImageUrl('class_dps.webp')
+        imageName: 'class_dps.webp'
       },
       {
         value: 'support',
         label: 'Support',
-        imageUrl: getStaticImageUrl('class_support.webp')
+        imageName: 'class_support.webp'
       },
       {
         value: 'tank',
         label: 'Tank',
-        imageUrl: getStaticImageUrl('class_tank.webp')
+        imageName: 'class_tank.webp'
       }
     ],
     []
@@ -533,32 +532,32 @@ export function HomePage({ apiBaseUrl }) {
       {
         value: 'vivacious',
         label: 'Vivacious',
-        imageUrl: getStaticImageUrl('element_vivacious.webp')
+        imageName: 'element_vivacious.webp'
       },
       {
         value: 'depressed',
         label: 'Depressed',
-        imageUrl: getStaticImageUrl('element_depressed.webp')
+        imageName: 'element_depressed.webp'
       },
       {
         value: 'innocent',
         label: 'Innocent',
-        imageUrl: getStaticImageUrl('element_innocence.webp')
+        imageName: 'element_innocence.webp'
       },
       {
         value: 'composed',
         label: 'Composed',
-        imageUrl: getStaticImageUrl('element_composed.webp')
+        imageName: 'element_composed.webp'
       },
       {
         value: 'mad',
         label: 'Mad',
-        imageUrl: getStaticImageUrl('element_madness.webp')
+        imageName: 'element_madness.webp'
       },
       {
         value: 'resonance',
         label: 'Resonance',
-        imageUrl: getStaticImageUrl('element_resonance.webp')
+        imageName: 'element_resonance.webp'
       }
     ],
     []
