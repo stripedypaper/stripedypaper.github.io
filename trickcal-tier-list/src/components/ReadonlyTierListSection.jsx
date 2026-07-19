@@ -12,25 +12,32 @@ export function ReadonlyTierListSection({
   renderTooltipContent,
   onCharacterClick,
   unratedCharacters = [],
-  beforeToggleContent = null
+  beforeToggleContent = null,
+  controls = null
 }) {
   return (
     <Stack gap="lg">
       {beforeToggleContent}
-      <Switch
-        checked={showYearning}
-        onChange={(event) => onShowYearningChange(event.currentTarget.checked)}
-        label="Show Yearning"
-      />
-      {onShowCuratorsOnlyChange ? (
-        <Switch
-          checked={showCuratorsOnly}
-          onChange={(event) =>
-            onShowCuratorsOnlyChange(event.currentTarget.checked)
-          }
-          label="Include curator scores only"
-        />
-      ) : null}
+      {controls || (
+        <>
+          <Switch
+            checked={showYearning}
+            onChange={(event) =>
+              onShowYearningChange(event.currentTarget.checked)
+            }
+            label="Show Yearning"
+          />
+          {onShowCuratorsOnlyChange ? (
+            <Switch
+              checked={showCuratorsOnly}
+              onChange={(event) =>
+                onShowCuratorsOnlyChange(event.currentTarget.checked)
+              }
+              label="Include curator scores only"
+            />
+          ) : null}
+        </>
+      )}
 
       <ReadonlyTierList
         buckets={SCORE_BUCKETS}

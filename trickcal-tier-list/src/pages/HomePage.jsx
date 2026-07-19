@@ -3,33 +3,43 @@ import {
   Group,
   Modal,
   Paper,
+  Select,
   SimpleGrid,
   Stack,
+  Switch,
   Table,
-  Text
+  Text,
+  Tooltip
 } from '@mantine/core';
 import { BarChart } from '@mantine/charts';
 import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useState } from 'react';
+import { IconFilterGroup } from '../components/IconFilterGroup.jsx';
 import { ReadonlyTierListSection } from '../components/ReadonlyTierListSection.jsx';
 import { ReadonlyCharacterChip } from '../components/ReadonlyCharacterChip.jsx';
 import { ScoreTooltip } from '../components/ScoreTooltip.jsx';
 import {
   formatCalendarDate,
   formatDate,
+  getStaticImageUrl,
   getCharacterDisplayName
 } from '../lib/site.js';
 import { fetchChangelogEntries } from '../lib/changelogApi.js';
 import {
   addCommunitySecondaryText,
-  buildReadonlyTierListDisplay,
-  hasCommunityRating,
-  hasCuratorCommunityRating
+  buildReadonlyTierListDisplay
 } from '../lib/readonlyTierList.js';
 
 function roundToTwo(value) {
   return Number((value || 0).toFixed(2));
 }
+
+const SCORE_FILTER_OPTIONS = [
+  { value: 'total', label: 'Total score' },
+  { value: 'mono', label: 'Mono score' },
+  { value: 'crusade', label: 'Crusade score' },
+  { value: 'raid', label: 'Raid score' }
+];
 
 const NEW_CHARACTER_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
 
@@ -88,6 +98,35 @@ function buildCalculatedHistogramData(distribution) {
   }
 
   return bins.sort((left, right) => left.sortValue - right.sortValue);
+}
+
+function getCommunityScoreStats(character, scoreMode, showCuratorsOnly) {
+  const scoreSource = showCuratorsOnly
+    ? character.communityStats?.curator
+    : character.communityStats;
+
+  if (scoreMode === 'mono') {
+    return scoreSource?.mono || {};
+  }
+
+  if (scoreMode === 'crusade') {
+    return scoreSource?.mixedCrusade || {};
+  }
+
+  if (scoreMode === 'raid') {
+    return scoreSource?.mixedFrontier || {};
+  }
+
+  return scoreSource?.calculated || {};
+}
+
+function buildCommunitySecondaryText(character, scoreMode, showCuratorsOnly) {
+  const stats = getCommunityScoreStats(character, scoreMode, showCuratorsOnly);
+  return String(roundToTwo(stats.average || 0));
+}
+
+function matchesFilter(selectedValue, candidateValue) {
+  return selectedValue === 'all' || selectedValue === candidateValue;
 }
 
 function CommunityChart({
@@ -357,6 +396,10 @@ export function HomePage({ apiBaseUrl }) {
   const [latestChangelogEntry, setLatestChangelogEntry] = useState(null);
   const [showCuratorsOnly, setShowCuratorsOnly] = useState(false);
   const [showYearning, setShowYearning] = useState(false);
+  const [scoreMode, setScoreMode] = useState('total');
+  const [selectedPosition, setSelectedPosition] = useState('all');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedPersonality, setSelectedPersonality] = useState('all');
 
   useEffect(() => {
     let active = true;
@@ -420,35 +463,123 @@ export function HomePage({ apiBaseUrl }) {
       })),
     [communityData]
   );
-  const characters = useMemo(
-    () => addCommunitySecondaryText(homePageCharacters),
-    [homePageCharacters]
+  const filteredCharacters = useMemo(
+    () =>
+      homePageCharacters.filter(
+        (character) =>
+          matchesFilter(selectedPosition, character.position) &&
+          matchesFilter(selectedRole, character.role) &&
+          matchesFilter(selectedPersonality, character.personality)
+      ),
+    [homePageCharacters, selectedPersonality, selectedPosition, selectedRole]
   );
   const displayedCharacters = useMemo(
     () =>
-      showCuratorsOnly
-        ? homePageCharacters.map((character) => ({
-            ...character,
-            secondaryText: String(
-              roundToTwo(
-                character.communityStats?.curator?.calculated?.average || 0
-              )
-            )
-          }))
-        : characters,
-    [characters, homePageCharacters, showCuratorsOnly]
+      addCommunitySecondaryText(filteredCharacters).map((character) => ({
+        ...character,
+        secondaryText: buildCommunitySecondaryText(
+          character,
+          scoreMode,
+          showCuratorsOnly
+        )
+      })),
+    [filteredCharacters, scoreMode, showCuratorsOnly]
+  );
+  const positionFilterOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All', shortLabel: 'All' },
+      {
+        value: 'front',
+        label: 'Front',
+        imageUrl: getStaticImageUrl('position_front.webp')
+      },
+      {
+        value: 'middle',
+        label: 'Middle',
+        imageUrl: getStaticImageUrl('position_middle.webp')
+      },
+      {
+        value: 'back',
+        label: 'Back',
+        imageUrl: getStaticImageUrl('position_back.webp')
+      }
+    ],
+    []
+  );
+  const roleFilterOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All', shortLabel: 'All' },
+      {
+        value: 'dps',
+        label: 'DPS',
+        imageUrl: getStaticImageUrl('class_dps.webp')
+      },
+      {
+        value: 'support',
+        label: 'Support',
+        imageUrl: getStaticImageUrl('class_support.webp')
+      },
+      {
+        value: 'tank',
+        label: 'Tank',
+        imageUrl: getStaticImageUrl('class_tank.webp')
+      }
+    ],
+    []
+  );
+  const personalityFilterOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All', shortLabel: 'All' },
+      {
+        value: 'vivacious',
+        label: 'Vivacious',
+        imageUrl: getStaticImageUrl('element_vivacious.webp')
+      },
+      {
+        value: 'depressed',
+        label: 'Depressed',
+        imageUrl: getStaticImageUrl('element_depressed.webp')
+      },
+      {
+        value: 'innocent',
+        label: 'Innocent',
+        imageUrl: getStaticImageUrl('element_innocence.webp')
+      },
+      {
+        value: 'composed',
+        label: 'Composed',
+        imageUrl: getStaticImageUrl('element_composed.webp')
+      },
+      {
+        value: 'mad',
+        label: 'Mad',
+        imageUrl: getStaticImageUrl('element_madness.webp')
+      },
+      {
+        value: 'resonance',
+        label: 'Resonance',
+        imageUrl: getStaticImageUrl('element_resonance.webp')
+      }
+    ],
+    []
   );
   const { visibleCharacters, unratedCharacters } = useMemo(
     () =>
       buildReadonlyTierListDisplay({
-        allCharacters: homePageCharacters,
+        allCharacters: filteredCharacters,
         scoredCharacters: displayedCharacters,
         showYearning,
-        isCharacterRated: showCuratorsOnly
-          ? hasCuratorCommunityRating
-          : hasCommunityRating
+        isCharacterRated: (character) =>
+          (getCommunityScoreStats(character, scoreMode, showCuratorsOnly)
+            ?.count || 0) > 0
       }),
-    [displayedCharacters, homePageCharacters, showCuratorsOnly, showYearning]
+    [
+      displayedCharacters,
+      filteredCharacters,
+      scoreMode,
+      showCuratorsOnly,
+      showYearning
+    ]
   );
   const favoriteCharacters = useMemo(
     () =>
@@ -507,6 +638,15 @@ export function HomePage({ apiBaseUrl }) {
     }
   }
 
+  function handleResetFilters() {
+    setScoreMode('total');
+    setSelectedPosition('all');
+    setSelectedRole('all');
+    setSelectedPersonality('all');
+    setShowYearning(false);
+    setShowCuratorsOnly(false);
+  }
+
   if (loading) {
     return (
       <Paper className="question-card" p="lg" radius="lg" withBorder>
@@ -545,14 +685,71 @@ export function HomePage({ apiBaseUrl }) {
           characters={visibleCharacters}
           unratedCharacters={unratedCharacters}
           getScore={(character) =>
-            showCuratorsOnly
-              ? character.communityStats?.curator?.calculated?.average || 0
-              : character.communityStats?.calculated?.average || 0
+            getCommunityScoreStats(character, scoreMode, showCuratorsOnly)
+              ?.average || 0
           }
           renderTooltipContent={
             showCuratorsOnly ? renderCuratorTooltip : renderCommunityTooltip
           }
           onCharacterClick={setSelectedCharacter}
+          controls={
+            <Paper className="question-card" p="md" radius="lg" withBorder>
+              <Group align="center" gap="md" wrap="wrap">
+                <Select
+                  data={SCORE_FILTER_OPTIONS}
+                  value={scoreMode}
+                  onChange={(value) => setScoreMode(value || 'total')}
+                  placeholder="Score"
+                  w={140}
+                  allowDeselect={false}
+                />
+                <IconFilterGroup
+                  options={positionFilterOptions}
+                  value={selectedPosition}
+                  onChange={setSelectedPosition}
+                />
+                <IconFilterGroup
+                  options={roleFilterOptions}
+                  value={selectedRole}
+                  onChange={setSelectedRole}
+                />
+                <IconFilterGroup
+                  options={personalityFilterOptions}
+                  value={selectedPersonality}
+                  onChange={setSelectedPersonality}
+                />
+                <Switch
+                  label="Show Yearning"
+                  checked={showYearning}
+                  onChange={(event) =>
+                    setShowYearning(event.currentTarget.checked)
+                  }
+                />
+                <Tooltip
+                  label="Only include votes from Curator users."
+                  withArrow
+                  multiline
+                  withinPortal
+                  position="top"
+                  openDelay={60}
+                  classNames={{ tooltip: 'readonly-tier-tooltip' }}
+                >
+                  <div>
+                    <Switch
+                      label="Curator only"
+                      checked={showCuratorsOnly}
+                      onChange={(event) =>
+                        setShowCuratorsOnly(event.currentTarget.checked)
+                      }
+                    />
+                  </div>
+                </Tooltip>
+                <Button variant="light" onClick={handleResetFilters}>
+                  Reset filters
+                </Button>
+              </Group>
+            </Paper>
+          }
           beforeToggleContent={
             latestChangelogEntry ? (
               <Paper className="question-card" p="md" radius="lg" withBorder>

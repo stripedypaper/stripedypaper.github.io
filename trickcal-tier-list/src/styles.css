@@ -150,6 +150,61 @@ body::before {
   white-space: nowrap;
 }
 
+.icon-filter-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: nowrap;
+}
+
+.icon-filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.icon-filter-button + .icon-filter-button {
+  margin-left: -1px;
+}
+
+.icon-filter-button:first-child {
+  border-top-left-radius: 0.75rem;
+  border-bottom-left-radius: 0.75rem;
+}
+
+.icon-filter-button:last-child {
+  border-top-right-radius: 0.75rem;
+  border-bottom-right-radius: 0.75rem;
+}
+
+.icon-filter-button:hover {
+  border-color: rgba(190, 140, 255, 0.75);
+  color: var(--text);
+}
+
+.icon-filter-button-selected {
+  border-color: rgba(190, 140, 255, 0.75);
+  background: rgba(122, 66, 190, 0.28);
+  color: var(--text);
+}
+
+.icon-filter-button-image {
+  width: 1.45rem;
+  height: 1.45rem;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .lineup-grid-wrap {
   display: flex;
   align-items: center;
