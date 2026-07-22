@@ -18,8 +18,7 @@ import {
   RANKING_QUESTIONS_BY_ID_V4,
   RANKING_QUESTIONS_V4,
   getTierScoreV4,
-  isCharacterEligibleForQuestionV4,
-  requiresCompleteAssignmentV4
+  isCharacterEligibleForQuestionV4
 } from './rankings-config-v4.mjs';
 import {
   ACTIVE_QUESTIONNAIRE_VERSION,
@@ -41,7 +40,6 @@ const MODERN_RANKING_CONFIGS = {
     mixedFrontierQuestionIds: MIXED_FRONTIER_QUESTION_IDS_V4,
     getTierScore: getTierScoreV4,
     isCharacterEligibleForQuestion: isCharacterEligibleForQuestionV4,
-    requiresCompleteAssignment: requiresCompleteAssignmentV4,
     variantAware: true
   }
 };
@@ -134,7 +132,6 @@ async function saveRankingSubmissionModern(
     candidates,
     questions: config.questions,
     isCharacterEligibleForQuestion: config.isCharacterEligibleForQuestion,
-    requiresCompleteAssignment: config.requiresCompleteAssignment,
     questionnaireLabel: questionnaireVersion,
     ownedYearningIds
   });
@@ -263,7 +260,6 @@ function validateAnswers({
   candidates,
   questions,
   isCharacterEligibleForQuestion: eligibilityFn,
-  requiresCompleteAssignment: completeAssignmentFn,
   ownedYearningIds = new Set()
 }) {
   const normalizedAnswers = {};
@@ -287,10 +283,6 @@ function validateAnswers({
     );
 
     if (!rawPlacements || typeof rawPlacements !== 'object') {
-      if (completeAssignmentFn(question) && eligibleCharacterIds.size > 0) {
-        throw new Error(`Every apostle must be assigned for ${question.id}.`);
-      }
-
       continue;
     }
 
@@ -338,13 +330,6 @@ function validateAnswers({
       placements[characterId] = tierId;
     }
 
-    if (
-      completeAssignmentFn(question) &&
-      Object.keys(placements).length !== eligibleCharacterIds.size
-    ) {
-      throw new Error(`Every apostle must be assigned for ${question.id}.`);
-    }
-
     for (const tier of question.tiers) {
       if (typeof tier.minimum !== 'number') {
         continue;
@@ -362,6 +347,16 @@ function validateAnswers({
   }
 
   assertYearningNotBelowBase({
+    answers: normalizedAnswers,
+    candidates,
+    questions
+  });
+  assertYearningRequiresBase({
+    answers: normalizedAnswers,
+    candidates,
+    questions
+  });
+  assertNoPartialScores({
     answers: normalizedAnswers,
     candidates,
     questions
@@ -406,11 +401,111 @@ function assertYearningNotBelowBase({ answers, candidates, questions }) {
         yearningScore < baseScore
       ) {
         throw new Error(
-          `Yearning version cannot be rated below base version in ${question.id}.`
+          `Yearning version cannot be rated below base version in ${formatQuestionReference(question)}.`
         );
       }
     }
   }
+}
+
+function assertYearningRequiresBase({ answers, candidates, questions }) {
+  const candidatesById = new Map(
+    candidates.map((candidate) => [candidate.id, candidate])
+  );
+
+  for (const question of questions) {
+    if (question.kind === 'owned-yearning') {
+      continue;
+    }
+
+    const placements = answers?.[question.id];
+    if (!placements || typeof placements !== 'object') {
+      continue;
+    }
+
+    for (const [characterId, yearningTierId] of Object.entries(placements)) {
+      const candidate = candidatesById.get(characterId);
+      if (!candidate?.isYearning || !yearningTierId) {
+        continue;
+      }
+
+      const baseCharacterId = `${candidate.characterId || normalizeBaseCharacterId(characterId)}#base`;
+      const baseTierId = placements[baseCharacterId];
+      if (baseTierId) {
+        continue;
+      }
+
+      throw new Error(
+        `${candidate.nameEn || candidate.characterId || characterId} has its Yearning version rated in ${formatQuestionReference(question)}, but its base version is not rated.`
+      );
+    }
+  }
+}
+
+function assertNoPartialScores({ answers, candidates, questions }) {
+  const monoQuestions = questions.filter(
+    (question) => question.kind === 'personality'
+  );
+  const crusadeQuestions = questions.filter(
+    (question) => question.kind === 'mixed-crusade'
+  );
+  const frontierQuestions = questions.filter(
+    (question) => question.kind === 'mixed-frontier'
+  );
+
+  for (const candidate of candidates) {
+    const ratedMono = monoQuestions.some((question) => {
+      const placements = answers?.[question.id];
+      return Boolean(placements?.[candidate.id]);
+    });
+    const ratedCrusade = crusadeQuestions.some((question) => {
+      const placements = answers?.[question.id];
+      return Boolean(placements?.[candidate.id]);
+    });
+    const ratedFrontier = frontierQuestions.some((question) => {
+      const placements = answers?.[question.id];
+      return Boolean(placements?.[candidate.id]);
+    });
+    const ratedCount = [ratedMono, ratedCrusade, ratedFrontier].filter(
+      Boolean
+    ).length;
+
+    if (ratedCount === 0 || ratedCount === 3) {
+      continue;
+    }
+
+    throw new Error(
+      `${candidate.nameEn || candidate.characterId || candidate.id} is only partially scored. Each character must be rated in all three categories or none: Mono (${ratedMono ? 'rated' : 'not rated'}), Crusade (${ratedCrusade ? 'rated' : 'not rated'}), Frontier (${ratedFrontier ? 'rated' : 'not rated'}).`
+    );
+  }
+}
+
+function formatQuestionReference(question) {
+  if (!question?.id) {
+    return 'this ranking';
+  }
+
+  if (question.kind === 'personality') {
+    return `Ranking ${question.id.replace('ranking-', '').toUpperCase()}: Mono`;
+  }
+
+  if (question.kind === 'mixed-crusade') {
+    return `Ranking ${question.id.replace('ranking-', '').toUpperCase()}: Crusade (${String(question.role || '').toUpperCase()})`;
+  }
+
+  if (question.kind === 'mixed-frontier') {
+    return `Ranking ${question.id.replace('ranking-', '').toUpperCase()}: Frontier (${String(question.role || '').toUpperCase()})`;
+  }
+
+  if (question.kind === 'favorite') {
+    return 'Ranking F: Favorite';
+  }
+
+  if (question.kind === 'owned-yearning') {
+    return 'Owned Yearnings';
+  }
+
+  return question.id;
 }
 
 function deriveCharacterScoresModern(

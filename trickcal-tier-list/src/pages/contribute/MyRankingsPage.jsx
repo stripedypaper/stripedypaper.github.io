@@ -7,9 +7,10 @@ import { getStaticImageUrl } from '../../lib/site.js';
 import {
   PERSONA_GRID_COLORS,
   buildQuestionGroups,
-  listIncompleteRequiredQuestions,
+  listPartialScoreViolations,
   listTierEligibilityViolations,
   listYearningBelowBaseViolations,
+  listYearningWithoutBaseViolations,
   listQuestionsWithUnsatisfiedMinimums
 } from '../../lib/rankings.js';
 
@@ -93,10 +94,6 @@ export function MyRankingsPage({
     () => serializeAnswers(placementsByQuestion),
     [placementsByQuestion]
   );
-  const incompleteRequiredQuestions = useMemo(
-    () => listIncompleteRequiredQuestions(questionGroups, placementsByQuestion),
-    [placementsByQuestion, questionGroups]
-  );
   const unsatisfiedMinimums = useMemo(
     () =>
       listQuestionsWithUnsatisfiedMinimums(
@@ -109,16 +106,19 @@ export function MyRankingsPage({
     () => listYearningBelowBaseViolations(questionGroups, placementsByQuestion),
     [placementsByQuestion, questionGroups]
   );
+  const yearningWithoutBaseViolations = useMemo(
+    () =>
+      listYearningWithoutBaseViolations(questionGroups, placementsByQuestion),
+    [placementsByQuestion, questionGroups]
+  );
+  const partialScoreViolations = useMemo(
+    () => listPartialScoreViolations(questionGroups, placementsByQuestion),
+    [placementsByQuestion, questionGroups]
+  );
   const tierEligibilityViolations = useMemo(
     () => listTierEligibilityViolations(questionGroups, placementsByQuestion),
     [placementsByQuestion, questionGroups]
   );
-  const missingAssignmentsMessage =
-    incompleteRequiredQuestions.length > 0
-      ? `${incompleteRequiredQuestions
-          .map((question) => question.label)
-          .join(', ')} must assign every apostle before saving.`
-      : '';
   const minimumRequirementsMessage =
     unsatisfiedMinimums.length > 0
       ? unsatisfiedMinimums
@@ -131,6 +131,14 @@ export function MyRankingsPage({
   const yearningValidationMessage =
     yearningBelowBaseViolations.length > 0
       ? `${yearningBelowBaseViolations[0].characterName} has its Yearning version rated below its base version in ${yearningBelowBaseViolations[0].question.label}.`
+      : '';
+  const yearningWithoutBaseMessage =
+    yearningWithoutBaseViolations.length > 0
+      ? `${yearningWithoutBaseViolations[0].characterName} has its Yearning version rated in ${yearningWithoutBaseViolations[0].question.label}, but its base version is not rated.`
+      : '';
+  const partialScoreMessage =
+    partialScoreViolations.length > 0
+      ? `${partialScoreViolations[0].characterName} is only partially scored. Each character must be rated in all three categories or none: Mono (${partialScoreViolations[0].ratedMono ? 'rated' : 'not rated'}), Crusade (${partialScoreViolations[0].ratedCrusade ? 'rated' : 'not rated'}), Frontier (${partialScoreViolations[0].ratedFrontier ? 'rated' : 'not rated'}).`
       : '';
   const tierEligibilityMessage =
     tierEligibilityViolations.length > 0
@@ -175,17 +183,6 @@ export function MyRankingsPage({
   }, []);
 
   async function handleSave() {
-    if (missingAssignmentsMessage) {
-      notifications.show({
-        color: 'red',
-        title: 'Unable to save rankings',
-        message: missingAssignmentsMessage
-      });
-      setSaveState('error');
-      setSaveMessage('');
-      return;
-    }
-
     if (minimumRequirementsMessage) {
       notifications.show({
         color: 'red',
@@ -197,11 +194,33 @@ export function MyRankingsPage({
       return;
     }
 
+    if (yearningWithoutBaseMessage) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to save rankings',
+        message: yearningWithoutBaseMessage
+      });
+      setSaveState('error');
+      setSaveMessage('');
+      return;
+    }
+
     if (yearningValidationMessage) {
       notifications.show({
         color: 'red',
         title: 'Unable to save rankings',
         message: yearningValidationMessage
+      });
+      setSaveState('error');
+      setSaveMessage('');
+      return;
+    }
+
+    if (partialScoreMessage) {
+      notifications.show({
+        color: 'red',
+        title: 'Unable to save rankings',
+        message: partialScoreMessage
       });
       setSaveState('error');
       setSaveMessage('');

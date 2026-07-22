@@ -256,26 +256,6 @@ export function buildQuestionGroups(characters, answers = {}) {
   return groups;
 }
 
-export function requiresCompleteAssignment(question) {
-  return (
-    question?.kind === 'personality' ||
-    question?.kind === 'mixed-crusade' ||
-    question?.kind === 'mixed-frontier'
-  );
-}
-
-export function listIncompleteRequiredQuestions(questionGroups, answers) {
-  return questionGroups
-    .filter((question) => requiresCompleteAssignment(question))
-    .filter((question) => {
-      const assignedCount = Object.keys(
-        normalizeAssignedPlacements(answers?.[question.id])
-      ).length;
-
-      return assignedCount !== question.items.length;
-    });
-}
-
 export function listQuestionsWithUnsatisfiedMinimums(questionGroups, answers) {
   return questionGroups.flatMap((question) => {
     const placements = normalizeAssignedPlacements(answers?.[question.id]);
@@ -385,6 +365,123 @@ export function listYearningBelowBaseViolations(questionGroups, answers) {
           }
         ];
       });
+  });
+}
+
+export function listYearningWithoutBaseViolations(questionGroups, answers) {
+  return questionGroups.flatMap((question) => {
+    if (question.kind === 'owned-yearning') {
+      return [];
+    }
+
+    const placements = normalizeAssignedPlacements(answers?.[question.id]);
+    if (!Object.keys(placements).length) {
+      return [];
+    }
+
+    const placementsByCharacterId = new Map(Object.entries(placements));
+
+    return (question.items || [])
+      .filter((item) => item?.isYearning)
+      .flatMap((item) => {
+        const yearningTierId = placementsByCharacterId.get(item.id);
+        if (!yearningTierId) {
+          return [];
+        }
+
+        const baseCharacterId = `${item.characterId || item.id.replace(/#yearning$/, '')}#base`;
+        const baseTierId = placementsByCharacterId.get(baseCharacterId);
+        if (baseTierId) {
+          return [];
+        }
+
+        return [
+          {
+            question,
+            baseCharacterId,
+            yearningCharacterId: item.id,
+            characterName:
+              item.nameEn || item.name || item.characterId || item.id
+          }
+        ];
+      });
+  });
+}
+
+export function listPartialScoreViolations(questionGroups, answers) {
+  const scoringQuestions = questionGroups.filter(
+    (question) =>
+      question.kind === 'personality' ||
+      question.kind === 'mixed-crusade' ||
+      question.kind === 'mixed-frontier'
+  );
+  const scoringCharacters = new Map();
+
+  for (const question of scoringQuestions) {
+    for (const item of question.items || []) {
+      if (!item?.id || scoringCharacters.has(item.id)) {
+        continue;
+      }
+
+      scoringCharacters.set(item.id, item);
+    }
+  }
+
+  return Array.from(scoringCharacters.values()).flatMap((character) => {
+    const ratedMono = questionGroups.some((question) => {
+      if (question.kind !== 'personality') {
+        return false;
+      }
+
+      if (!(question.items || []).some((item) => item.id === character.id)) {
+        return false;
+      }
+
+      const placements = normalizeAssignedPlacements(answers?.[question.id]);
+      return Boolean(placements[character.id]);
+    });
+
+    const crusadeQuestion = questionGroups.find(
+      (question) =>
+        question.kind === 'mixed-crusade' &&
+        (question.items || []).some((item) => item.id === character.id)
+    );
+    const frontierQuestion = questionGroups.find(
+      (question) =>
+        question.kind === 'mixed-frontier' &&
+        (question.items || []).some((item) => item.id === character.id)
+    );
+    const ratedCrusade = Boolean(
+      crusadeQuestion &&
+      normalizeAssignedPlacements(answers?.[crusadeQuestion.id])[character.id]
+    );
+    const ratedFrontier = Boolean(
+      frontierQuestion &&
+      normalizeAssignedPlacements(answers?.[frontierQuestion.id])[character.id]
+    );
+    const ratedCount = [ratedMono, ratedCrusade, ratedFrontier].filter(
+      Boolean
+    ).length;
+
+    if (ratedCount === 0 || ratedCount === 3) {
+      return [];
+    }
+
+    return [
+      {
+        characterId: character.id,
+        characterName:
+          character.nameEn ||
+          character.name ||
+          character.characterId ||
+          character.id,
+        ratedMono,
+        ratedCrusade,
+        ratedFrontier,
+        crusadeQuestion,
+        frontierQuestion
+      }
+    ];
   });
 }
 
