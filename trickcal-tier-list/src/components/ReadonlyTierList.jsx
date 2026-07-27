@@ -103,6 +103,9 @@ function getDefaultTooltipContent(character) {
     return (
       <ScoreTooltip
         title={getCharacterDisplayName(character)}
+        position={character.position}
+        role={character.role}
+        personality={character.personality}
         score={character.calculatedScore ?? 0}
         monoScore={character.monoScore ?? 0}
         mixedScore={character.mixedCrusadeScore ?? 0}
@@ -122,6 +125,9 @@ function getDefaultTooltipContent(character) {
   return (
     <ScoreTooltip
       title={getCharacterDisplayName(character)}
+      position={character.position}
+      role={character.role}
+      personality={character.personality}
       score={character.calculatedScore ?? 0}
       monoScore={character.monoScore ?? 0}
       mixedScore={character.mixedScore ?? 0}

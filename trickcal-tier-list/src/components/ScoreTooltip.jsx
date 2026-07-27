@@ -1,5 +1,6 @@
-import { Stack, Text } from '@mantine/core';
+import { Group, Image, Stack, Text } from '@mantine/core';
 import { SCORE_WEIGHT_LABELS, SCORE_WEIGHTS } from '../lib/scoreWeights.js';
+import { getStaticImageUrl } from '../lib/site.js';
 
 function formatNumber(value) {
   return typeof value === 'number' ? Number(value.toFixed(2)) : 0;
@@ -13,6 +14,9 @@ function formatContribution(value, weightKey) {
 export function ScoreTooltip({
   title,
   subtitle,
+  position,
+  role,
+  personality,
   score,
   monoScore,
   mixedScore,
@@ -21,9 +25,36 @@ export function ScoreTooltip({
   mixedLabel = 'Crusade',
   raidLabel = 'Raid'
 }) {
+  const iconImageNames = [
+    position ? `position_${position}.webp` : '',
+    role ? `class_${role}.webp` : '',
+    personality
+      ? `element_${
+          personality === 'innocent'
+            ? 'innocence'
+            : personality === 'mad'
+              ? 'madness'
+              : personality
+        }.webp`
+      : ''
+  ].filter(Boolean);
+
   return (
     <Stack gap={6}>
       <Text fw={700}>{title}</Text>
+      {iconImageNames.length ? (
+        <Group gap={6}>
+          {iconImageNames.map((imageName) => (
+            <Image
+              key={imageName}
+              src={getStaticImageUrl(imageName)}
+              alt=""
+              w={18}
+              h={18}
+            />
+          ))}
+        </Group>
+      ) : null}
       {subtitle ? (
         <Text size="sm" c="dimmed">
           {subtitle}

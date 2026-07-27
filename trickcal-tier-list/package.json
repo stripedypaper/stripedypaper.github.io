@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --open /index.src.html",
+    "dev:no-open": "vite /index.src.html",
     "build": "node scripts/vite-build.mjs",
     "pages:build": "node scripts/pages-build.mjs",
     "preview": "vite preview",

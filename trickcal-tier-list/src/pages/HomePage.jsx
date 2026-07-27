@@ -177,8 +177,12 @@ function CharacterDetailsModal({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={getCharacterDisplayName(character)}
-      size="80rem"
+      title={
+        <Text fw={700} size="xl">
+          {getCharacterDisplayName(character)}
+        </Text>
+      }
+      size="60rem"
       centered
     >
       <Stack gap="md">
@@ -303,6 +307,9 @@ function renderCommunityTooltip(character) {
     <ScoreTooltip
       title={getCharacterDisplayName(character)}
       subtitle={`${voteCount} ${voteCount === 1 ? 'vote' : 'votes'}`}
+      position={character.position}
+      role={character.role}
+      personality={character.personality}
       score={roundToTwo(stats.calculated?.average || 0)}
       monoScore={roundToTwo(stats.mono?.average || 0)}
       mixedScore={roundToTwo(stats.mixedCrusade?.average || 0)}
@@ -322,6 +329,9 @@ function renderCuratorTooltip(character) {
     <ScoreTooltip
       title={getCharacterDisplayName(character)}
       subtitle={`${voteCount} ${voteCount === 1 ? 'vote' : 'votes'}`}
+      position={character.position}
+      role={character.role}
+      personality={character.personality}
       score={roundToTwo(stats.calculated?.average || 0)}
       monoScore={roundToTwo(stats.mono?.average || 0)}
       mixedScore={roundToTwo(stats.mixedCrusade?.average || 0)}
