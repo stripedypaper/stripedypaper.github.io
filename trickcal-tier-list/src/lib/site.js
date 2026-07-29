@@ -194,6 +194,18 @@ export function getCharacterDisplayName(character) {
   return character.isYearning ? `${baseName} (Y2)` : baseName;
 }
 
+export function getCharacterLongDisplayName(character) {
+  const baseName =
+    character.baseName ||
+    character.nameEn ||
+    character.nameJa ||
+    character.nameZh ||
+    character.nameKo ||
+    character.id;
+
+  return character.isYearning ? `${baseName} (Yearning 2-star)` : baseName;
+}
+
 export function buildCharacterVariantKey(characterId, isYearning = false) {
   return `${characterId}#${isYearning ? 'yearning' : 'base'}`;
 }

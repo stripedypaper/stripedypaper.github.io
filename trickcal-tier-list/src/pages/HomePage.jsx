@@ -14,6 +14,7 @@ import {
 import { BarChart } from '@mantine/charts';
 import { notifications } from '@mantine/notifications';
 import { useEffect, useMemo, useState } from 'react';
+import { CharacterDetailsModal as CharacterDetailsDialog } from '../components/CharacterDetailsModal.jsx';
 import { IconFilterGroup } from '../components/IconFilterGroup.jsx';
 import { ReadonlyTierListSection } from '../components/ReadonlyTierListSection.jsx';
 import { ReadonlyCharacterChip } from '../components/ReadonlyCharacterChip.jsx';
@@ -395,7 +396,7 @@ async function triggerCommunityRebuild(apiBaseUrl) {
   return data;
 }
 
-export function HomePage({ apiBaseUrl }) {
+export function HomePage({ apiBaseUrl, user }) {
   const [communityData, setCommunityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -816,8 +817,11 @@ export function HomePage({ apiBaseUrl }) {
         </Stack>
       </Stack>
 
-      <CharacterDetailsModal
-        character={selectedCharacter}
+      <CharacterDetailsDialog
+        apiBaseUrl={apiBaseUrl}
+        user={user}
+        characters={homePageCharacters}
+        selectedCharacter={selectedCharacter}
         opened={Boolean(selectedCharacter)}
         showCuratorsOnly={showCuratorsOnly}
         onClose={() => setSelectedCharacter(null)}

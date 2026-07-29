@@ -5,6 +5,14 @@ import {
   rebuildCommunityCharacterStats,
   triggerPublicCommunityRebuild
 } from './community-stats.mjs';
+import {
+  addReviewThumbsUp,
+  canCreateReview,
+  deleteCharacterReview,
+  listCharacterReviews,
+  removeReviewThumbsUp,
+  upsertCharacterReview
+} from './character-reviews.mjs';
 import { listAuditEventsPage, recordAuditEvent } from './audit-events.mjs';
 import {
   getAuthContext,
@@ -15,7 +23,12 @@ import {
 } from './auth.mjs';
 import { getRankingSubmission, saveRankingSubmission } from './rankings.mjs';
 import { resolveQuestionnaireVersion } from './questionnaire-version.mjs';
-import { ensureUserRecord, listUsersPage, updateUserRecord } from './users.mjs';
+import {
+  ensureUserRecord,
+  getUserRecord,
+  listUsersPage,
+  updateUserRecord
+} from './users.mjs';
 import {
   createCharacterImageUploadUrl,
   createCharacterRecord,
@@ -75,6 +88,10 @@ export async function handler(event) {
       return getCommunityFavorites(event);
     }
 
+    if (method === 'GET' && path === '/community/reviews') {
+      return getCommunityReviews(event);
+    }
+
     if (method === 'GET' && path === '/changelog') {
       return getChangelog(event);
     }
@@ -89,6 +106,22 @@ export async function handler(event) {
 
     if (method === 'PUT' && path === '/rankings/me') {
       return putMyRankings(event);
+    }
+
+    if (method === 'PUT' && path === '/reviews/me') {
+      return putMyReview(event);
+    }
+
+    if (path.startsWith('/reviews/') && path.endsWith('/thumbs-up')) {
+      return method === 'PUT'
+        ? putReviewThumbsUp(event)
+        : method === 'DELETE'
+          ? deleteReviewThumbsUp(event)
+          : json(405, { error: 'Method not allowed' });
+    }
+
+    if (path.startsWith('/reviews/') && method === 'DELETE') {
+      return removeReview(event);
     }
 
     if (method === 'GET' && path === '/admin/users') {
@@ -406,6 +439,43 @@ async function putMyRankings(event) {
   }
 }
 
+async function putMyReview(event) {
+  const auth = await requireAuthenticatedUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const body = parseJsonBody(event);
+    const review = await upsertCharacterReview({
+      authUser: auth.user,
+      characterVariantKey: body.characterVariantKey || '',
+      markdown: body.markdown || ''
+    });
+
+    await recordAuditEvent({
+      category: 'review.upserted',
+      actor: auth.user.id,
+      actorUsername: auth.user.username || '',
+      metadata: {
+        reviewId: review.reviewId,
+        characterVariantKey: review.characterVariantKey,
+        canCreateReview: canCreateReview(auth.user)
+      }
+    });
+
+    return json(200, { review });
+  } catch (error) {
+    return json(
+      error instanceof Error && error.message === 'Forbidden' ? 403 : 400,
+      {
+        error: error instanceof Error ? error.message : 'Invalid input.'
+      }
+    );
+  }
+}
+
 async function getCommunityCharacters(event) {
   const result = await listCommunityCharacterStats(
     getQuestionnaireVersion(event)
@@ -420,6 +490,23 @@ async function getCommunityFavorites(event) {
     questionnaireVersion: getQuestionnaireVersion(event)
   });
   return json(200, result);
+}
+
+async function getCommunityReviews(event) {
+  try {
+    const authContext = await getAuthContext(event);
+    const characterVariantKey =
+      event.queryStringParameters?.characterVariantKey || '';
+    const result = await listCharacterReviews(
+      characterVariantKey,
+      authContext.isAuthenticated ? authContext.user.id : ''
+    );
+    return json(200, result);
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
 }
 
 async function getChangelog(event) {
@@ -475,9 +562,12 @@ async function getSharedRankings(event) {
     return json(404, { error: 'Not found' });
   }
 
+  const userRecord = await getUserRecord(userId);
+
   return json(200, {
     submission: {
       userId: submission.userId,
+      username: userRecord?.username || '',
       updatedAt: submission.updatedAt,
       submittedAt: submission.submittedAt,
       derivedScores: submission.derivedScores
@@ -722,6 +812,107 @@ async function createCharacterImageUpload(event) {
   }
 }
 
+async function removeReview(event) {
+  const auth = await requireAuthenticatedUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const reviewId = getReviewIdFromPath(event.rawPath);
+    const review = await deleteCharacterReview(reviewId, auth.user);
+
+    if (!review) {
+      return json(404, { error: 'Not found' });
+    }
+
+    await recordAuditEvent({
+      category: 'review.deleted',
+      actor: auth.user.id,
+      actorUsername: auth.user.username || '',
+      metadata: {
+        reviewId: review.reviewId,
+        characterVariantKey: review.characterVariantKey,
+        authorUserId: review.authorUserId
+      }
+    });
+
+    return json(200, { ok: true });
+  } catch (error) {
+    return json(
+      error instanceof Error && error.message === 'Forbidden' ? 403 : 400,
+      {
+        error: error instanceof Error ? error.message : 'Invalid input.'
+      }
+    );
+  }
+}
+
+async function putReviewThumbsUp(event) {
+  const auth = await requireAuthenticatedUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const reviewId = getReviewIdFromPath(event.rawPath);
+    const review = await addReviewThumbsUp(reviewId, auth.user.id);
+
+    if (!review) {
+      return json(404, { error: 'Not found' });
+    }
+
+    await recordAuditEvent({
+      category: 'review.thumbsUpAdded',
+      actor: auth.user.id,
+      actorUsername: auth.user.username || '',
+      metadata: {
+        reviewId
+      }
+    });
+
+    return json(200, { review });
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
+}
+
+async function deleteReviewThumbsUp(event) {
+  const auth = await requireAuthenticatedUser(event);
+
+  if (!auth.ok) {
+    return json(auth.statusCode, auth.body);
+  }
+
+  try {
+    const reviewId = getReviewIdFromPath(event.rawPath);
+    const review = await removeReviewThumbsUp(reviewId, auth.user.id);
+
+    if (!review) {
+      return json(404, { error: 'Not found' });
+    }
+
+    await recordAuditEvent({
+      category: 'review.thumbsUpRemoved',
+      actor: auth.user.id,
+      actorUsername: auth.user.username || '',
+      metadata: {
+        reviewId
+      }
+    });
+
+    return json(200, { review });
+  } catch (error) {
+    return json(400, {
+      error: error instanceof Error ? error.message : 'Invalid input.'
+    });
+  }
+}
+
 function logout() {
   return json(200, { ok: true }, [clearCookie('trickcal_session')]);
 }
@@ -909,6 +1100,11 @@ function getCookie(event, name) {
 function getCharacterIdFromPath(path) {
   const parts = path.split('/').filter(Boolean);
   return parts[2] || '';
+}
+
+function getReviewIdFromPath(path) {
+  const parts = path.split('/').filter(Boolean);
+  return decodeURIComponent(parts[1] || '');
 }
 
 function getRankingUserIdFromPath(path) {

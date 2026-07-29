@@ -23,7 +23,8 @@ export function CharacterAvatar({
   character,
   size = 54,
   radius = 'lg',
-  variant = character?.isYearning ? 'yearning' : 'base'
+  variant = character?.isYearning ? 'yearning' : 'base',
+  showBorder = false
 }) {
   return (
     <div
@@ -41,7 +42,10 @@ export function CharacterAvatar({
         size={size}
         style={{
           backgroundColor: getPersonalityAvatarColor(character?.personality),
-          color: character?.personality === 'resonance' ? '#171021' : undefined
+          color: character?.personality === 'resonance' ? '#171021' : undefined,
+          border: showBorder
+            ? `0.4rem solid ${getPersonalityAvatarColor(character?.personality)}`
+            : undefined
         }}
       />
       {variant === 'yearning' && character?.yearningImageUrl ? (
@@ -50,7 +54,7 @@ export function CharacterAvatar({
           alt=""
           radius={radius}
           size={size}
-          className="character-avatar-overlay"
+          className={`character-avatar-overlay${showBorder ? ' big' : ''}`}
         />
       ) : null}
       {character?.showNewBadge ? (

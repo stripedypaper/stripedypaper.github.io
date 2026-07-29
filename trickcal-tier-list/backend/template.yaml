@@ -426,6 +426,36 @@ Resources:
           Projection:
             ProjectionType: ALL
 
+  CharacterReviewsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: characterVariantKey
+          AttributeType: S
+        - AttributeName: authorUserId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: characterVariantKey
+          KeyType: HASH
+        - AttributeName: authorUserId
+          KeyType: RANGE
+
+  ReviewVotesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: reviewId
+          AttributeType: S
+        - AttributeName: voterUserId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: reviewId
+          KeyType: HASH
+        - AttributeName: voterUserId
+          KeyType: RANGE
+
   CharactersImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -586,6 +616,10 @@ Resources:
             TableName: !Ref UserCharacterScoresV4Table
         - DynamoDBCrudPolicy:
             TableName: !Ref CommunityCharacterStatsV4Table
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CharacterReviewsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReviewVotesTable
         - S3CrudPolicy:
             BucketName: !Ref CharactersImagesBucket
       Environment:
@@ -610,6 +644,8 @@ Resources:
           COMMUNITY_CHARACTER_STATS_V2_TABLE_NAME: !Ref CommunityCharacterStatsV2Table
           USER_CHARACTER_SCORES_V4_TABLE_NAME: !Ref UserCharacterScoresV4Table
           COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME: !Ref CommunityCharacterStatsV4Table
+          CHARACTER_REVIEWS_TABLE_NAME: !Ref CharacterReviewsTable
+          REVIEW_VOTES_TABLE_NAME: !Ref ReviewVotesTable
           CHARACTERS_IMAGES_BUCKET_NAME: !Ref CharactersImagesBucket
           CHARACTERS_CDN_BASE_URL: !Sub 'https://${CharactersImagesDistribution.DomainName}'
       Events:
@@ -661,12 +697,42 @@ Resources:
             ApiId: !Ref AuthApi
             Path: /community/favorites
             Method: GET
+        GetCommunityReviews:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /community/reviews
+            Method: GET
         GetChangelog:
           Type: HttpApi
           Properties:
             ApiId: !Ref AuthApi
             Path: /changelog
             Method: GET
+        PutMyReview:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /reviews/me
+            Method: PUT
+        DeleteReview:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /reviews/{reviewId}
+            Method: DELETE
+        PutReviewThumbsUp:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /reviews/{reviewId}/thumbs-up
+            Method: PUT
+        DeleteReviewThumbsUp:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /reviews/{reviewId}/thumbs-up
+            Method: DELETE
         TriggerCommunityRebuild:
           Type: HttpApi
           Properties:

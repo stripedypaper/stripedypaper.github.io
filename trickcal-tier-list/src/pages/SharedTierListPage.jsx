@@ -131,7 +131,9 @@ export function SharedTierListPage({ apiBaseUrl, sharedUserId }) {
     <Stack gap="lg">
       <div>
         <Text fw={700} size="xl">
-          Shared Tier List
+          {submission?.username
+            ? `${submission.username}'s Shared Tier List`
+            : 'Shared Tier List'}
         </Text>
         <Text c="dimmed" size="sm" mt={4}>
           Generated from rankings saved {formatDate(submission.updatedAt)}.

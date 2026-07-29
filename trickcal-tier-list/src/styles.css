@@ -588,6 +588,16 @@ body::before {
   filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.3));
 }
 
+.character-avatar-overlay.big {
+  top: -2rem;
+  right: -5rem;
+}
+
+.review-modal-textarea {
+  min-height: 500px;
+  max-height: 800px;
+}
+
 @keyframes character-avatar-float {
   0%,
   100% {
@@ -631,6 +641,13 @@ body::before {
   color: var(--text);
   border: 1px solid var(--border);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.36);
+}
+
+.character-details-portrait-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
 }
 
 .tier-candidate-selected {
