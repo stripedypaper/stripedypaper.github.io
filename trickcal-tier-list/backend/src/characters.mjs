@@ -359,7 +359,7 @@ export async function createCharacterRecord(actorId, input) {
   return getCharacterRecord(id);
 }
 
-export async function updateCharacterRecord(actorId, id, input) {
+export async function updateCharacterRecord(actorId, id, input, { isAdmin = false } = {}) {
   assertCharacterTableConfigured();
   const payload = validateCharacterInput(input);
   const now = new Date().toISOString();
@@ -369,6 +369,15 @@ export async function updateCharacterRecord(actorId, id, input) {
     updatedAt: now,
     updatedBy: actorId
   });
+
+  const ownerCondition = 'attribute_exists(id) AND #updatedBy = :condActorId';
+  const adminCondition = 'attribute_exists(id)';
+  const conditionExpression = isAdmin ? adminCondition : ownerCondition;
+
+  if (!isAdmin) {
+    update.expressionAttributeValues[':condActorId'] = { S: actorId };
+    update.expressionAttributeNames['#updatedBy'] = 'updatedBy';
+  }
 
   const response = await ddbClient.send(
     new UpdateItemCommand({
@@ -381,7 +390,7 @@ export async function updateCharacterRecord(actorId, id, input) {
       UpdateExpression: update.updateExpression,
       ExpressionAttributeNames: update.expressionAttributeNames,
       ExpressionAttributeValues: update.expressionAttributeValues,
-      ConditionExpression: 'attribute_exists(id)',
+      ConditionExpression: conditionExpression,
       ReturnValues: 'ALL_NEW'
     })
   );
@@ -494,17 +503,17 @@ function buildUpdateExpression(character) {
       continue;
     }
 
-    const tokenValue = `:${field}`;
+    const tokenValue = ':' + field;
     expressionAttributeValues[tokenValue] = toAttributeValue(value);
-    setParts.push(`${tokenName} = ${tokenValue}`);
+    setParts.push(tokenName + ' = ' + tokenValue);
   }
 
   const updateExpressionParts = [];
   if (setParts.length) {
-    updateExpressionParts.push(`SET ${setParts.join(', ')}`);
+    updateExpressionParts.push('SET ' + setParts.join(', '));
   }
   if (removeParts.length) {
-    updateExpressionParts.push(`REMOVE ${removeParts.join(', ')}`);
+    updateExpressionParts.push('REMOVE ' + removeParts.join(', '));
   }
 
   return {
