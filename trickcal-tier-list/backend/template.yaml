@@ -456,6 +456,21 @@ Resources:
         - AttributeName: voterUserId
           KeyType: RANGE
 
+  CharacterReviewCountsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: entityType
+          AttributeType: S
+        - AttributeName: characterVariantKey
+          AttributeType: S
+      KeySchema:
+        - AttributeName: entityType
+          KeyType: HASH
+        - AttributeName: characterVariantKey
+          KeyType: RANGE
+
   CharactersImagesBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -620,6 +635,8 @@ Resources:
             TableName: !Ref CharacterReviewsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref ReviewVotesTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CharacterReviewCountsTable
         - S3CrudPolicy:
             BucketName: !Ref CharactersImagesBucket
       Environment:
@@ -646,6 +663,7 @@ Resources:
           COMMUNITY_CHARACTER_STATS_V4_TABLE_NAME: !Ref CommunityCharacterStatsV4Table
           CHARACTER_REVIEWS_TABLE_NAME: !Ref CharacterReviewsTable
           REVIEW_VOTES_TABLE_NAME: !Ref ReviewVotesTable
+          CHARACTER_REVIEW_COUNTS_TABLE_NAME: !Ref CharacterReviewCountsTable
           CHARACTERS_IMAGES_BUCKET_NAME: !Ref CharactersImagesBucket
           CHARACTERS_CDN_BASE_URL: !Sub 'https://${CharactersImagesDistribution.DomainName}'
       Events:
@@ -702,6 +720,12 @@ Resources:
           Properties:
             ApiId: !Ref AuthApi
             Path: /community/reviews
+            Method: GET
+        GetCommunityReviewCounts:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AuthApi
+            Path: /community/review-counts
             Method: GET
         GetChangelog:
           Type: HttpApi

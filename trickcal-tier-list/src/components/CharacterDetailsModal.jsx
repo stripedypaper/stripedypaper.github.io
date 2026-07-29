@@ -111,6 +111,12 @@ function CommunityChart({
   );
 }
 
+function scrollToSection(sectionRef) {
+  sectionRef.current?.scrollIntoView({
+    behavior: 'smooth'
+  });
+}
+
 function StatCards({ stats }) {
   return (
     <SimpleGrid cols={{ base: 1, md: 4 }} spacing="md">
@@ -524,6 +530,10 @@ export function CharacterDetailsModal({
     <Modal
       opened={opened}
       onClose={onClose}
+      classNames={{
+        content: 'character-details-modal-content',
+        body: 'character-details-modal-body'
+      }}
       title={
         <Text fw={700} size="xl">
           {getCharacterDisplayName(activeCharacter)}
@@ -567,6 +577,31 @@ export function CharacterDetailsModal({
             />
           </Stack>
         </section>
+
+        <Paper
+          className="question-card"
+          p="sm"
+          radius="lg"
+          withBorder
+          style={{ alignSelf: 'flex-start' }}
+        >
+          <Stack gap={4} align="flex-start">
+            <Button
+              variant="subtle"
+              size="compact-sm"
+              onClick={() => scrollToSection(reviewsRef)}
+            >
+              Curator reviews
+            </Button>
+            <Button
+              variant="subtle"
+              size="compact-sm"
+              onClick={() => scrollToSection(statsRef)}
+            >
+              Scoring stats
+            </Button>
+          </Stack>
+        </Paper>
 
         <section ref={reviewsRef}>
           <ReviewsSection

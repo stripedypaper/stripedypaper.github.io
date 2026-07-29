@@ -20,6 +20,7 @@ import { ReadonlyTierListSection } from '../components/ReadonlyTierListSection.j
 import { ReadonlyCharacterChip } from '../components/ReadonlyCharacterChip.jsx';
 import { ScoreTooltip } from '../components/ScoreTooltip.jsx';
 import {
+  buildCharacterVariantKey,
   formatCalendarDate,
   formatDate,
   getCharacterDisplayName
@@ -372,6 +373,20 @@ async function fetchCommunityFavorites(apiBaseUrl) {
   return response.json();
 }
 
+async function fetchCommunityReviewCounts(apiBaseUrl) {
+  const response = await fetch(`${apiBaseUrl}/community/review-counts`, {
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Community review counts failed with status ${response.status}.`
+    );
+  }
+
+  return response.json();
+}
+
 async function triggerCommunityRebuild(apiBaseUrl) {
   const response = await fetch(`${apiBaseUrl}/community/rebuild`, {
     method: 'POST',
@@ -403,6 +418,7 @@ export function HomePage({ apiBaseUrl, user }) {
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [rebuilding, setRebuilding] = useState(false);
   const [favoriteData, setFavoriteData] = useState(null);
+  const [reviewCountsData, setReviewCountsData] = useState(null);
   const [latestChangelogEntry, setLatestChangelogEntry] = useState(null);
   const [showCuratorsOnly, setShowCuratorsOnly] = useState(false);
   const [showYearning, setShowYearning] = useState(false);
@@ -428,17 +444,20 @@ export function HomePage({ apiBaseUrl, user }) {
       }
 
       try {
-        const [data, favorites, changelogResult] = await Promise.all([
-          fetchCommunityCharacters(apiBaseUrl),
-          fetchCommunityFavorites(apiBaseUrl),
-          fetchChangelogEntries(apiBaseUrl).catch(() => null)
-        ]);
+        const [data, favorites, reviewCounts, changelogResult] =
+          await Promise.all([
+            fetchCommunityCharacters(apiBaseUrl),
+            fetchCommunityFavorites(apiBaseUrl),
+            fetchCommunityReviewCounts(apiBaseUrl),
+            fetchChangelogEntries(apiBaseUrl).catch(() => null)
+          ]);
         if (!active) {
           return;
         }
 
         setCommunityData(data);
         setFavoriteData(favorites);
+        setReviewCountsData(reviewCounts);
         const changelogEntries = Array.isArray(changelogResult?.entries)
           ? changelogResult.entries
           : [];
@@ -465,14 +484,32 @@ export function HomePage({ apiBaseUrl, user }) {
     };
   }, [apiBaseUrl]);
 
-  const homePageCharacters = useMemo(
-    () =>
-      (communityData?.characters || []).map((character) => ({
+  const homePageCharacters = useMemo(() => {
+    const reviewCountsByVariantKey = new Map(
+      (reviewCountsData?.counts || []).map((entry) => [
+        entry.characterVariantKey,
+        entry.reviewCount || 0
+      ])
+    );
+
+    return (communityData?.characters || []).map((character) => {
+      const characterVariantKey =
+        character.characterVariantKey ||
+        buildCharacterVariantKey(
+          character.characterId || character.id,
+          Boolean(character.isYearning)
+        );
+
+      return {
         ...character,
-        showNewBadge: isRecentlyAddedCharacter(character.createdAt)
-      })),
-    [communityData]
-  );
+        characterVariantKey,
+        showNewBadge: isRecentlyAddedCharacter(character.createdAt),
+        reviewCount: reviewCountsByVariantKey.get(characterVariantKey) || 0,
+        showReviewIndicator:
+          (reviewCountsByVariantKey.get(characterVariantKey) || 0) > 0
+      };
+    });
+  }, [communityData, reviewCountsData]);
   const filteredCharacters = useMemo(
     () =>
       homePageCharacters.filter(
@@ -591,27 +628,49 @@ export function HomePage({ apiBaseUrl, user }) {
       showYearning
     ]
   );
-  const favoriteCharacters = useMemo(
-    () =>
-      [...(favoriteData?.characters || [])]
-        .sort((left, right) => {
-          const favoriteDifference =
-            (right.communityStats?.favoriteCount || 0) -
-            (left.communityStats?.favoriteCount || 0);
+  const favoriteCharacters = useMemo(() => {
+    const reviewCountsByVariantKey = new Map(
+      (reviewCountsData?.counts || []).map((entry) => [
+        entry.characterVariantKey,
+        entry.reviewCount || 0
+      ])
+    );
 
-          if (favoriteDifference !== 0) {
-            return favoriteDifference;
-          }
-
-          return getCharacterDisplayName(left).localeCompare(
-            getCharacterDisplayName(right),
-            undefined,
-            { sensitivity: 'base' }
+    return [...(favoriteData?.characters || [])]
+      .map((character) => {
+        const characterVariantKey =
+          character.characterVariantKey ||
+          buildCharacterVariantKey(
+            character.characterId || character.id,
+            Boolean(character.isYearning)
           );
-        })
-        .slice(0, 20),
-    [favoriteData]
-  );
+        const reviewCount =
+          reviewCountsByVariantKey.get(characterVariantKey) || 0;
+
+        return {
+          ...character,
+          characterVariantKey,
+          reviewCount,
+          showReviewIndicator: reviewCount > 0
+        };
+      })
+      .sort((left, right) => {
+        const favoriteDifference =
+          (right.communityStats?.favoriteCount || 0) -
+          (left.communityStats?.favoriteCount || 0);
+
+        if (favoriteDifference !== 0) {
+          return favoriteDifference;
+        }
+
+        return getCharacterDisplayName(left).localeCompare(
+          getCharacterDisplayName(right),
+          undefined,
+          { sensitivity: 'base' }
+        );
+      })
+      .slice(0, 20);
+  }, [favoriteData, reviewCountsData]);
 
   async function handleRebuild() {
     if (!apiBaseUrl || rebuilding) {
@@ -624,8 +683,11 @@ export function HomePage({ apiBaseUrl, user }) {
       const rebuildResult = await triggerCommunityRebuild(apiBaseUrl);
       const refreshed = await fetchCommunityCharacters(apiBaseUrl);
       const refreshedFavorites = await fetchCommunityFavorites(apiBaseUrl);
+      const refreshedReviewCounts =
+        await fetchCommunityReviewCounts(apiBaseUrl);
       setCommunityData(refreshed);
       setFavoriteData(refreshedFavorites);
+      setReviewCountsData(refreshedReviewCounts);
       notifications.show({
         title: 'Refreshed',
         message: rebuildResult?.computedAt

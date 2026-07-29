@@ -643,6 +643,16 @@ body::before {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.36);
 }
 
+.character-details-modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 70rem);
+}
+
+.character-details-modal-body {
+  overflow-y: auto;
+}
+
 .character-details-portrait-frame {
   display: inline-flex;
   align-items: center;
@@ -662,6 +672,27 @@ body::before {
 
 .tier-candidate-label {
   max-width: 180px;
+}
+
+.readonly-chip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.readonly-chip-meta-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1em;
+}
+
+.readonly-chip-review-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: var(--text-dim);
 }
 
 .sr-only {

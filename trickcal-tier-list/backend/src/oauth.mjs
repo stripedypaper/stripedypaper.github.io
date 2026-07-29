@@ -9,6 +9,7 @@ import {
   addReviewThumbsUp,
   canCreateReview,
   deleteCharacterReview,
+  listCharacterReviewCounts,
   listCharacterReviews,
   removeReviewThumbsUp,
   upsertCharacterReview
@@ -90,6 +91,10 @@ export async function handler(event) {
 
     if (method === 'GET' && path === '/community/reviews') {
       return getCommunityReviews(event);
+    }
+
+    if (method === 'GET' && path === '/community/review-counts') {
+      return getCommunityReviewCounts(event);
     }
 
     if (method === 'GET' && path === '/changelog') {
@@ -507,6 +512,11 @@ async function getCommunityReviews(event) {
       error: error instanceof Error ? error.message : 'Invalid input.'
     });
   }
+}
+
+async function getCommunityReviewCounts() {
+  const result = await listCharacterReviewCounts();
+  return json(200, result);
 }
 
 async function getChangelog(event) {

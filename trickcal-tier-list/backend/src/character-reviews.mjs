@@ -2,6 +2,7 @@ import {
   BatchGetItemCommand,
   DeleteItemCommand,
   DynamoDBClient,
+  GetItemCommand,
   PutItemCommand,
   QueryCommand,
   UpdateItemCommand
@@ -9,6 +10,9 @@ import {
 
 const CHARACTER_REVIEWS_TABLE_NAME = process.env.CHARACTER_REVIEWS_TABLE_NAME;
 const REVIEW_VOTES_TABLE_NAME = process.env.REVIEW_VOTES_TABLE_NAME;
+const CHARACTER_REVIEW_COUNTS_TABLE_NAME =
+  process.env.CHARACTER_REVIEW_COUNTS_TABLE_NAME;
+const REVIEW_COUNT_ENTITY_TYPE = 'CHARACTER_REVIEW_COUNT';
 
 const ddbClient = new DynamoDBClient({});
 
@@ -78,6 +82,33 @@ export async function listCharacterReviews(
   return { reviews };
 }
 
+export async function listCharacterReviewCounts() {
+  assertConfigured();
+
+  const counts = [];
+  let exclusiveStartKey;
+
+  do {
+    const response = await ddbClient.send(
+      new QueryCommand({
+        TableName: CHARACTER_REVIEW_COUNTS_TABLE_NAME,
+        KeyConditionExpression: 'entityType = :entityType',
+        ExpressionAttributeValues: {
+          ':entityType': {
+            S: REVIEW_COUNT_ENTITY_TYPE
+          }
+        },
+        ExclusiveStartKey: exclusiveStartKey
+      })
+    );
+
+    counts.push(...(response.Items || []).map(parseReviewCount));
+    exclusiveStartKey = response.LastEvaluatedKey;
+  } while (exclusiveStartKey);
+
+  return { counts };
+}
+
 export async function upsertCharacterReview({
   authUser,
   characterVariantKey,
@@ -118,6 +149,10 @@ export async function upsertCharacterReview({
     })
   );
 
+  if (!existingReview) {
+    await incrementReviewCount(normalizedCharacterVariantKey, 1);
+  }
+
   return review;
 }
 
@@ -153,6 +188,7 @@ export async function deleteCharacterReview(reviewId, authUser) {
   );
 
   await deleteAllVotesForReview(review.reviewId);
+  await incrementReviewCount(review.characterVariantKey, -1);
   return review;
 }
 
@@ -368,6 +404,14 @@ function parseReview(item) {
   };
 }
 
+function parseReviewCount(item) {
+  return {
+    characterVariantKey: item.characterVariantKey?.S || '',
+    reviewCount: Number(item.reviewCount?.N || 0),
+    updatedAt: item.updatedAt?.S || ''
+  };
+}
+
 function buildReviewId(characterVariantKey, authorUserId) {
   return `${characterVariantKey}::${authorUserId}`;
 }
@@ -422,7 +466,80 @@ function normalizeRequiredString(value, fieldName) {
 }
 
 function assertConfigured() {
-  if (!CHARACTER_REVIEWS_TABLE_NAME || !REVIEW_VOTES_TABLE_NAME) {
+  if (
+    !CHARACTER_REVIEWS_TABLE_NAME ||
+    !REVIEW_VOTES_TABLE_NAME ||
+    !CHARACTER_REVIEW_COUNTS_TABLE_NAME
+  ) {
     throw new Error('Review tables are not configured.');
   }
+}
+
+async function incrementReviewCount(characterVariantKey, delta) {
+  const now = new Date().toISOString();
+
+  if (delta >= 0) {
+    await ddbClient.send(
+      new UpdateItemCommand({
+        TableName: CHARACTER_REVIEW_COUNTS_TABLE_NAME,
+        Key: {
+          entityType: {
+            S: REVIEW_COUNT_ENTITY_TYPE
+          },
+          characterVariantKey: {
+            S: characterVariantKey
+          }
+        },
+        UpdateExpression: 'SET updatedAt = :updatedAt ADD reviewCount :delta',
+        ExpressionAttributeValues: {
+          ':updatedAt': {
+            S: now
+          },
+          ':delta': {
+            N: String(delta)
+          }
+        }
+      })
+    );
+    return;
+  }
+
+  const response = await ddbClient.send(
+    new GetItemCommand({
+      TableName: CHARACTER_REVIEW_COUNTS_TABLE_NAME,
+      Key: {
+        entityType: {
+          S: REVIEW_COUNT_ENTITY_TYPE
+        },
+        characterVariantKey: {
+          S: characterVariantKey
+        }
+      }
+    })
+  );
+
+  const nextCount = Math.max(
+    0,
+    Number(response.Item?.reviewCount?.N || 0) + delta
+  );
+
+  await ddbClient.send(
+    new PutItemCommand({
+      TableName: CHARACTER_REVIEW_COUNTS_TABLE_NAME,
+      Item: {
+        entityType: {
+          S: REVIEW_COUNT_ENTITY_TYPE
+        },
+        characterVariantKey: {
+          S: characterVariantKey
+        },
+        reviewCount: {
+          N: String(nextCount)
+        },
+        updatedAt: {
+          S: now
+        }
+      }
+    })
+  );
 }
