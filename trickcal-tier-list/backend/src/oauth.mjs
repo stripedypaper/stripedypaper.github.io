@@ -748,7 +748,7 @@ async function updateCharacter(event) {
   try {
     const id = getCharacterIdFromPath(event.rawPath);
     const body = parseJsonBody(event);
-    const character = await updateCharacterRecord(auth.user.id, id, body, { isAdmin: auth.isAdmin });
+    const character = await updateCharacterRecord(auth.user.id, id, body);
 
     if (!character) {
       return json(404, { error: 'Not found' });
