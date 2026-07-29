@@ -861,7 +861,10 @@ export function HomePage({ apiBaseUrl, user }) {
                   {favoriteCharacters.map((character) => (
                     <Table.Tr key={character.id}>
                       <Table.Td>
-                        <ReadonlyCharacterChip character={character} />
+                        <ReadonlyCharacterChip
+                          character={character}
+                          showReviewIndicator={false}
+                        />
                       </Table.Td>
                       <Table.Td>
                         {character.communityStats?.favoriteCount || 0}

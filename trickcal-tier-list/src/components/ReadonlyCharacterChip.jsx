@@ -6,9 +6,10 @@ import { getCharacterDisplayName } from '../lib/site.js';
 export function ReadonlyCharacterChip({
   character,
   secondaryText = '',
-  className = ''
+  className = '',
+  showReviewIndicator = character?.showReviewIndicator
 }) {
-  const showMetaRow = secondaryText || character?.showReviewIndicator;
+  const showMetaRow = secondaryText || showReviewIndicator;
 
   return (
     <div
@@ -28,7 +29,7 @@ export function ReadonlyCharacterChip({
                 {secondaryText}
               </Text>
             ) : null}
-            {character?.showReviewIndicator ? (
+            {showReviewIndicator ? (
               <span className="readonly-chip-review-indicator">
                 <HiMiniChatBubbleBottomCenterText size={12} />
               </span>
