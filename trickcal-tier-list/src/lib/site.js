@@ -290,6 +290,8 @@ export function parseCharacterForm(character) {
     personality: character?.personality || '',
     rarity: character?.rarity ? String(character.rarity) : '',
     hasYearning: Boolean(character?.hasYearning),
+    apostleCreatedAt: character?.apostleCreatedAt || '',
+    yearningCreatedAt: character?.yearningCreatedAt || '',
     imageFile: null,
     yearningImageFile: null
   };
@@ -305,8 +307,29 @@ export function buildCharacterPayload(formState) {
     role: formState.role,
     personality: formState.personality,
     rarity: Number.parseInt(formState.rarity, 10),
-    hasYearning: Boolean(formState.hasYearning)
+    hasYearning: Boolean(formState.hasYearning),
+    apostleCreatedAt: formState.apostleCreatedAt || null,
+    yearningCreatedAt: formState.hasYearning
+      ? formState.yearningCreatedAt || null
+      : null
   };
+}
+
+export function getCharacterVariantCreatedAt(character) {
+  if (!character) {
+    return '';
+  }
+
+  if (character.isYearning) {
+    return (
+      character.yearningCreatedAt ||
+      character.apostleCreatedAt ||
+      character.createdAt ||
+      ''
+    );
+  }
+
+  return character.apostleCreatedAt || character.createdAt || '';
 }
 
 export function canManageCharacters(user) {

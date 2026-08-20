@@ -23,7 +23,8 @@ import {
   buildCharacterVariantKey,
   formatCalendarDate,
   formatDate,
-  getCharacterDisplayName
+  getCharacterDisplayName,
+  getCharacterVariantCreatedAt
 } from '../lib/site.js';
 import { fetchChangelogEntries } from '../lib/changelogApi.js';
 import {
@@ -54,7 +55,8 @@ function isRecentlyAddedCharacter(createdAt) {
     return false;
   }
 
-  return Date.now() - createdAtMs < NEW_CHARACTER_WINDOW_MS;
+  const elapsedMs = Date.now() - createdAtMs;
+  return elapsedMs >= 0 && elapsedMs < NEW_CHARACTER_WINDOW_MS;
 }
 
 function buildSortedDistributionData(distribution) {
@@ -503,7 +505,9 @@ export function HomePage({ apiBaseUrl, user }) {
       return {
         ...character,
         characterVariantKey,
-        showNewBadge: isRecentlyAddedCharacter(character.createdAt),
+        showNewBadge: isRecentlyAddedCharacter(
+          getCharacterVariantCreatedAt(character)
+        ),
         reviewCount: reviewCountsByVariantKey.get(characterVariantKey) || 0,
         showReviewIndicator:
           (reviewCountsByVariantKey.get(characterVariantKey) || 0) > 0

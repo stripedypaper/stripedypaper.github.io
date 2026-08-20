@@ -159,6 +159,16 @@ export function CharacterEditorModal({
           />
         </SimpleGrid>
 
+        <TextInput
+          type="date"
+          label="Apostle creation date"
+          value={formState.apostleCreatedAt}
+          onChange={(event) =>
+            updateField('apostleCreatedAt', event.currentTarget.value)
+          }
+          description="Used for the New indicator; defaults to the row creation date."
+        />
+
         <Switch
           label="Has Yearning"
           checked={Boolean(formState.hasYearning)}
@@ -177,14 +187,25 @@ export function CharacterEditorModal({
         />
 
         {formState.hasYearning ? (
-          <FileInput
-            label="(Re)upload yearning image"
-            placeholder="Choose a yearning image"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            value={formState.yearningImageFile}
-            onChange={(file) => updateField('yearningImageFile', file)}
-            clearable
-          />
+          <>
+            <TextInput
+              type="date"
+              label="Yearning creation date"
+              value={formState.yearningCreatedAt}
+              onChange={(event) =>
+                updateField('yearningCreatedAt', event.currentTarget.value)
+              }
+              description="Used for the New indicator; defaults to the apostle creation date."
+            />
+            <FileInput
+              label="(Re)upload yearning image"
+              placeholder="Choose a yearning image"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              value={formState.yearningImageFile}
+              onChange={(file) => updateField('yearningImageFile', file)}
+              clearable
+            />
+          </>
         ) : null}
 
         {error ? (

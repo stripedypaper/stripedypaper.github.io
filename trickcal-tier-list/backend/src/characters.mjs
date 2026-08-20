@@ -149,7 +149,7 @@ function buildSingleFilterQueryInput({
   filterValue
 }) {
   const baseProjectionExpression =
-    'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl';
+    'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, apostleCreatedAt, yearningCreatedAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl';
 
   if (filterType === 'position') {
     const queryInput = {
@@ -285,7 +285,7 @@ async function listCharactersByNamePrefixPage({ limit, cursor, prefix }) {
           ExclusiveStartKey: currentState.lastKey,
           Limit: Math.max(1, limit - characters.length),
           ProjectionExpression:
-            'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl',
+            'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, apostleCreatedAt, yearningCreatedAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl',
           ScanIndexForward: false
         })
       );
@@ -471,6 +471,8 @@ function buildCharacterItem(character) {
   addOptionalString(item, 'nameKoLower', lowerOptionalString(character.nameKo));
   addOptionalBoolean(item, 'hasYearning', character.hasYearning);
   addOptionalString(item, 'yearningImageUrl', character.yearningImageUrl);
+  addOptionalString(item, 'apostleCreatedAt', character.apostleCreatedAt);
+  addOptionalString(item, 'yearningCreatedAt', character.yearningCreatedAt);
 
   return item;
 }
@@ -526,6 +528,8 @@ function parseCharacterRecord(item) {
     personality: item.personality?.S || '',
     rarity: item.rarity?.N ? Number(item.rarity.N) : 0,
     createdAt: item.createdAt?.S || '',
+    apostleCreatedAt: item.apostleCreatedAt?.S || '',
+    yearningCreatedAt: item.yearningCreatedAt?.S || '',
     updatedAt: item.updatedAt?.S || '',
     updatedBy: item.updatedBy?.S || '',
     imageVersion: item.imageVersion?.S || '',
@@ -564,6 +568,16 @@ function validateCharacterInput(input) {
     'rarity'
   );
   const hasYearning = normalizeOptionalBoolean(input?.hasYearning);
+  const apostleCreatedAt = normalizeOptionalCalendarDate(
+    input?.apostleCreatedAt,
+    'apostle creation date'
+  );
+  const yearningCreatedAt = hasYearning
+    ? normalizeOptionalCalendarDate(
+        input?.yearningCreatedAt,
+        'yearning creation date'
+      )
+    : null;
   const yearningImageUrl =
     hasYearning && input?.yearningImageUrl
       ? normalizeOptionalString(input?.yearningImageUrl)
@@ -586,7 +600,9 @@ function validateCharacterInput(input) {
     personality,
     rarity,
     hasYearning,
-    yearningImageUrl
+    yearningImageUrl,
+    apostleCreatedAt,
+    yearningCreatedAt
   };
 }
 
@@ -615,6 +631,29 @@ function normalizeOptionalString(value) {
 
   const normalized = String(value).trim();
   return normalized ? normalized : null;
+}
+
+function normalizeOptionalCalendarDate(value, fieldName) {
+  const normalized = normalizeOptionalString(value);
+  if (!normalized) {
+    return null;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    throw new Error(`Invalid ${fieldName}.`);
+  }
+
+  const [year, month, day] = normalized.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    throw new Error(`Invalid ${fieldName}.`);
+  }
+
+  return normalized;
 }
 
 function normalizeRequiredString(value, fieldName) {
