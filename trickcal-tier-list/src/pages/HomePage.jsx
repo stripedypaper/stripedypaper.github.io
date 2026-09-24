@@ -132,6 +132,25 @@ function matchesFilter(selectedValue, candidateValue) {
   return selectedValue === 'all' || selectedValue === candidateValue;
 }
 
+function matchesPersonalityFilter(selectedValue, character) {
+  if (selectedValue === 'all') {
+    return true;
+  }
+
+  const personalities = character.personalities || [];
+  if (selectedValue === 'multiple') {
+    return personalities.length > 1;
+  }
+
+  return personalities.includes(selectedValue);
+}
+
+function matchesPositionFilter(selectedValue, position) {
+  return (
+    selectedValue === 'any' || position === 'all' || selectedValue === position
+  );
+}
+
 function CommunityChart({
   title,
   data,
@@ -313,7 +332,7 @@ function renderCommunityTooltip(character) {
       subtitle={`${voteCount} ${voteCount === 1 ? 'vote' : 'votes'}`}
       position={character.position}
       role={character.role}
-      personality={character.personality}
+      personalities={character.personalities}
       score={roundToTwo(stats.calculated?.average || 0)}
       monoScore={roundToTwo(stats.mono?.average || 0)}
       mixedScore={roundToTwo(stats.mixedCrusade?.average || 0)}
@@ -335,7 +354,7 @@ function renderCuratorTooltip(character) {
       subtitle={`${voteCount} ${voteCount === 1 ? 'vote' : 'votes'}`}
       position={character.position}
       role={character.role}
-      personality={character.personality}
+      personalities={character.personalities}
       score={roundToTwo(stats.calculated?.average || 0)}
       monoScore={roundToTwo(stats.mono?.average || 0)}
       mixedScore={roundToTwo(stats.mixedCrusade?.average || 0)}
@@ -425,7 +444,7 @@ export function HomePage({ apiBaseUrl, user }) {
   const [showCuratorsOnly, setShowCuratorsOnly] = useState(false);
   const [showYearning, setShowYearning] = useState(false);
   const [scoreMode, setScoreMode] = useState('total');
-  const [selectedPosition, setSelectedPosition] = useState('all');
+  const [selectedPosition, setSelectedPosition] = useState('any');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedPersonality, setSelectedPersonality] = useState('all');
 
@@ -518,9 +537,9 @@ export function HomePage({ apiBaseUrl, user }) {
     () =>
       homePageCharacters.filter(
         (character) =>
-          matchesFilter(selectedPosition, character.position) &&
+          matchesPositionFilter(selectedPosition, character.position) &&
           matchesFilter(selectedRole, character.role) &&
-          matchesFilter(selectedPersonality, character.personality)
+          matchesPersonalityFilter(selectedPersonality, character)
       ),
     [homePageCharacters, selectedPersonality, selectedPosition, selectedRole]
   );
@@ -538,7 +557,7 @@ export function HomePage({ apiBaseUrl, user }) {
   );
   const positionFilterOptions = useMemo(
     () => [
-      { value: 'all', label: 'All', shortLabel: 'All' },
+      { value: 'any', label: 'All', shortLabel: 'All' },
       {
         value: 'front',
         label: 'Front',
@@ -553,6 +572,11 @@ export function HomePage({ apiBaseUrl, user }) {
         value: 'back',
         label: 'Back',
         imageName: 'position_back.webp'
+      },
+      {
+        value: 'all',
+        label: 'All positions',
+        imageName: 'position_all.webp'
       }
     ],
     []
@@ -607,9 +631,9 @@ export function HomePage({ apiBaseUrl, user }) {
         imageName: 'element_madness.webp'
       },
       {
-        value: 'resonance',
-        label: 'Resonance',
-        imageName: 'element_resonance.webp'
+        value: 'multiple',
+        label: 'Multiple personalities',
+        imageName: 'element_question.webp'
       }
     ],
     []
@@ -716,7 +740,7 @@ export function HomePage({ apiBaseUrl, user }) {
 
   function handleResetFilters() {
     setScoreMode('total');
-    setSelectedPosition('all');
+    setSelectedPosition('any');
     setSelectedRole('all');
     setSelectedPersonality('all');
     setShowYearning(false);

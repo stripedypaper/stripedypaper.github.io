@@ -736,7 +736,7 @@ async function createCharacter(event) {
         nameEn: character.nameEn || '',
         role: character.role,
         position: character.position,
-        personality: character.personality
+        personalities: character.personalities
       }
     });
 
@@ -773,7 +773,7 @@ async function updateCharacter(event) {
         nameEn: character.nameEn || '',
         role: character.role,
         position: character.position,
-        personality: character.personality,
+        personalities: character.personalities,
         hasYearning: character.hasYearning
       }
     });

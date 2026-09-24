@@ -19,15 +19,14 @@ const CHARACTERS_CDN_BASE_URL = normalizeBaseUrl(
 const ddbClient = new DynamoDBClient({});
 const s3Client = new S3Client({});
 
-export const CHARACTER_POSITION_VALUES = ['front', 'middle', 'back'];
+export const CHARACTER_POSITION_VALUES = ['front', 'middle', 'back', 'all'];
 export const CHARACTER_ROLE_VALUES = ['dps', 'tank', 'support'];
 export const CHARACTER_PERSONALITY_VALUES = [
   'vivacious',
   'depressed',
   'innocent',
   'composed',
-  'mad',
-  'resonance'
+  'mad'
 ];
 export const CHARACTER_RARITY_VALUES = [1, 2, 3];
 const CHARACTER_FILTER_TYPES = new Set(['', 'name', 'personality', 'position']);
@@ -78,6 +77,14 @@ export async function listCharactersPage({
       limit,
       cursor,
       prefix: normalizedFilterValue
+    });
+  }
+
+  if (normalizedFilterType === 'personality') {
+    return listCharactersByPersonalityPage({
+      limit,
+      cursor,
+      personality: normalizedFilterValue
     });
   }
 
@@ -149,7 +156,7 @@ function buildSingleFilterQueryInput({
   filterValue
 }) {
   const baseProjectionExpression =
-    'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, apostleCreatedAt, yearningCreatedAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl';
+    'id, #position, #role, personalities, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, apostleCreatedAt, yearningCreatedAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl';
 
   if (filterType === 'position') {
     const queryInput = {
@@ -162,34 +169,6 @@ function buildSingleFilterQueryInput({
       },
       ExpressionAttributeValues: {
         ':position': {
-          S: filterValue
-        }
-      },
-      Limit: limit,
-      ScanIndexForward: false,
-      ProjectionExpression: baseProjectionExpression
-    };
-
-    const exclusiveStartKey = decodeCursor(cursor);
-    if (exclusiveStartKey) {
-      queryInput.ExclusiveStartKey = exclusiveStartKey;
-    }
-
-    return queryInput;
-  }
-
-  if (filterType === 'personality') {
-    const queryInput = {
-      TableName: CHARACTERS_TABLE_NAME,
-      IndexName: 'CharactersByPersonalityIndex',
-      KeyConditionExpression: '#personality = :personality',
-      ExpressionAttributeNames: {
-        '#personality': 'personality',
-        '#position': 'position',
-        '#role': 'role'
-      },
-      ExpressionAttributeValues: {
-        ':personality': {
           S: filterValue
         }
       },
@@ -231,6 +210,52 @@ function buildSingleFilterQueryInput({
   }
 
   return queryInput;
+}
+
+async function listCharactersByPersonalityPage({ limit, cursor, personality }) {
+  if (!CHARACTER_PERSONALITY_VALUES.includes(personality)) {
+    return { characters: [], nextCursor: null };
+  }
+
+  const characters = [];
+  let exclusiveStartKey = decodeCursor(cursor);
+
+  do {
+    const response = await ddbClient.send(
+      new QueryCommand({
+        TableName: CHARACTERS_TABLE_NAME,
+        IndexName: 'CharactersByUpdatedAtIndex',
+        KeyConditionExpression: '#entityType = :entityType',
+        FilterExpression:
+          'contains(#personalities, :personality) OR #legacyPersonality = :personality OR #legacyPersonality = :resonance',
+        ExpressionAttributeNames: {
+          '#entityType': 'entityType',
+          '#personalities': 'personalities',
+          '#legacyPersonality': 'personality',
+          '#position': 'position',
+          '#role': 'role'
+        },
+        ExpressionAttributeValues: {
+          ':entityType': { S: 'character' },
+          ':personality': { S: personality },
+          ':resonance': { S: 'resonance' }
+        },
+        ExclusiveStartKey: exclusiveStartKey,
+        Limit: Math.max(25, limit - characters.length),
+        ScanIndexForward: false,
+        ProjectionExpression:
+          'id, #position, #role, personalities, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, apostleCreatedAt, yearningCreatedAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl'
+      })
+    );
+
+    characters.push(...(response.Items || []).map(parseCharacterRecord));
+    exclusiveStartKey = response.LastEvaluatedKey;
+  } while (characters.length < limit && exclusiveStartKey);
+
+  return {
+    characters,
+    nextCursor: encodeCursor(exclusiveStartKey || null)
+  };
 }
 
 async function listCharactersByNamePrefixPage({ limit, cursor, prefix }) {
@@ -285,7 +310,7 @@ async function listCharactersByNamePrefixPage({ limit, cursor, prefix }) {
           ExclusiveStartKey: currentState.lastKey,
           Limit: Math.max(1, limit - characters.length),
           ProjectionExpression:
-            'id, #position, #role, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, apostleCreatedAt, yearningCreatedAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl',
+            'id, #position, #role, personalities, personality, rarity, nameEn, nameJa, nameZh, nameKo, createdAt, apostleCreatedAt, yearningCreatedAt, updatedAt, updatedBy, imageVersion, hasYearning, yearningImageUrl',
           ScanIndexForward: false
         })
       );
@@ -444,8 +469,8 @@ function buildCharacterItem(character) {
     role: {
       S: character.role
     },
-    personality: {
-      S: character.personality
+    personalities: {
+      SS: character.personalities
     },
     rarity: {
       N: String(character.rarity)
@@ -525,7 +550,7 @@ function parseCharacterRecord(item) {
     nameKo: item.nameKo?.S || '',
     position: item.position?.S || '',
     role: item.role?.S || '',
-    personality: item.personality?.S || '',
+    personalities: readCharacterPersonalities(item),
     rarity: item.rarity?.N ? Number(item.rarity.N) : 0,
     createdAt: item.createdAt?.S || '',
     apostleCreatedAt: item.apostleCreatedAt?.S || '',
@@ -557,10 +582,10 @@ function validateCharacterInput(input) {
     CHARACTER_ROLE_VALUES,
     'role'
   );
-  const personality = normalizeRequiredChoice(
-    input?.personality,
+  const personalities = normalizeRequiredChoices(
+    input?.personalities,
     CHARACTER_PERSONALITY_VALUES,
-    'personality'
+    'personalities'
   );
   const rarity = normalizeRequiredInteger(
     input?.rarity,
@@ -597,7 +622,8 @@ function validateCharacterInput(input) {
     nameKoLower: lowerOptionalString(nameKo),
     position,
     role,
-    personality,
+    personalities,
+    personality: null,
     rarity,
     hasYearning,
     yearningImageUrl,
@@ -613,6 +639,40 @@ function normalizeRequiredChoice(value, allowedValues, fieldName) {
   }
 
   return normalizedValue;
+}
+
+function normalizeRequiredChoices(value, allowedValues, fieldName) {
+  if (!Array.isArray(value) || !value.length) {
+    throw new Error(`Missing ${fieldName}.`);
+  }
+
+  const normalizedValues = [
+    ...new Set(value.map((item) => String(item).trim()))
+  ];
+  if (
+    normalizedValues.length > allowedValues.length ||
+    normalizedValues.some((item) => !allowedValues.includes(item))
+  ) {
+    throw new Error(`Invalid ${fieldName}.`);
+  }
+
+  return normalizedValues;
+}
+
+function readCharacterPersonalities(item) {
+  if (item.personalities?.SS?.length) {
+    return item.personalities.SS.filter((personality) =>
+      CHARACTER_PERSONALITY_VALUES.includes(personality)
+    );
+  }
+
+  if (item.personality?.S === 'resonance') {
+    return [...CHARACTER_PERSONALITY_VALUES];
+  }
+
+  return CHARACTER_PERSONALITY_VALUES.includes(item.personality?.S)
+    ? [item.personality.S]
+    : [];
 }
 
 function normalizeRequiredInteger(value, allowedValues, fieldName) {
@@ -695,6 +755,12 @@ function toAttributeValue(value) {
   if (typeof value === 'number') {
     return {
       N: String(value)
+    };
+  }
+
+  if (Array.isArray(value)) {
+    return {
+      SS: value
     };
   }
 

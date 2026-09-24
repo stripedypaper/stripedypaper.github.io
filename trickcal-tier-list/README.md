@@ -167,6 +167,16 @@ Notes:
 - The frontend no longer selects questionnaire versions, and the backend now resolves all ranking/community flows to the active v4 path.
 - These retained tables should be treated as historical/manual-recovery data unless you deliberately reintroduce code paths for them.
 
+### Character personality migration
+
+Character records store `personalities` as a DynamoDB String Set containing one or more of the five main personalities. The old single `personality` value is retired; legacy `resonance` records should be converted to all five personalities after the backend deployment:
+
+```powershell
+.\scripts\backfill-character-personalities.ps1 -TableName YOUR_CHARACTERS_TABLE_NAME
+```
+
+The script is safe to rerun. It converts a single legacy personality to a one-value set, converts `resonance` to all five values, and removes the old attribute.
+
 ## Authorization model
 
 - The first login for a Discord ID creates a `user` row in the users table.

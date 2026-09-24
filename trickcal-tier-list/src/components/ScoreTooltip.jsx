@@ -1,6 +1,6 @@
 import { Group, Image, Stack, Text } from '@mantine/core';
 import { SCORE_WEIGHT_LABELS, SCORE_WEIGHTS } from '../lib/scoreWeights.js';
-import { getStaticImageUrl } from '../lib/site.js';
+import { getCharacterPersonalities, getStaticImageUrl } from '../lib/site.js';
 
 function formatNumber(value) {
   return typeof value === 'number' ? Number(value.toFixed(2)) : 0;
@@ -16,7 +16,7 @@ export function ScoreTooltip({
   subtitle,
   position,
   role,
-  personality,
+  personalities,
   score,
   monoScore,
   mixedScore,
@@ -25,18 +25,20 @@ export function ScoreTooltip({
   mixedLabel = 'Crusade',
   raidLabel = 'Raid'
 }) {
+  const personalityIconNames = getCharacterPersonalities({ personalities }).map(
+    (personality) =>
+      `element_${
+        personality === 'innocent'
+          ? 'innocence'
+          : personality === 'mad'
+            ? 'madness'
+            : personality
+      }.webp`
+  );
   const iconImageNames = [
     position ? `position_${position}.webp` : '',
     role ? `class_${role}.webp` : '',
-    personality
-      ? `element_${
-          personality === 'innocent'
-            ? 'innocence'
-            : personality === 'mad'
-              ? 'madness'
-              : personality
-        }.webp`
-      : ''
+    ...personalityIconNames
   ].filter(Boolean);
 
   return (

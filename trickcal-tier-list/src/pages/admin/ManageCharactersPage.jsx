@@ -21,6 +21,7 @@ import {
   PAGE_SIZE,
   buildCharacterPayload,
   getCharacterDisplayName,
+  getCharacterPersonalities,
   getOptionLabel,
   parseCharacterForm
 } from '../../lib/site.js';
@@ -437,10 +438,16 @@ export function ManageCharactersPage({ apiBaseUrl }) {
                     {getOptionLabel(CHARACTER_ROLE_OPTIONS, item.role)}
                   </Table.Td>
                   <Table.Td>
-                    {getOptionLabel(
-                      CHARACTER_PERSONALITY_OPTIONS,
-                      item.personality
-                    )}
+                    <Group gap={4} wrap="wrap">
+                      {getCharacterPersonalities(item).map((personality) => (
+                        <Badge key={personality} variant="light" size="sm">
+                          {getOptionLabel(
+                            CHARACTER_PERSONALITY_OPTIONS,
+                            personality
+                          )}
+                        </Badge>
+                      ))}
+                    </Group>
                   </Table.Td>
                   <Table.Td>
                     <Badge variant="light">{item.rarity}</Badge>

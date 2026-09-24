@@ -100,10 +100,7 @@ export function isCharacterEligibleForQuestionV4(character, question) {
   }
 
   if (question.kind === 'personality') {
-    return (
-      character.personality === question.personality ||
-      character.personality === 'resonance'
-    );
+    return character.personalities?.includes(question.personality);
   }
 
   if (

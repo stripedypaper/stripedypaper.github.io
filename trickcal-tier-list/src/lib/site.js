@@ -32,7 +32,8 @@ export const PAGE_SIZE = 10;
 export const CHARACTER_POSITION_OPTIONS = [
   { value: 'front', label: 'Front' },
   { value: 'middle', label: 'Middle' },
-  { value: 'back', label: 'Back' }
+  { value: 'back', label: 'Back' },
+  { value: 'all', label: 'All' }
 ];
 
 export const CHARACTER_ROLE_OPTIONS = [
@@ -46,9 +47,26 @@ export const CHARACTER_PERSONALITY_OPTIONS = [
   { value: 'depressed', label: 'Depressed' },
   { value: 'innocent', label: 'Innocent' },
   { value: 'composed', label: 'Composed' },
-  { value: 'mad', label: 'Mad' },
-  { value: 'resonance', label: 'Resonance' }
+  { value: 'mad', label: 'Mad' }
 ];
+
+const MAIN_PERSONALITIES = CHARACTER_PERSONALITY_OPTIONS.map(
+  (option) => option.value
+);
+
+export function getCharacterPersonalities(character) {
+  const personalities = Array.isArray(character?.personalities)
+    ? character.personalities
+    : character?.personality === 'resonance'
+      ? MAIN_PERSONALITIES
+      : character?.personality
+        ? [character.personality]
+        : [];
+
+  return MAIN_PERSONALITIES.filter((personality) =>
+    personalities.includes(personality)
+  );
+}
 
 export function resolveApiBaseUrl() {
   const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -287,7 +305,7 @@ export function parseCharacterForm(character) {
     nameKo: character?.nameKo || '',
     position: character?.position || '',
     role: character?.role || '',
-    personality: character?.personality || '',
+    personalities: getCharacterPersonalities(character),
     rarity: character?.rarity ? String(character.rarity) : '',
     hasYearning: Boolean(character?.hasYearning),
     apostleCreatedAt: character?.apostleCreatedAt || '',
@@ -305,7 +323,7 @@ export function buildCharacterPayload(formState) {
     nameKo: formState.nameKo,
     position: formState.position,
     role: formState.role,
-    personality: formState.personality,
+    personalities: formState.personalities,
     rarity: Number.parseInt(formState.rarity, 10),
     hasYearning: Boolean(formState.hasYearning),
     apostleCreatedAt: formState.apostleCreatedAt || null,

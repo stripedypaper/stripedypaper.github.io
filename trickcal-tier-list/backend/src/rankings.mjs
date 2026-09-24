@@ -584,10 +584,7 @@ function getCharacterMonoScoresModern(character, answers, config) {
     personality,
     questionId
   ] of config.personalityQuestionIds.entries()) {
-    if (
-      character.personality !== personality &&
-      character.personality !== 'resonance'
-    ) {
+    if (!character.personalities?.includes(personality)) {
       continue;
     }
 

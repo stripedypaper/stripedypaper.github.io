@@ -28,6 +28,7 @@ This repo contains a Vite/React frontend in `src/` and an AWS SAM backend in `ba
 - Auth and admin checks live in `backend/src/auth.mjs` and `backend/src/oauth.mjs`.
 - User data is stored in DynamoDB `UsersTable`.
 - Character data is stored in DynamoDB `CharactersTable`.
+- Multi-personality character filtering in the admin area may use application-side filtering rather than a dedicated inverted index. The character catalog is expected to stay small and admin filtering is not latency-sensitive; add a personality lookup table only if that assumption changes.
 - Character images are uploaded to S3 and served through CloudFront.
 - Character image URLs should be cache-busted when an image is re-uploaded.
 

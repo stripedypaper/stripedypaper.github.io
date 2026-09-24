@@ -4,6 +4,7 @@ import {
   Group,
   Image,
   Modal,
+  MultiSelect,
   NumberInput,
   Select,
   SimpleGrid,
@@ -137,12 +138,14 @@ export function CharacterEditorModal({
             onChange={(value) => updateField('role', value || '')}
             placeholder="Select role"
           />
-          <Select
+          <MultiSelect
             label="Personality *"
             data={CHARACTER_PERSONALITY_OPTIONS}
-            value={formState.personality}
-            onChange={(value) => updateField('personality', value || '')}
-            placeholder="Select personality"
+            value={formState.personalities}
+            onChange={(value) => updateField('personalities', value)}
+            placeholder="Select one or more personalities"
+            maxValues={5}
+            searchable
           />
           <NumberInput
             label="Rarity *"

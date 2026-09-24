@@ -161,10 +161,7 @@ function getOwnedYearningQuestionTiers() {
 }
 
 function matchesPersonality(character, personality) {
-  return (
-    character.personality === personality ||
-    character.personality === 'resonance'
-  );
+  return character.personalities?.includes(personality);
 }
 
 export function buildQuestionGroups(characters, answers = {}) {

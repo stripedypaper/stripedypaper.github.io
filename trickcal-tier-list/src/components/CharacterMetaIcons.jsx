@@ -1,5 +1,5 @@
 import { Group, Image } from '@mantine/core';
-import { getStaticImageUrl } from '../lib/site.js';
+import { getCharacterPersonalities, getStaticImageUrl } from '../lib/site.js';
 
 function getPersonalityImageName(personality) {
   if (personality === 'innocent') {
@@ -19,10 +19,13 @@ export function CharacterMetaIcons({
   justify = 'center',
   gap = 'xs'
 }) {
+  const personalityIconNames = getCharacterPersonalities(character).map(
+    getPersonalityImageName
+  );
   const iconNames = [
     character?.position ? `position_${character.position}.webp` : '',
     character?.role ? `class_${character.role}.webp` : '',
-    character?.personality ? getPersonalityImageName(character.personality) : ''
+    ...personalityIconNames
   ].filter(Boolean);
 
   if (!iconNames.length) {
