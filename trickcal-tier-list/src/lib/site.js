@@ -298,6 +298,9 @@ export function getOptionLabel(options, value) {
 }
 
 export function parseCharacterForm(character) {
+  const isNewCharacter = !character;
+  const currentDate = new Date().toISOString().slice(0, 10);
+
   return {
     nameEn: character?.nameEn || '',
     nameJa: character?.nameJa || '',
@@ -306,12 +309,21 @@ export function parseCharacterForm(character) {
     position: character?.position || '',
     role: character?.role || '',
     personalities: getCharacterPersonalities(character),
-    rarity: character?.rarity ? String(character.rarity) : '',
+    rarity: character?.rarity
+      ? String(character.rarity)
+      : isNewCharacter
+        ? '3'
+        : '',
     hasYearning: Boolean(character?.hasYearning),
-    apostleCreatedAt: character?.apostleCreatedAt || '',
-    yearningCreatedAt: character?.yearningCreatedAt || '',
+    apostleCreatedAt:
+      character?.apostleCreatedAt || (isNewCharacter ? currentDate : ''),
+    yearningCreatedAt:
+      character?.yearningCreatedAt || (isNewCharacter ? currentDate : ''),
     imageFile: null,
-    yearningImageFile: null
+    yearningImageFile: null,
+    publishChangelog: isNewCharacter,
+    changelogDescription: isNewCharacter ? 'Added character' : '',
+    changelogDescriptionEdited: false
   };
 }
 

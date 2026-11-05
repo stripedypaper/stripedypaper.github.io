@@ -34,10 +34,26 @@ export function CharacterEditorModal({
   const isEditMode = mode === 'edit';
 
   function updateField(field, value) {
-    setFormState((previous) => ({
-      ...previous,
-      [field]: value
-    }));
+    setFormState((previous) => {
+      const next = {
+        ...previous,
+        [field]: value
+      };
+
+      if (field === 'changelogDescription') {
+        next.changelogDescriptionEdited = true;
+      }
+
+      if (
+        !isEditMode &&
+        !previous.changelogDescriptionEdited &&
+        ['nameEn', 'nameJa', 'nameZh', 'nameKo', 'hasYearning'].includes(field)
+      ) {
+        next.changelogDescription = getChangelogDescription(next);
+      }
+
+      return next;
+    });
   }
 
   return (
@@ -211,6 +227,26 @@ export function CharacterEditorModal({
           </>
         ) : null}
 
+        {!isEditMode ? (
+          <>
+            <Switch
+              label="Publish changelog entry"
+              checked={Boolean(formState.publishChangelog)}
+              onChange={(event) =>
+                updateField('publishChangelog', event.currentTarget.checked)
+              }
+            />
+            <TextInput
+              label="Changelog entry"
+              value={formState.changelogDescription}
+              onChange={(event) =>
+                updateField('changelogDescription', event.currentTarget.value)
+              }
+              disabled={!formState.publishChangelog}
+            />
+          </>
+        ) : null}
+
         {error ? (
           <Text c="red" size="sm">
             {error}
@@ -233,4 +269,18 @@ export function CharacterEditorModal({
       </Stack>
     </Modal>
   );
+}
+
+function getChangelogDescription(formState) {
+  const characterName =
+    formState.nameEn ||
+    formState.nameJa ||
+    formState.nameZh ||
+    formState.nameKo ||
+    'character';
+  const baseDescription = `Added ${characterName}`;
+
+  return formState.hasYearning
+    ? `${baseDescription} and ${characterName} Yearning`
+    : baseDescription;
 }

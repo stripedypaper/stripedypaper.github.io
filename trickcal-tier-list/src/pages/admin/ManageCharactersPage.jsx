@@ -14,6 +14,7 @@ import {
 } from '@mantine/core';
 import { IconEdit, IconPlus } from '@tabler/icons-react';
 import { buildAuthenticatedRequestInit } from '../../lib/auth.js';
+import { createChangelogEntry } from '../../lib/changelogApi.js';
 import {
   CHARACTER_PERSONALITY_OPTIONS,
   CHARACTER_POSITION_OPTIONS,
@@ -270,6 +271,20 @@ export function ManageCharactersPage({ apiBaseUrl }) {
           formState.yearningImageFile,
           'yearning'
         );
+      }
+
+      if (modalMode === 'create' && formState.publishChangelog) {
+        try {
+          await createChangelogEntry(apiBaseUrl, {
+            description: formState.changelogDescription
+          });
+        } catch (changelogError) {
+          setError(
+            changelogError instanceof Error
+              ? `Character added, but changelog publishing failed: ${changelogError.message}`
+              : 'Character added, but changelog publishing failed.'
+          );
+        }
       }
 
       setModalOpened(false);
